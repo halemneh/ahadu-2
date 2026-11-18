@@ -114,11 +114,14 @@ reserved, with no syntax (§3.2).
 
 ### C09 — `&` as `እና`, and no `|` · minor
 
-Both v1s lex `&` to `KEYWORD:AND`. Neither has `|` for `ወይም`. An ASCII
-shorthand for one of a symmetric pair, in a language whose premise is Amharic
-words, is noise.
+Both v1s lex `&` to `KEYWORD:AND`. Neither has `|` for `ወይም`, and bare `!`
+means `ተቃርኖ` in both but was left out of the 2.0 draft. The defect is the
+**asymmetry**, not the shorthand.
 
-**Resolution**: dropped. `እና` / `ወይም` only (§3.5). Breaking change.
+**Resolution**: all three kept and made symmetric — `&` for `እና`, `|` for
+`ወይም`, `!` for `ተቃርኖ`, with `&&` and `||` accepted as well since Ahadu has no
+bitwise operators for them to collide with (§3.2, §3.5). An alias costs one
+lexer branch and saves a learner who already types `!`.
 
 ### C10 — `እና` and `ወይም` have equal precedence · major
 
@@ -181,8 +184,10 @@ fails to parse. v1-ts implemented `TypedDeclaration` but, having no evaluator,
 never gave it meaning.
 
 **Resolution**: optional, runtime-checked annotations (§7.2), honoring the
-documented intent. `ፊደል` means "a `ጽሁፍ` of length 1" rather than a distinct
-type, since neither v1 ever had a character value.
+documented intent — except `ፊደል`, which is reserved rather than revived. A
+string of length 1 **is** the character (§4.3): neither v1 ever had a distinct
+character value, and an annotation naming a type that `አይነት` can never report
+would be a concept with nothing behind it.
 
 ### C13 — `አዋህድ` and `ሰርዝ` crash the interpreter · critical
 
@@ -505,14 +510,20 @@ two names can refer to one list or one object was never decided.
 **Resolution**: text and lists are immutable, so the question is unobservable
 for them; objects are references (§4.5, §4.7). No implicit copying.
 
-### C36 — Identifier character range · minor
+### C36 — Identifier character range, and Ge'ez numerals · minor
 
-`ALPHANUMERAL = r'[a-zA-Zሀ-ፚ0-9_]+'` covers the Ethiopic syllable
-block only. Ethiopic digits (U+1369–U+137C), Ethiopic Supplement, Extended, and
-Extended-A are all excluded, so those code points are illegal characters
-anywhere in a program.
+`ALPHANUMERAL = r'[a-zA-Zሀ-ፚ0-9_]+'` covers the Ethiopic syllable block only.
+Ethiopic Supplement, Extended, and Extended-A are excluded, so those code
+points are illegal characters anywhere in a program. Ethiopic digits and
+numerals (U+1369–U+137C) are excluded too, meaning `፳፩` could be neither a
+name nor a number — Amharic's own numerals were not writable in an Amharic
+language.
 
-**Resolution**: the ranges in §3.1.
+**Resolution**: the supplement and extended blocks join the identifier ranges
+(§3.1); the numerals become number literals (§3.4.1), so they are digits
+rather than word characters. Three limits come from the numeral system itself
+and are stated rather than worked around: it has no zero, no fractional form,
+and output is always ASCII.
 
 ### C29 — `።` is an illegal character · minor
 
@@ -563,13 +574,13 @@ These v1-ts behaviors have no v1-py counterpart and are adopted as-is:
   multi-word `እስከሆነ ድረስ` spanning the separating space.
 - Parser error recovery with panic-mode resynchronization.
 - `%` for modulo (absent from v1-py entirely).
+- `&` for `እና` and bare `!` for `ተቃርኖ`, now joined by `|` for `ወይም` (C09).
 - Whole-word keyword matching, so `ከሆነነገር` is one identifier.
 
 ## Deliberately not carried forward
 
 | Dropped | Why |
 | --- | --- |
-| `&` for `እና` | C09 — asymmetric ASCII shorthand in a word-based language |
 | `አዲስ` / `NewExpression` | C07 — syntax the language never had |
 | inline `if` / `while` / function bodies | C06 — second shape, worst code path |
 | optional `፦` | C05 — the block marker is the teaching aid |

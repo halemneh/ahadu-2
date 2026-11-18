@@ -89,7 +89,6 @@ An identifier is one or more *word characters*, where a word character is:
 | Range | Contents |
 | --- | --- |
 | U+1200–U+135A | Ethiopic syllables |
-| U+1369–U+137C | Ethiopic digits and numerals |
 | U+1380–U+139F | Ethiopic Supplement |
 | U+2D80–U+2DDF | Ethiopic Extended |
 | U+AB01–U+AB2F | Ethiopic Extended-A |
@@ -99,10 +98,12 @@ An identifier is one or more *word characters*, where a word character is:
 
 Rules:
 
-- An identifier MUST NOT begin with an ASCII digit (`0`–`9`). An identifier MAY
-  begin with an Ethiopic digit.
+- An identifier MUST NOT begin with a digit.
 - Ethiopic punctuation (U+1360–U+1368) is **not** a word character; it is
   punctuation (§3.5).
+- Ethiopic digits and numerals (U+1369–U+137C) are **not** word characters
+  either; they are number literals (§3.4.1), so `፩` is the number 1 and never
+  part of a name.
 - Identifiers are compared by exact code-point sequence. There is **no**
   normalization and no spelling-variant folding: `ሃይሌ` and `ኃይሌ` are two
   different variables. (Keywords are the sole exception — §3.2.)
@@ -127,16 +128,15 @@ predictable.
 | function | `ተግባር` | `FUNC` |
 | class | `ክላስ` | `CLASS` |
 | constructor | `ፍጠር` | `INIT` |
-| and | `እና` `ዕና` | `AND` |
-| or | `ወይም` | `OR` |
-| not | `ተቃርኖ` | `NOT` |
+| and | `እና` `ዕና` `&` `&&` | `AND` |
+| or | `ወይም` `\|` `\|\|` | `OR` |
+| not | `ተቃርኖ` `!` | `NOT` |
 | true | `እውነት` `ዕውነት` | `TRUE` |
 | false | `ሃሰት` `ሀሰት` `ኅሰት` `ኃሰት` `ሓሰት` `ሐሰት` `ሃሠት` `ሀሠት` `ኅሠት` `ኃሠት` `ሓሠት` `ሐሠት` | `FALSE` |
 | nothing | `ምንም` | `NOTHING` |
 | type: number | `ቁጥር` | `TYPE_NUM` |
 | type: boolean | `እውነታ` | `TYPE_BOOL` |
-| type: character | `ፊደል` | `TYPE_CHAR` |
-| type: text | `ጽሁፍ` `ፅሁፍ` | `TYPE_TEXT` |
+| type: string | `ጽሁፍ` `ፅሁፍ` | `TYPE_STRING` |
 | type: list | `ስብስብ` | `TYPE_LIST` |
 
 Keyword matching is **whole-word**: `ከሆነነገር` is one identifier, not `ከሆነ`
@@ -144,7 +144,7 @@ followed by `ነገር`. A keyword is recognized only when the maximal run of wo
 characters equals a listed spelling exactly.
 
 Reserved for future use (recognized as keywords, no syntax in 2.0; using one is
-error `AH2010`): `አዲስ`, `ለ`, `አቁም`, `ቀጥል`.
+error `AH2010`): `አዲስ`, `ለ`, `አቁም`, `ቀጥል`, `ፊደል`.
 
 Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
 **not** keywords. They are ordinary identifiers pre-bound in the global scope
@@ -174,15 +174,66 @@ Amharic prefix — was silently torn in half.
 number := digit+ ( "." digit+ )?
 ```
 
-- Digits are ASCII `0`–`9`.
+- Digits are ASCII `0`–`9`. Ge'ez numerals are a separate literal form
+  (§3.4.1).
 - A number has at most one `.`, and the `.` MUST have at least one digit on
   each side. `5.` and `.5` are **not** numbers: `5.` lexes as `5` then `.`
   (which the parser rejects), and `.5` lexes as `.` then `5`.
 - `1.2.3` lexes as `1.2`, `.`, `3` — a parse error, not a number.
-- There are no sign characters in a literal; `-5` is unary minus applied to
-  `5` (§6.2).
 - There are no separators, no exponent form, and no radix prefixes in 2.0.
 - All numbers are IEEE-754 binary64 (§4.2).
+
+Negative numbers exist and are written the obvious way — `-5`, `[-1፣ -2]`,
+`ሀ = -ለ` — but the sign is **not** part of the literal: `-5` is the prefix
+operator `-` applied to the literal `5` (§6.1, §6.2). The value is identical
+either way; keeping the sign out of the literal is what makes `5-3` three
+tokens (`5`, `-`, `3`) instead of two numbers in a row.
+
+#### 3.4.1 Ge'ez numeral literals
+
+Ethiopic numerals are accepted as number literals:
+
+```ahadu
+ጻፍ(፳፩)        # 21
+ጻፍ(፫፻፳፩)      # 321
+ጻፍ(፪፼)        # 20000
+```
+
+The numeral symbols and their values:
+
+| Symbols | Values |
+| --- | --- |
+| `፩ ፪ ፫ ፬ ፭ ፮ ፯ ፰ ፱` | 1–9 (units) |
+| `፲ ፳ ፴ ፵ ፶ ፷ ፸ ፹ ፺` | 10–90 (tens) |
+| `፻` | ×100 (separator) |
+| `፼` | ×10000 (separator) |
+
+A literal is a maximal run of these symbols, read as:
+
+1. Split the run on `፼`. The value is `Σ partᵢ × 10000ⁱ`, counting from the
+   right.
+2. Split each part on `፻`. Its value is `Σ subⱼ × 100ʲ`, counting from the
+   right.
+3. A *sub* contains at most one tens symbol followed by at most one units
+   symbol; its value is their sum. A sub that is empty and precedes a
+   separator is **1**, so `፻` alone is 100 and `፼` alone is 10000. A sub that
+   is empty and trails a separator is 0.
+
+Anything else in the run — a units symbol before a tens symbol, two units
+symbols, more than one `፼` — is error `AH1005`
+(`የግዕዝ ቁጥር አጻጻፍ ስተት`).
+
+Three limits follow from the numeral system itself, not from this
+implementation:
+
+- **There is no zero in Ge'ez numerals.** Write `0`.
+- **There are no fractions.** Write `2.5`.
+- **Output is always ASCII**: `ጻፍ(፳፩)` prints `21`. Ge'ez numerals are an
+  input spelling for whole positive numbers, not a separate numeric type, and
+  `አይነት(፳፩)` is `ቁጥር`.
+
+ASCII and Ge'ez digits MUST NOT be mixed inside one literal: `፳1` is two
+adjacent number literals and therefore a parse error.
 
 ### 3.5 Punctuation and operators
 
@@ -199,6 +250,9 @@ Both ASCII and Ethiopic forms are accepted; they are exactly equivalent.
 | `ASSIGN` | `=` | |
 | `EQ` | `==` | |
 | `NEQ` | `!=` | |
+| `AND` | `&` `&&` | same token as `እና` (§3.2) |
+| `OR` | `\|` `\|\|` | same token as `ወይም` |
+| `NOT` | `!` | same token as `ተቃርኖ` |
 | `LT` | `<` `‹` (U+2039) | |
 | `LTE` | `<=` `‹=` | |
 | `GT` | `>` `›` (U+203A) | |
@@ -211,14 +265,18 @@ Both ASCII and Ethiopic forms are accepted; they are exactly equivalent.
 | `THEN` | `፦` (U+1366) `:-` `፡-` | opens a block |
 | `STOP` | `።` (U+1362) | optional statement terminator |
 
-Longest-match wins: `<=` is one `LTE`, never `LT` then `ASSIGN`.
+Longest-match wins: `<=` is one `LTE`, never `LT` then `ASSIGN`, and `!=` is
+one `NEQ`, never `NOT` then `ASSIGN`.
 
 `።` (Ethiopic full stop) terminates a statement exactly as a newline does, and
 is optional. It is accepted because it is the natural end-of-sentence mark in
 Amharic prose and its absence in v1-py was a gap, not a decision.
 
-There is no `&` for `እና` and no `|` for `ወይም`. (v1 accepted `&` and had no
-`|`; see CHANGES §C09.)
+`&`, `|`, and `!` are exact aliases for `እና`, `ወይም`, and `ተቃርኖ` — same tokens,
+same precedence (§6.1). The doubled forms `&&` and `||` are accepted too, since
+a learner arriving from another language will type them and there is nothing
+else they could mean: Ahadu has no bitwise operators. v1 accepted `&` but had
+no `|`; the asymmetry, not the shorthand, was the problem (CHANGES §C09).
 
 ### 3.6 String literals
 
@@ -289,8 +347,7 @@ annotations** (§7.2). There is no static type checker.
 | --- | --- | --- |
 | Number | `ቁጥር` | `42`, `3.5` |
 | Boolean | `እውነታ` | `እውነት`, `ሃሰት` |
-| Text | `ጽሁፍ` | `"ሰላም"` |
-| Character | `ፊደል` | — (a `ጽሁፍ` of length 1; annotation only) |
+| String | `ጽሁፍ` | `"ሰላም"` |
 | List | `ስብስብ` | `[1፣ 2፣ 3]` |
 | Function | `ተግባር` | `ተግባር` declaration |
 | Class | `ክላስ` | `ክላስ` declaration |
@@ -309,17 +366,21 @@ annotations** (§7.2). There is no static type checker.
 - `NaN` and `±Infinity` are not reachable: every operation that would produce
   one is a runtime error instead (§6.2).
 
-### 4.3 Text
+### 4.3 String
 
 - Immutable sequence of Unicode **code points**. `ርዝመት("ሰላም")` is 3, and
   `"ሰላም"[0]` is `"ሰ"`. Implementations MUST NOT expose UTF-16 surrogate halves.
 - Zero-indexed. Indexing and slicing follow §6.5.
+- There is no character type. Indexing a string yields a `ጽሁፍ` of length 1,
+  which **is** the character: one concept instead of two, and no rule about
+  which operations accept which. (`ፊደል` was in v1's keyword table but never
+  had a value behind it; it is reserved — §3.2, CHANGES C08.)
 
 ### 4.4 Boolean and truthiness
 
 - `እውነት` and `ሃሰት` are the only Boolean values.
-- Conditions in `ከሆነ` and `እስከሆነ ድረስ` MUST be of type `እውነታ`. A number, text,
-  or list used as a condition is error `AH3005`
+- Conditions in `ከሆነ` and `እስከሆነ ድረስ` MUST be of type `እውነታ`. A number,
+  string, or list used as a condition is error `AH3005`
   (`ሁኔታው እውነት ወይም ሃሰት መሆን አለበት`).
 
   This is a deliberate break from v1, where a condition was any number and
@@ -477,7 +538,7 @@ Amharic.
   Cross-type comparison is **not** an error — it is `ሃሰት`. This is the one
   place where mixed types are allowed, because "are these the same?" is a
   reasonable question to ask about any two values.
-- Numbers compare by value; text by code-point sequence; lists element-wise;
+- Numbers compare by value; strings by code-point sequence; lists element-wise;
   `ምንም` equals only `ምንም`; objects and functions by reference identity.
 - `!=` is the negation of `==`.
 
@@ -485,7 +546,7 @@ Amharic.
 
 ```ahadu
 ዝርዝር[0]            # index
-ጽሁፍ[1]             # index into text
+ጽሁፍ[1]             # index into a string
 ዝርዝር[1:3]          # slice
 ተግባር(ሀ፣ ለ)         # call
 ሃይሌ.ስም             # attribute
@@ -552,7 +613,6 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
 ጽሁፍ ስም = "ሰላም"
 ስብስብ ቤተሰብ = []
 እውነታ ተጠናቋል = ሃሰት
-ፊደል ፊት = "ሀ"
 ```
 
 - A type keyword before the name declares the variable **and** pins its type
@@ -561,13 +621,13 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
 - The initializer is required. `ቁጥር ቆጣሪ` with no `=` is error `AH2007`.
 - Annotations are entirely optional; plain `ቆጣሪ = 0` is equally valid and
   stays untyped.
-- `ፊደል` pins "a `ጽሁፍ` whose length is exactly 1".
 - Redeclaring a name already declared in the same scope is error `AH2011`.
 
 Annotations exist because the original grammar specified them
 (`expression ::= KEYWORD:INT IDENTIFIER EQUAL arith_expr`) even though no v1
 implementation ever parsed them, and because naming a type is pedagogically
-useful. See CHANGES §C08.
+useful. The one annotation dropped along the way is `ፊደል` (§4.3). See
+CHANGES §C08.
 
 ### 7.3 Conditional
 
@@ -731,15 +791,15 @@ hardcodes `< 5`.
 | --- | --- |
 | `ቁጥር` | `42`, `3.5` — integral values with no decimal point |
 | `እውነታ` | `እውነት` / `ሃሰት` |
-| `ጽሁፍ` | the text itself, with no surrounding quotes |
-| `ስብስብ` | `[ሀ፣ ለ፣ ሐ]` — Ethiopic comma and a space; nested text **is** quoted |
+| `ጽሁፍ` | the characters themselves, with no surrounding quotes |
+| `ስብስብ` | `[ሀ፣ ለ፣ ሐ]` — Ethiopic comma and a space; nested strings **are** quoted |
 | `ምንም` | `ምንም` |
 | `ተግባር` | `[ተግባር <name>]` |
 | `ክላስ` | `[ክላስ <Name>]` |
 | `ኦብጀክት` | `[<Name> ኦብጀክት]` |
 
-Nesting is the only context where text is quoted, so that `ጻፍ(["ሀ"])` shows
-`["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
+Nesting is the only context where a string is quoted, so that `ጻፍ(["ሀ"])`
+shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
 
 ---
 
@@ -751,7 +811,7 @@ Every error carries a stable code, an Amharic message, a line, and an inclusive
 column span. The rendered form is:
 
 ```
-የተሰበረ ህግ አለ።: መስመር 3 ላይ: 15ኛው ካራክተር
+[AH2001] የተሰበረ ህግ አለ።: መስመር 3 ላይ: 15ኛው ካራክተር
 ------------------------------------------------------------
 
     3: ዕድሜ > 18 ከሆነ
@@ -759,6 +819,11 @@ column span. The rendered form is:
 
 "፦" ይጠበቃል።
 ```
+
+The code is part of the rendered message, in brackets ahead of the Amharic
+text, in every surface — CLI, REPL, playground, and `--json`. A learner can
+read past it; a teacher, a bug report, or a search needs it, and an error
+message that cannot be quoted precisely is hard to get help with.
 
 Runtime errors additionally render a call traceback (`የጥሪ መልሶ ምልከታ`), outermost
 frame first, with the global frame named `ዋና ፕሮግራም`.
@@ -775,6 +840,7 @@ syntactic, `AH3xxx` runtime.
 | `AH1002` | bad leading whitespace — `የመስመር መጀመሪያ ክፍተት ስተት፡` |
 | `AH1003` | unterminated string — `ያልተሟላ ፅሑፍ` |
 | `AH1004` | `እስከሆነ` without `ድረስ` |
+| `AH1005` | malformed Ge'ez numeral — `የግዕዝ ቁጥር አጻጻፍ ስተት` |
 | `AH2001` | unexpected token |
 | `AH2002` | missing closing `)` / `]` |
 | `AH2003` | `ግን` without `<condition> ከሆነ` |

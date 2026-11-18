@@ -1,0 +1,16 @@
+# Regression: CHANGES C36 — Amharic's own numerals were not writable in v1.
+# Ge'ez numerals are an input spelling; output is always ASCII (§3.4.1).
+# expect: 1
+# expect: 21
+# expect: 321
+# expect: 100
+# expect: 20000
+# expect: ቁጥር
+# expect: 22
+ጻፍ(፩)
+ጻፍ(፳፩)
+ጻፍ(፫፻፳፩)
+ጻፍ(፻)
+ጻፍ(፪፼)
+ጻፍ(አይነት(፳፩))
+ጻፍ(፳፩ + ፩)

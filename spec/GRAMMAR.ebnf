@@ -29,16 +29,26 @@ RETURN      = "ተመላሽ" ;
 FUNC        = "ተግባር" ;
 CLASS       = "ክላስ" ;
 INIT        = "ፍጠር" ;
-AND         = "እና" | "ዕና" ;
-OR          = "ወይም" ;
-NOT         = "ተቃርኖ" ;
+AND         = "እና" | "ዕና" | "&" | "&&" ;
+OR          = "ወይም" | "|" | "||" ;
+NOT         = "ተቃርኖ" | "!" ;
 TRUE        = "እውነት" | "ዕውነት" ;
 FALSE       = "ሃሰት" | "ሀሰት" | "ኅሰት" | "ኃሰት" | "ሓሰት" | "ሐሰት"
             | "ሃሠት" | "ሀሠት" | "ኅሠት" | "ኃሠት" | "ሓሠት" | "ሐሠት" ;
 NOTHING     = "ምንም" ;
-TYPE        = "ቁጥር" | "እውነታ" | "ፊደል" | "ጽሁፍ" | "ፅሁፍ" | "ስብስብ" ;
+TYPE        = "ቁጥር" | "እውነታ" | "ጽሁፍ" | "ፅሁፍ" | "ስብስብ" ;
 
-NUMBER      = digit { digit } [ "." digit { digit } ] ;
+NUMBER      = ascii_number | geez_number ;
+ascii_number = digit { digit } [ "." digit { digit } ] ;
+
+(* Ge'ez numerals: whole positive values only. See LANGUAGE.md §3.4.1 for the
+   reading algorithm and for why there is no zero and no fractional form. *)
+geez_number = geez_myriad ;
+geez_myriad = [ geez_hundred ] "፼" [ geez_hundred ] | geez_hundred ;
+geez_hundred = [ geez_sub ] "፻" [ geez_sub ] | geez_sub ;
+geez_sub    = geez_ten [ geez_unit ] | geez_unit ;
+geez_unit   = "፩" | "፪" | "፫" | "፬" | "፭" | "፮" | "፯" | "፰" | "፱" ;
+geez_ten    = "፲" | "፳" | "፴" | "፵" | "፶" | "፷" | "፸" | "፹" | "፺" ;
 STRING      = '"' { char } '"' | "'" { char } "'" ;
 IDENT       = word_char { word_char } ;          (* must not start with 0-9 *)
 OF_IDENT    = "የ" word_char { word_char } ;      (* IDENT with hasOfPrefix *)
@@ -124,6 +134,8 @@ not_expr    = NOT not_expr
 compare_expr = add_expr [ compare_op add_expr ] ;
 
 compare_op  = "==" | "!=" | "<" | "<=" | ">" | ">=" | "‹" | "‹=" | "›" | "›=" ;
+
+(* Longest match: "!=" is one compare_op, never NOT followed by "=". *)
 
 add_expr    = mul_expr { ( "+" | "-" ) mul_expr } ;
 

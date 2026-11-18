@@ -69,9 +69,11 @@ the value it produced — which is how a learner sees a loop actually looping.
 
 ### 1.3 Diagnostics
 
-One renderer, shared by the CLI, the REPL, and the playground: code, Amharic
-message, line and column, the source line, and a caret span under the offending
-columns. `--json` emits
+One renderer, shared by the CLI, the REPL, and the playground: the code in
+brackets, the Amharic message, line and column, the source line, and a caret
+span under the offending columns (LANGUAGE.md §9.1). The code is always shown,
+never only in `--json`, so a learner can quote an error precisely when asking
+for help. `--json` emits
 `{code, message, line, startCol, endCol, stage, severity}` so an editor can
 consume it.
 

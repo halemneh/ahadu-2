@@ -88,8 +88,9 @@ Types: `ቁጥር` (number) · `ጽሁፍ` (text) · `እውነታ` (boolean) ·
 Built-ins: `ጻፍ` (print) · `ርዝመት` (length) · `አዋህድ` (append) · `ሰርዝ` (remove) ·
 `አይነት` (type of) · `አንብብ` (read a line).
 
-Both ASCII and Ethiopic punctuation work everywhere: `፦` or `:-`, `፣` or `,`,
-`‹` or `<`. Write whichever your keyboard gives you.
+Both ASCII and Ethiopic forms work everywhere: `፦` or `:-`, `፣` or `,`, `‹` or
+`<`, `&` or `እና`, `!` or `ተቃርኖ`, and `፳፩` or `21`. Write whichever your
+keyboard gives you.
 
 ## Getting started
 

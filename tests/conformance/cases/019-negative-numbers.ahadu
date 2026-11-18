@@ -1,0 +1,12 @@
+# Negative numbers exist; the sign is an operator, not part of the literal (§3.4).
+# expect: -5
+# expect: [-1፣ -2]
+# expect: 2
+# expect: -4
+# expect: 8
+ሀ = -5
+ጻፍ(ሀ)
+ጻፍ([-1፣ -2])
+ጻፍ(5 - 3)
+ጻፍ(-2 ^ 2)
+ጻፍ(-ሀ + 3)

@@ -10,7 +10,8 @@ change the language without changing `spec/LANGUAGE.md` in the same change.
 
 Tokens with code-point columns, keyword variant folding, `የ` kept attached
 (C23), `እስከሆነ ድረስ` as one token (C11), indentation normalization, Ethiopic
-punctuation including `።`, and non-throwing error recovery.
+punctuation including `።`, Ge'ez numeral literals (§3.4.1), the `&` / `|` / `!`
+aliases, and non-throwing error recovery.
 
 **Done when**: unit tests cover every token kind and every `AH1xxx` code, and
 `ahadu tokens` prints a sane table for all seven `examples/`.
