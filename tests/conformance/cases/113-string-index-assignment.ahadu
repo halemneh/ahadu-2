@@ -1,4 +1,4 @@
 # Strings are immutable; lists are not (§4.3, §4.5).
-# expect-error: AH2009
+# expect-error: AH3015
 ስም = "ሰላም"
 ስም[0] = "ሀ"

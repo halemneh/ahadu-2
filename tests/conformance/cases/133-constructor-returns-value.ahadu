@@ -1,0 +1,7 @@
+# ፍጠር always evaluates to the new object (§7.6).
+# expect-error: AH2014
+ክላስ ተማሪ፦
+    ቁጥር ዕድሜ = 0
+
+    ፍጠር()፦
+        ተመላሽ 1

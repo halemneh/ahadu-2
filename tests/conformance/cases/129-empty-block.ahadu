@@ -1,0 +1,4 @@
+# A block holds at least one statement (§5.2).
+# expect-error: AH2006
+እውነት ከሆነ፦
+ጻፍ("ያልገባ")

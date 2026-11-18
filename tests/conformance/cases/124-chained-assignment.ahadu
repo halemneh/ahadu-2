@@ -1,0 +1,3 @@
+# Assignment is a statement, not an expression (§7.1, CHANGES C12).
+# expect-error: AH2001
+ሀ = ለ = 1

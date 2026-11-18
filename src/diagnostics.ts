@@ -32,13 +32,56 @@ export const AH1003 = 'AH1003';
 export const AH1004 = 'AH1004';
 export const AH1005 = 'AH1005';
 
-/** Amharic message text, keyed by code. */
+// ---------------------------------------------------------------------------
+// Syntactic codes (§9.2)
+// ---------------------------------------------------------------------------
+
+export const AH2001 = 'AH2001';
+export const AH2002 = 'AH2002';
+export const AH2003 = 'AH2003';
+export const AH2004 = 'AH2004';
+export const AH2005 = 'AH2005';
+export const AH2006 = 'AH2006';
+export const AH2007 = 'AH2007';
+export const AH2008 = 'AH2008';
+export const AH2009 = 'AH2009';
+export const AH2010 = 'AH2010';
+export const AH2011 = 'AH2011';
+export const AH2012 = 'AH2012';
+export const AH2013 = 'AH2013';
+export const AH2014 = 'AH2014';
+export const AH2015 = 'AH2015';
+
+/**
+ * Default Amharic text, keyed by code.
+ *
+ * Lexical codes stand alone. Parser codes name a general category and are
+ * nearly always given a more specific message at the call site — see
+ * `src/parser/messages.ts` — so these are the fallback a tool shows when no
+ * detail was supplied.
+ */
 export const MESSAGES: Readonly<Record<string, string>> = {
   [AH1001]: 'የማይታወቅ ካራክተር አለ።',
   [AH1002]: 'የመስመር መጀመሪያ ክፍተት ስተት፡',
   [AH1003]: 'ያልተሟላ ፅሑፍ',
   [AH1004]: '"ድረስ" ይጠበቃል።',
   [AH1005]: 'የግዕዝ ቁጥር አጻጻፍ ስተት።',
+
+  [AH2001]: 'የተሰበረ ህግ አለ።',
+  [AH2002]: 'የመዝጊያ ቅንፍ ረስተዋል።',
+  [AH2003]: '"ግን" ሁኔታና "ከሆነ" ያስፈልገዋል።',
+  [AH2004]: 'ከዚህ በፊት "ከሆነ" የለም።',
+  [AH2005]: '"ተመላሽ" በተግባር ውስጥ ብቻ ይሰራል።',
+  [AH2006]: 'ብሎኩ ባዶ ነው።',
+  [AH2007]: 'መጀመሪያ ዋጋ ያስፈልጋል።',
+  [AH2008]: 'ሁለት ማወዳደሪያዎችን በአንድ ላይ ማስቀመጥ አይቻልም።',
+  [AH2009]: 'ቁራጭ መቀየር አይቻልም።',
+  [AH2010]: 'ለወደፊት የተያዘ ቃል ነው።',
+  [AH2011]: 'ለዚህ ነገር ዋጋ መስጠት አይቻልም።',
+  [AH2012]: 'የተደገመ የግቤት ስም አለ።',
+  [AH2013]: 'በክላስ ውስጥ መሆን የማይገባው ነገር አለ።',
+  [AH2014]: '"ፍጠር" ዋጋ አይመልስም።',
+  [AH2015]: 'ከሚያስፈልገው በላይ ክፍተት አለ።',
 };
 
 export function diagnostic(

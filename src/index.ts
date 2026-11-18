@@ -18,6 +18,16 @@ export { describeToken, isKeyword } from './lexer/index.js';
 export type { Diagnostic, Stage } from './diagnostics.js';
 export { formatDiagnostic, sortDiagnostics } from './diagnostics.js';
 
+export { parse, printAst } from './parser/index.js';
+export type {
+  Block,
+  Expression,
+  Node,
+  ParseResult,
+  Program,
+  Span,
+  Statement,
+} from './parser/index.js';
+
 // Stage exports are added as each stage lands:
-//   export { parse } from './parser/index.js';
 //   export { run } from './interpreter/index.js';

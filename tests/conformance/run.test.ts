@@ -3,8 +3,15 @@
  * interpreter, comparing captured stdout against `# expect:` lines and
  * diagnostics against `# expect-error:` lines.
  *
- * The suite skips itself until the pipeline exists, so a spec-only checkout
- * stays green. Deleting the guard is part of landing the interpreter.
+ * A runner stops at the first stage that reports, which is why a case names
+ * exactly one code: lexing problems make the token stream untrustworthy, so
+ * parsing it would pile guesses on a known error (§9.3). An editor asks each
+ * stage directly instead, and gets everything each one found.
+ *
+ * Per-stage behaviour is covered now — `tests/unit/lexer/corpus.test.ts` and
+ * `tests/unit/parser/corpus.test.ts` run this same corpus through the lexer
+ * and the parser. This suite skips itself until the evaluator exists, so a
+ * checkout without it stays green; deleting the guard is part of landing M3.
  */
 
 import { existsSync } from 'node:fs';

@@ -16,13 +16,14 @@ import { formatDiagnostic } from '../diagnostics.js';
 import type { Diagnostic } from '../diagnostics.js';
 import { tokenize } from '../lexer/index.js';
 import type { Token } from '../lexer/index.js';
+import { parse, printAst } from '../parser/index.js';
 
 const USAGE = `አሃዱ — Ahadu ${'2.0'}
 
   ahadu tokens <file>    the lexer's output as a table
+  ahadu ast <file>       the parse tree
+  ahadu check <file>     report diagnostics, exit 1 if there are any
   ahadu <file>           run a program            (not implemented yet — M3)
-  ahadu ast <file>       the parse tree           (not implemented yet — M2)
-  ahadu check <file>     report diagnostics only  (not implemented yet — M2)
   ahadu trace <file>     run, printing each step  (not implemented yet — M3)
   ahadu                  REPL                     (not implemented yet — M4)
 
@@ -55,15 +56,17 @@ function tokenRow(t: Token): string {
   return `  ${span}${type}${value}${of}`;
 }
 
-function cmdTokens(path: string, json: boolean): number {
-  let source: string;
+/** Reads a file, or null after reporting that it could not be read. */
+function read(path: string): string | null {
   try {
-    source = readFileSync(path, 'utf8');
+    return readFileSync(path, 'utf8');
   } catch {
     stderr.write(`ፋይሉ አልተገኘም፦ ${path}\n`);
-    return 2;
+    return null;
   }
+}
 
+function cmdTokens(source: string, json: boolean): number {
   const { tokens, diagnostics } = tokenize(source);
 
   if (json) {
@@ -73,6 +76,47 @@ function cmdTokens(path: string, json: boolean): number {
     stdout.write(`\n  ${tokens.length} ቶከኖች`);
     stdout.write(diagnostics.length > 0 ? `, ${diagnostics.length} ስተቶች\n` : '\n');
     reportDiagnostics(source, diagnostics);
+  }
+
+  return diagnostics.length > 0 ? 1 : 0;
+}
+
+/**
+ * A runner stops at the first stage that reports. Lexing problems make the
+ * token stream untrustworthy, so parsing it would only pile guesses on top of
+ * a known error (§9.3). An editor asks each stage directly instead.
+ */
+function cmdAst(source: string, json: boolean): number {
+  const lexed = tokenize(source);
+  if (lexed.diagnostics.length > 0) {
+    reportDiagnostics(source, lexed.diagnostics);
+    return 1;
+  }
+
+  const { program, diagnostics } = parse(lexed.tokens);
+
+  if (json) {
+    stdout.write(`${JSON.stringify({ program, diagnostics }, null, 2)}\n`);
+  } else {
+    stdout.write(`${printAst(program)}\n`);
+    if (diagnostics.length > 0) reportDiagnostics(source, diagnostics);
+  }
+
+  return diagnostics.length > 0 ? 1 : 0;
+}
+
+function cmdCheck(source: string, json: boolean): number {
+  const lexed = tokenize(source);
+  const diagnostics =
+    lexed.diagnostics.length > 0 ? lexed.diagnostics : parse(lexed.tokens).diagnostics;
+
+  if (json) {
+    stdout.write(`${JSON.stringify({ diagnostics }, null, 2)}\n`);
+  } else if (diagnostics.length === 0) {
+    stdout.write('ምንም ስተት አልተገኘም።\n');
+  } else {
+    reportDiagnostics(source, diagnostics);
+    stderr.write(`${diagnostics.length} ስተት${diagnostics.length > 1 ? 'ች' : ''}\n`);
   }
 
   return diagnostics.length > 0 ? 1 : 0;
@@ -89,13 +133,22 @@ function main(args: string[]): number {
 
   const [command, ...operands] = rest;
 
-  if (command === 'tokens') {
+  const stages: Record<string, ((source: string, json: boolean) => number) | undefined> = {
+    tokens: cmdTokens,
+    ast: cmdAst,
+    check: cmdCheck,
+  };
+
+  const stage = command === undefined ? undefined : stages[command];
+  if (stage !== undefined) {
     const path = operands[0];
     if (path === undefined) {
-      stderr.write('የፋይል ስም ያስፈልጋል፦ ahadu tokens <file>\n');
+      stderr.write(`የፋይል ስም ያስፈልጋል፦ ahadu ${String(command)} <file>\n`);
       return 2;
     }
-    return cmdTokens(path, json);
+    const source = read(path);
+    if (source === null) return 2;
+    return stage(source, json);
   }
 
   if (command === undefined) {
@@ -104,14 +157,14 @@ function main(args: string[]): number {
     return 2;
   }
 
-  if (['ast', 'check', 'trace', 'run'].includes(command)) {
+  if (['trace', 'run'].includes(command)) {
     stderr.write(`"${command}" እስካሁን አልተሰራም። (ROADMAP.md)\n`);
     return 2;
   }
 
   // A bare path means "run this", which needs the evaluator.
   stderr.write(`ፕሮግራም ማስኬድ እስካሁን አልተሰራም። (M3 — ROADMAP.md)\n`);
-  stderr.write(`የቶከኖችን ለማየት፦ ahadu tokens ${command}\n`);
+  stderr.write(`ለማየት፦ ahadu tokens ${command}  ወይም  ahadu ast ${command}\n`);
   return 2;
 }
 

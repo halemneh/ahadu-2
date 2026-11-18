@@ -25,10 +25,11 @@ specification-first rebuild in TypeScript.
 | --- | --- |
 | Language specification | **complete** — [`spec/LANGUAGE.md`](spec/LANGUAGE.md) |
 | Gap analysis of v1 | **complete** — [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md) |
-| Conformance corpus | 38 cases written, running once the pipeline lands |
-| **Lexer** | **done** — 356 tests, 100% statement coverage |
-| Parser / Interpreter | not yet implemented |
-| CLI | `ahadu tokens` works; the rest is specified |
+| Conformance corpus | 46 cases |
+| **Lexer** | **done** |
+| **Parser** | **done** — 821 tests, 99.7% statement coverage |
+| Interpreter | not yet implemented |
+| CLI | `ahadu tokens`, `ahadu ast`, `ahadu check` work; the rest is specified |
 | Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
 
 Implementation order and the acceptance bar for each stage are in
@@ -105,28 +106,40 @@ npm install
 npm run check          # lint, format, build, test
 ```
 
-Working today — the lexer, through the CLI:
+Working today — the lexer and the parser, through the CLI:
 
 ```sh
 npm run build
-node dist/cli/main.js tokens examples/02-ዑደት.ahadu
-node dist/cli/main.js tokens examples/02-ዑደት.ahadu --json
+node dist/cli/main.js tokens examples/02-ዑደት.ahadu   # the token table
+node dist/cli/main.js ast examples/02-ዑደት.ahadu      # the parse tree
+node dist/cli/main.js check examples/02-ዑደት.ahadu    # diagnostics only
 ```
 
 ```
-  2:1-4       IDENTIFIER ቁጥሮች
-  2:6-6       ASSIGN
-  2:8-8       LBRACKET
-  2:9-9       NUMBER     1
-  2:10-10     COMMA
+Program [2:1-7:24]
+└─ body:
+   ├─ AssignmentStatement [2:1-2:19]
+   │  ├─ target: Identifier ቁጥሮች [2:1-2:4]
+   │  └─ value: ListLiteral [2:8-2:19]
+   └─ WhileStatement [5:1-7:24]
+      ├─ condition: BinaryExpression LT [5:1-5:21]
+      └─ body: Block [6:5-7:24]
 ```
 
-Once the remaining stages land:
+Errors are Amharic, carry their code, and point at the span:
+
+```
+[AH2001] ሁኔታው ከ"ከሆነ" በፊት መምጣት አለበት። ለምሳሌ፦ ዕድሜ > 18 ከሆነ፦: መስመር 4 ላይ: 1ኛው ካራክተር
+
+    4: ከሆነ ዕድሜ > 18፦
+       ^^^
+```
+
+Once the evaluator lands:
 
 ```sh
 npm run repl                              # interactive አሃዱ> prompt
 npx ahadu examples/01-ሰላም.ahadu           # run a program
-npx ahadu ast examples/02-ዑደት.ahadu       # see the parse tree
 npm run play                              # playground on localhost:5173
 ```
 

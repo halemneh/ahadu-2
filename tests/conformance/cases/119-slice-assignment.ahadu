@@ -1,0 +1,4 @@
+# Slice assignment is not in 2.0; it is refused on sight (§6.5).
+# expect-error: AH2009
+ዝ = [1፣ 2፣ 3]
+ዝ[0:2] = [9፣ 9]

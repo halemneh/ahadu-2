@@ -386,7 +386,7 @@ annotations** (§7.2). There is no static type checker.
   which operations accept which. (`ፊደል` was in v1's keyword table but never
   had a value behind it; it is reserved — §3.2, CHANGES C08.)
 - Strings are the one indexable type that cannot be modified in place:
-  `ስም[0] = "ሀ"` is error `AH2009` (`ጽሁፍን በቦታው መቀየር አይቻልም`). Build a new
+  `ስም[0] = "ሀ"` is error `AH3015` (`ጽሁፍን በቦታው መቀየር አይቻልም።`). Build a new
   string instead — `ስም = "ሀ" + ስም[1:]`. Lists, by contrast, are mutable
   (§4.5): the asymmetry is because a string is a single word-like value while
   a list is a container of them.
@@ -480,7 +480,9 @@ exactly one level deeper than the line that opened the block.
   CHANGES §C05.)
 - A block MUST contain at least one statement. An empty block is error
   `AH2006`.
-- Indenting deeper than one level past the opener is error `AH1002`.
+- Indenting deeper than one level past the opener is error `AH2015`. (The
+  lexer reports malformed whitespace, `AH1002`, but it has no idea which line
+  opened a block, so depth relative to an opener is the parser's to check.)
 - A block ends at the first non-blank line indented less deeply. Blank lines
   inside a block do not end it.
 - Single-line (inline) block forms are **not** supported in 2.0: the body
@@ -630,8 +632,9 @@ when `x` is a `ስብስብ`:
   replaces the last element.
 - An out-of-range index is `AH3008`. Assignment **cannot** extend a list —
   `ዝ[ርዝመት(ዝ)] = 1` is an error, not an append. Use `አዋህድ` (§8).
-- Slice assignment (`x[a:b] = …`) is not in 2.0.
-- `x` must be a `ስብስብ`. A `ጽሁፍ` target is `AH2009` (§4.3); anything else is
+- Slice assignment (`x[a:b] = …`) is not in 2.0; it is refused at parse time
+  as `AH2009`.
+- `x` must be a `ስብስብ`. A `ጽሁፍ` target is `AH3015` (§4.3); anything else is
   `AH3002`.
 
 ---
@@ -652,7 +655,9 @@ when `x` is a `ስብስብ`:
   `ሀ = 1 ከሆነ፦` are syntax errors. (Both v1s parsed assignment as an
   expression; CHANGES §C12.)
 - Legal targets: a plain identifier, a list index `x[i]` (§6.5), `obj.attr`,
-  or `የobj attr`. A string index is error `AH2009`.
+  or `የobj attr`. Anything else — a literal, a call, a parenthesized
+  expression — is error `AH2011`. A slice target is `AH2009`. A target that
+  turns out at runtime to index a string is `AH3015`.
 - The right-hand side is evaluated **before** the target is bound. So inside a
   function, `ቆጣሪ = ቆጣሪ + 1` reads the outer `ቆጣሪ` and creates a *local* one
   holding the result; the outer variable is unchanged (§5.3). This is an error
@@ -675,7 +680,7 @@ when `x` is a `ስብስብ`:
 - The initializer is required. `ቁጥር ቆጣሪ` with no `=` is error `AH2007`.
 - Annotations are entirely optional; plain `ቆጣሪ = 0` is equally valid and
   stays untyped.
-- Redeclaring a name already declared in the same scope is error `AH2011`.
+- Redeclaring a name already declared in the same scope is error `AH3016`.
 
 Annotations exist because the original grammar specified them
 (`expression ::= KEYWORD:INT IDENTIFIER EQUAL arith_expr`) even though no v1
@@ -891,7 +896,11 @@ frame first, with the global frame named `ዋና ፕሮግራም`.
 
 Codes are stable across releases and are what tooling matches on; the Amharic
 text is what humans read and MAY be reworded. `AH1xxx` is lexical, `AH2xxx`
-syntactic, `AH3xxx` runtime.
+syntactic, `AH3xxx` runtime — and that grouping is a commitment about *when* a
+problem is detected, not a loose label. A diagnostic belongs to the earliest
+stage that can actually see it: whether `x[0] = v` targets a list or a string
+is unknowable until `x` has a value, so that is `AH3015` and not a parse
+error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 
 ### 9.2 Catalogue
 
@@ -910,12 +919,13 @@ syntactic, `AH3xxx` runtime.
 | `AH2006` | empty block |
 | `AH2007` | typed declaration without an initializer |
 | `AH2008` | chained comparison |
-| `AH2009` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም` |
+| `AH2009` | assignment to a slice — `ቁራጭ መቀየር አይቻልም።` |
 | `AH2010` | reserved word used |
-| `AH2011` | redeclaration in the same scope |
+| `AH2011` | assignment to something that cannot be assigned to |
 | `AH2012` | duplicate parameter name |
 | `AH2013` | illegal item in a class body |
 | `AH2014` | `ተመላሽ <expr>` inside `ፍጠር` |
+| `AH2015` | block indented deeper than one level |
 | `AH3001` | undefined variable — `ያልታወቀ ተለዋጭ` |
 | `AH3002` | illegal operation for these types — `ሕጋዊ ያለሆነ ተግባር` |
 | `AH3003` | division or modulo by zero — `በዘሮ ማካፈል አይቻልም።` |
@@ -930,6 +940,8 @@ syntactic, `AH3xxx` runtime.
 | `AH3012` | assignment to an undeclared attribute |
 | `AH3013` | call of a non-callable value |
 | `AH3014` | member access on a non-object |
+| `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
+| `AH3016` | redeclaration in the same scope |
 
 ### 9.3 Recovery
 

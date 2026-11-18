@@ -25,7 +25,7 @@ would have cost the most natural short variable name in Amharic. Now
 but **kept** inside string literals, which §2.1 had left ambiguous — a string
 is data.
 
-## M2 — Parser
+## M2 — Parser ✅
 
 §5–7, `GRAMMAR.ebnf` · `src/parser/`
 
@@ -34,9 +34,17 @@ for `ከሆነ` / `እስከሆነ ድረስ` behind it (C01). Also: assignment 
 (C12), non-associative comparison, `^` tighter than unary minus, a slice node
 (C04), structured class bodies (C03), panic-mode recovery.
 
-**Done when**: every `examples/` file and every `tests/conformance/cases/`
-file parses with exactly the diagnostics its header claims, and `ahadu ast`
-prints a tree for each.
+**Done**: 821 tests, 99.7% statement coverage, 100% function coverage. All 7
+examples and all 46 conformance cases parse with exactly the diagnostics their
+headers claim, `tests/unit/parser/corpus.test.ts` checks the §9.2 catalogue is
+actually exercised, and `ahadu ast` / `ahadu check` print a tree and
+diagnostics for each.
+
+Found while implementing: `AH2009` and `AH2011` were filed as syntactic but
+one of them cannot be known until runtime, so the catalogue was re-cut along
+the line of *when a problem is detectable* — see §9.2 and the note under it.
+§5.2 also asked the lexer to detect over-indentation relative to a block
+opener, which only the parser can see; that is `AH2015` now.
 
 ## M3 — Interpreter
 

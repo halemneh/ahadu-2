@@ -1,0 +1,5 @@
+# The keyword-first shape v1-ts accepted (CHANGES C01). The condition comes
+# first in Ahadu, and the message says so.
+# expect-error: AH2001
+ከሆነ ዕድሜ > 18፦
+    ጻፍ("ትልቅ")

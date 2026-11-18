@@ -1,0 +1,4 @@
+# A class body holds attributes, one ፍጠር, and methods — nothing else (§7.6).
+# expect-error: AH2013
+ክላስ ተማሪ፦
+    ጻፍ("ይህ አይፈቀድም")

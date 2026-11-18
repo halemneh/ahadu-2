@@ -1,0 +1,3 @@
+# Only a name, a list index, or an attribute can be assigned to (§7.1).
+# expect-error: AH2011
+ጻፍ("ሰላም") = 1

@@ -1,0 +1,6 @@
+# ግን carries a condition and ከሆነ, in that order (§7.3).
+# expect-error: AH2003
+እውነት ከሆነ፦
+    ጻፍ(1)
+ግን ሃሰት፦
+    ጻፍ(2)

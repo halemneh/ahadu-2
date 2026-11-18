@@ -1,0 +1,4 @@
+# A block is exactly one level deeper than the line that opened it (§5.2).
+# expect-error: AH2015
+እውነት ከሆነ፦
+        ጻፍ("ሁለት ደረጃ")
