@@ -375,6 +375,11 @@ annotations** (§7.2). There is no static type checker.
   which **is** the character: one concept instead of two, and no rule about
   which operations accept which. (`ፊደል` was in v1's keyword table but never
   had a value behind it; it is reserved — §3.2, CHANGES C08.)
+- Strings are the one indexable type that cannot be modified in place:
+  `ስም[0] = "ሀ"` is error `AH2009` (`ጽሁፍን በቦታው መቀየር አይቻልም`). Build a new
+  string instead — `ስም = "ሀ" + ስም[1:]`. Lists, by contrast, are mutable
+  (§4.5): the asymmetry is because a string is a single word-like value while
+  a list is a container of them.
 
 ### 4.4 Boolean and truthiness
 
@@ -389,11 +394,33 @@ annotations** (§7.2). There is no static type checker.
 
 ### 4.5 List
 
-- Ordered, zero-indexed, heterogeneous, **immutable** sequence.
-- Every list operation returns a new list; nothing mutates in place. `አዋህድ`
-  appends by returning a new list (§8).
-- A list is a **reference** value for identity purposes but, being immutable,
-  that distinction is unobservable.
+- Ordered, zero-indexed, heterogeneous, **mutable** sequence.
+- A list is a **reference** value, and because it is mutable that is
+  observable: `ለ = ሀ` gives one list two names, and a change through either
+  name is visible through both.
+
+  ```ahadu
+  ሀ = [1፣ 2፣ 3]
+  ለ = ሀ
+  ለ[0] = 9
+  ጻፍ(ሀ)        # [9፣ 2፣ 3] — ሀ and ለ are the same list
+  መ = ቅጂ(ሀ)     # an independent copy (§8)
+  መ[0] = 1
+  ጻፍ(ሀ)        # [9፣ 2፣ 3]
+  ```
+
+  This is how lists behave in every mainstream language, and sharing is a
+  thing a programmer has to understand rather than be shielded from. `ቅጂ` is
+  how you opt out of it.
+- Two kinds of operation, kept strictly apart so it is always obvious which
+  one you are using:
+  - **Operators build new lists.** `+` concatenates into a fresh list and
+    `x[a:b]` slices into a fresh list; neither touches its operands (§6.2,
+    §6.5).
+  - **Built-ins named as commands change the list.** `አዋህድ` ("merge!") and
+    `ሰርዝ` ("delete!") modify the list they are given and return `ምንም` (§8).
+- `ቅጂ` is a **shallow** copy: the new list has the same elements, so a nested
+  list is still shared.
 
 ### 4.6 Nothing
 
@@ -538,8 +565,12 @@ Amharic.
   Cross-type comparison is **not** an error — it is `ሃሰት`. This is the one
   place where mixed types are allowed, because "are these the same?" is a
   reasonable question to ask about any two values.
-- Numbers compare by value; strings by code-point sequence; lists element-wise;
-  `ምንም` equals only `ምንም`; objects and functions by reference identity.
+- Numbers compare by value; strings by code-point sequence; lists
+  element-wise; `ምንም` equals only `ምንም`; objects and functions by reference
+  identity.
+- Lists compare by **value**, not identity, even though they are mutable
+  references: `[1፣ 2] == [1፣ 2]` is `እውነት` for two separate lists. 2.0 has no
+  identity test; if you need one, compare something you control.
 - `!=` is the negation of `==`.
 
 ### 6.4 Access
@@ -579,6 +610,19 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
   range.
 - Indexing a `ጽሁፍ` yields a `ጽሁፍ` of length 1. There is no distinct character
   value.
+- A slice always produces a new value and never aliases its source, so
+  `መ = ሀ[:]` is the slice spelling of `ቅጂ(ሀ)`.
+
+**Index assignment.** `x[i] = v` replaces the element at effective index `i`
+when `x` is a `ስብስብ`:
+
+- The index rules above apply unchanged, negatives included: `ዝ[-1] = 9`
+  replaces the last element.
+- An out-of-range index is `AH3008`. Assignment **cannot** extend a list —
+  `ዝ[ርዝመት(ዝ)] = 1` is an error, not an append. Use `አዋህድ` (§8).
+- Slice assignment (`x[a:b] = …`) is not in 2.0.
+- `x` must be a `ስብስብ`. A `ጽሁፍ` target is `AH2009` (§4.3); anything else is
+  `AH3002`.
 
 ---
 
@@ -589,7 +633,7 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
 ```ahadu
 ስም = "ሰላም"
 ቆጣሪ = ቆጣሪ + 1
-ዝርዝር[0] = 5          # NOT legal — lists are immutable (AH2009)
+ዝርዝር[0] = 5
 ሃይሌ.ዕድሜ = 22
 የሃይሌ ዕድሜ = 22
 ```
@@ -597,8 +641,8 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
 - Assignment is a **statement**, never an expression. `ሀ = ለ = 1` and
   `ሀ = 1 ከሆነ፦` are syntax errors. (Both v1s parsed assignment as an
   expression; CHANGES §C12.)
-- Legal targets: a plain identifier, `obj.attr`, or `የobj attr`. An index
-  target is error `AH2009`.
+- Legal targets: a plain identifier, a list index `x[i]` (§6.5), `obj.attr`,
+  or `የobj attr`. A string index is error `AH2009`.
 - The right-hand side is evaluated **before** the target is bound. So inside a
   function, `ቆጣሪ = ቆጣሪ + 1` reads the outer `ቆጣሪ` and creates a *local* one
   holding the result; the outer variable is unchanged (§5.3). This is an error
@@ -765,7 +809,7 @@ Semantics:
 
 ## 8. Built-in functions
 
-These six names are pre-bound in the global scope. They are not keywords and
+These seven names are pre-bound in the global scope. They are not keywords and
 MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
 keywords but implemented only `ጻፍ`; calling either other one crashed the
 interpreter with a Python exception (CHANGES §C13).
@@ -774,14 +818,21 @@ interpreter with a Python exception (CHANGES §C13).
 | --- | --- | --- |
 | `ጻፍ` | `ጻፍ(…)` any arity | prints each argument separated by one space, then a newline; returns `ምንም` |
 | `ርዝመት` | `ርዝመት(ጽሁፍ \| ስብስብ)` | `ቁጥር` length in code points / elements |
-| `አዋህድ` | `አዋህድ(ስብስብ፣ ዕቃ)` | new `ስብስብ` with `ዕቃ` appended |
-| `ሰርዝ` | `ሰርዝ(ስብስብ፣ ኢንዴክስ)` | new `ስብስብ` without that index; index rules as §6.5 |
+| `አዋህድ` | `አዋህድ(ስብስብ፣ ዕቃ)` | **appends `ዕቃ` to the list in place**; returns `ምንም` |
+| `ሰርዝ` | `ሰርዝ(ስብስብ፣ ኢንዴክስ)` | **removes that index from the list in place**; returns `ምንም`; index rules as §6.5 |
+| `ቅጂ` | `ቅጂ(ስብስብ)` | a new `ስብስብ` with the same elements — a shallow copy |
 | `አይነት` | `አይነት(any)` | `ጽሁፍ` naming the type (§4.1) |
 | `አንብብ` | `አንብብ()` or `አንብብ(ጽሁፍ)` | reads one line from standard input as `ጽሁፍ`; the optional argument is printed as a prompt first |
 
-`ርዝመት`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no way to
-walk a list whose length is not already known, which is why every v1 example
-hardcodes `< 5`.
+`ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
+way to walk a list whose length is not already known, which is why every v1
+example hardcodes `< 5`.
+
+`አዋህድ` and `ሰርዝ` are imperatives in Amharic — "merge!", "delete!" — so they
+change the list rather than handing back a new one, and returning `ምንም` makes
+that unmistakable: `ዝ = አዋህድ(ዝ፣ 4)` leaves `ዝ` holding `ምንም`, which fails
+loudly instead of looking like it worked. The operators `+` and `x[a:b]` are
+the non-mutating half of the pair (§4.5).
 
 ### 8.1 How values print
 
@@ -849,7 +900,7 @@ syntactic, `AH3xxx` runtime.
 | `AH2006` | empty block |
 | `AH2007` | typed declaration without an initializer |
 | `AH2008` | chained comparison |
-| `AH2009` | assignment to an index |
+| `AH2009` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም` |
 | `AH2010` | reserved word used |
 | `AH2011` | redeclaration in the same scope |
 | `AH2012` | duplicate parameter name |

@@ -1,7 +1,17 @@
 # Regression: CHANGES C15 — v1-py's '+' appended instead of concatenating.
+# '+' builds a new list; አዋህድ changes the list it is given (§4.5).
+# expect: [1፣ 2]
+# expect: [1፣ 2፣ 3፣ 4]
+# expect: ምንም
 # expect: [1፣ 2]
 # expect: [1፣ [2]]
-# expect: [1፣ 2፣ 3፣ 4]
 ጻፍ([1] + [2])
-ጻፍ(አዋህድ([1]፣ [2]))
 ጻፍ([1፣ 2] + [3፣ 4])
+
+ዝ = [1]
+ጻፍ(አዋህድ(ዝ፣ 2))
+ጻፍ(ዝ)
+
+መ = [1]
+አዋህድ(መ፣ [2])
+ጻፍ(መ)

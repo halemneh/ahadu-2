@@ -103,6 +103,7 @@ return_stmt = RETURN [ expression ] terminator ;
 assign_stmt = assign_target "=" expression terminator ;
 
 assign_target = IDENT
+              | postfix_expr index_suffix        (* list element; see §6.5 *)
               | postfix_expr "." IDENT          (* must end in a member access *)
               | OF_IDENT IDENT ;                (* "the IDENT of OF_IDENT" *)
 
@@ -152,6 +153,8 @@ postfix_expr = primary { call_suffix | index_suffix | member_suffix } ;
 
 call_suffix   = "(" [ arguments ] ")" ;
 index_suffix  = "[" ( index | slice ) "]" ;
+(* In assign_target only the `index` form is legal: slice assignment is not in
+   2.0 (LANGUAGE.md §6.5). *)
 member_suffix = "." IDENT ;
 
 arguments   = expression { COMMA expression } ;

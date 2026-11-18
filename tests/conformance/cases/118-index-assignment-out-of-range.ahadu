@@ -1,0 +1,4 @@
+# Index assignment cannot extend a list — use አዋህድ (§6.5).
+# expect-error: AH3008
+ዝ = [1፣ 2፣ 3]
+ዝ[3] = 4

@@ -86,7 +86,11 @@ Types: `ቁጥር` (number) · `ጽሁፍ` (text) · `እውነታ` (boolean) ·
 `ተግባር` (function) · `ክላስ` / object · `ምንም` (nothing).
 
 Built-ins: `ጻፍ` (print) · `ርዝመት` (length) · `አዋህድ` (append) · `ሰርዝ` (remove) ·
-`አይነት` (type of) · `አንብብ` (read a line).
+`ቅጂ` (copy) · `አይነት` (type of) · `አንብብ` (read a line).
+
+Lists are mutable and held by reference — `ዝ[0] = 9` works, `አዋህድ` appends in
+place, and `ለ = ሀ` gives one list two names. Strings are immutable: build a new
+one rather than changing a character. `ቅጂ` is how you stop sharing a list.
 
 Both ASCII and Ethiopic forms work everywhere: `፦` or `:-`, `፣` or `,`, `‹` or
 `<`, `&` or `እና`, `!` or `ተቃርኖ`, and `፳፩` or `21`. Write whichever your

@@ -342,8 +342,8 @@ def add(self, x):
 `lt`, or `multiply`, so comparing two lists raises `AH3002`-equivalent errors,
 and `#TODO: at equals and not equals` is still in the file.
 
-**Resolution**: `+` concatenates; `አዋህድ` appends one element; `==` compares
-element-wise (§6.2, §6.3, §8).
+**Resolution**: `+` concatenates into a new list; `አዋህድ` appends one element to
+the list in place; `==` compares element-wise (§4.5, §6.2, §6.3, §8).
 
 ### C16 — Open-ended slice drops the last element · major
 
@@ -507,8 +507,11 @@ v1-py deep-copies in several unrelated places — the callee before a call
 context on construction, the array in `Array.add` — and nowhere else. Whether
 two names can refer to one list or one object was never decided.
 
-**Resolution**: text and lists are immutable, so the question is unobservable
-for them; objects are references (§4.5, §4.7). No implicit copying.
+**Resolution**: stated outright instead of emerging from where a `deepcopy`
+happened to land. Strings are immutable (§4.3). Lists and objects are mutable
+references, so sharing is observable and `ለ = ሀ` gives one list two names
+(§4.5, §4.7); `ቅጂ` is the explicit opt-out. Nothing is copied implicitly —
+not arguments, not return values, not an object's class context.
 
 ### C36 — Identifier character range, and Ge'ez numerals · minor
 
@@ -544,8 +547,10 @@ written against a hardcoded bound. Both shipped list examples do exactly that:
 `ቆጣሪ < 5 እስከሆነ ድረስ` over a five-element array. The language could not express
 "for each item in this list".
 
-**Resolution**: `ርዝመት` (§8), plus `አይነት` and `አንብብ` for the same reason — the
-smallest set that makes beginner exercises writable.
+**Resolution**: `ርዝመት` (§8), plus `ቅጂ`, `አይነት`, and `አንብብ` for the same
+reason — the smallest set that makes beginner exercises writable. `ቅጂ` is the
+one that comes with mutability: once `ለ = ሀ` shares a list, there has to be a
+way to say "give me my own".
 
 ### C45 — v1-ts has no evaluator · critical
 
@@ -587,4 +592,3 @@ These v1-ts behaviors have no v1-py counterpart and are adopted as-is:
 | assignment as an expression | C12 — enables `ሀ = 1 ከሆነ፦` |
 | implicit truthiness | C24 — the top source of confusing beginner bugs |
 | `ደግሞ` as else-if | C34 — dead constant; `ግን` is the real one |
-| index assignment `x[0] = 1` | lists are immutable (§4.5); `AH2009` |

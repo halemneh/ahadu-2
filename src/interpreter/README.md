@@ -14,7 +14,11 @@ Things the spec pins down that are easy to get wrong here:
 - `ተመላሽ` returns immediately from anywhere in the function — use a return
   signal, not a syntactic guess about the last statement (§7.5, CHANGES C17).
 - Conditions MUST be `እውነታ`; there is no implicit truthiness (§4.4).
-- `ስብስብ + ስብስብ` concatenates; `አዋህድ` appends one element (§6.2, CHANGES C15).
+- Strings are immutable; lists are mutable references, so `ለ = ሀ` shares one
+  list and `ቅጂ` is the only way to break the sharing (§4.3, §4.5).
+- `ስብስብ + ስብስብ` concatenates into a **new** list, while `አዋህድ` and `ሰርዝ`
+  change the list in place and return `ምንም`. Keep the two halves apart
+  (§4.5, §6.2, CHANGES C15).
 - A slice's default end is `n`, not `n-1` (§6.5, CHANGES C16).
 - Effective index is `i < 0 ? n + i : i`, checked against `0 … n-1` (§6.5).
 - Integral numbers print with no decimal point (§4.2).

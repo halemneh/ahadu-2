@@ -34,10 +34,10 @@ prints a tree for each.
 §4, §5.3, §6–9 · `src/interpreter/`
 
 Values including `እውነታ` and `ምንም`, presence-based scope lookup (C19), a real
-return signal (C17), immutable text and lists with concatenating `+` (C15),
-slices defaulting to `n` (C16), dynamic method dispatch with constructor
-inheritance (C18), the six built-ins (C13, C28), and the full `AH3xxx`
-catalogue with tracebacks.
+return signal (C17), immutable strings and mutable list references with
+concatenating `+` and in-place `አዋህድ` / `ሰርዝ` (C15, C32), slices defaulting to
+`n` (C16), dynamic method dispatch with constructor inheritance (C18), the
+seven built-ins (C13, C28), and the full `AH3xxx` catalogue with tracebacks.
 
 **Done when**: `npm run test:conformance` passes with the skip guard in
 `tests/conformance/run.test.ts` removed, and `tests/helpers/run-source.ts` is
