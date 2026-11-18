@@ -50,10 +50,14 @@ whichever option best satisfies the earlier principle.
   silently and MUST NOT occupy a column. A U+FEFF anywhere else is an illegal
   character.
 - These format-control code points MUST be skipped silently wherever they
-  appear, including inside identifiers, and MUST NOT occupy a column:
-  U+200B (ZWSP), U+200C (ZWNJ), U+200D (ZWJ), U+00AD (soft hyphen).
+  appear **in code**, including inside identifiers, and MUST NOT occupy a
+  column: U+200B (ZWSP), U+200C (ZWNJ), U+200D (ZWJ), U+00AD (soft hyphen).
   Rationale: Ge'ez text pasted from word processors and the web routinely
-  carries these.
+  carries these, and one of them inside a name would otherwise split it in
+  two for reasons invisible on screen.
+- Inside a string literal they are **kept**, along with U+FEFF. A string is
+  data, and silently altering the user's characters is worse than tolerating
+  invisible formatting in it.
 
 ### 2.2 Lines and positions
 
@@ -144,7 +148,13 @@ followed by `ነገር`. A keyword is recognized only when the maximal run of wo
 characters equals a listed spelling exactly.
 
 Reserved for future use (recognized as keywords, no syntax in 2.0; using one is
-error `AH2010`): `አዲስ`, `ለ`, `አቁም`, `ቀጥል`, `ፊደል`.
+error `AH2010`): `አዲስ`, `ለእያንዳንዱ`, `አቁም`, `ቀጥል`, `ፊደል`.
+
+A reserved word has to be long enough to be worth the naming space it takes.
+`ለ` was the obvious candidate for a future `for`, and is wrong for exactly
+that reason: one of the commonest syllables in Amharic and the most natural
+short variable name there is. `ለእያንዳንዱ` ("for each one") reads better in
+Ahadu's condition-first order anyway — `ቤተሰብ ለእያንዳንዱ ስም፦`.
 
 Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
 **not** keywords. They are ordinary identifiers pre-bound in the global scope

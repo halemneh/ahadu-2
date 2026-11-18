@@ -25,9 +25,11 @@ specification-first rebuild in TypeScript.
 | --- | --- |
 | Language specification | **complete** — [`spec/LANGUAGE.md`](spec/LANGUAGE.md) |
 | Gap analysis of v1 | **complete** — [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md) |
-| Conformance corpus | 32 cases written, running once the pipeline lands |
-| Lexer / Parser / Interpreter | not yet implemented |
-| CLI / Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
+| Conformance corpus | 38 cases written, running once the pipeline lands |
+| **Lexer** | **done** — 356 tests, 100% statement coverage |
+| Parser / Interpreter | not yet implemented |
+| CLI | `ahadu tokens` works; the rest is specified |
+| Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
 
 Implementation order and the acceptance bar for each stage are in
 [`ROADMAP.md`](ROADMAP.md).
@@ -103,14 +105,29 @@ npm install
 npm run check          # lint, format, build, test
 ```
 
-Once the pipeline lands:
+Working today — the lexer, through the CLI:
 
 ```sh
-npm run repl                       # interactive አሃዱ> prompt
-npx ahadu examples/01-ሰላም.ahadu    # run a program
-npx ahadu tokens examples/02-ዑደት.ahadu   # see the lexer's output
-npx ahadu ast examples/02-ዑደት.ahadu      # see the parse tree
-npm run play                       # playground on localhost:5173
+npm run build
+node dist/cli/main.js tokens examples/02-ዑደት.ahadu
+node dist/cli/main.js tokens examples/02-ዑደት.ahadu --json
+```
+
+```
+  2:1-4       IDENTIFIER ቁጥሮች
+  2:6-6       ASSIGN
+  2:8-8       LBRACKET
+  2:9-9       NUMBER     1
+  2:10-10     COMMA
+```
+
+Once the remaining stages land:
+
+```sh
+npm run repl                              # interactive አሃዱ> prompt
+npx ahadu examples/01-ሰላም.ahadu           # run a program
+npx ahadu ast examples/02-ዑደት.ahadu       # see the parse tree
+npm run play                              # playground on localhost:5173
 ```
 
 Every stage of the interpreter is inspectable from the command line, and the

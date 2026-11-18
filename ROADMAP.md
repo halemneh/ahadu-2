@@ -4,7 +4,7 @@ The specification is done; the implementation is not. Order matters here —
 each milestone is independently verifiable, and none of them is allowed to
 change the language without changing `spec/LANGUAGE.md` in the same change.
 
-## M1 — Lexer
+## M1 — Lexer ✅
 
 `spec/LANGUAGE.md` §2–3, §9.3 · `src/lexer/`
 
@@ -13,8 +13,17 @@ Tokens with code-point columns, keyword variant folding, `የ` kept attached
 punctuation including `።`, Ge'ez numeral literals (§3.4.1), the `&` / `|` / `!`
 aliases, and non-throwing error recovery.
 
-**Done when**: unit tests cover every token kind and every `AH1xxx` code, and
-`ahadu tokens` prints a sane table for all seven `examples/`.
+**Done**: 356 tests, 100% statement and function coverage, 97% branch.
+`tests/unit/lexer/spec-tables.test.ts` re-parses the keyword table out of the
+spec and fails if the code drifts from it. `tests/unit/lexer/corpus.test.ts`
+lexes all 38 conformance cases and all 7 examples, checking each case's
+diagnostics against its own header. `ahadu tokens` prints the table.
+
+Found while implementing: `ለ` was reserved for a future `for` loop, which
+would have cost the most natural short variable name in Amharic. Now
+`ለእያንዳንዱ` (§3.2). Also settled that invisible formatting is dropped in code
+but **kept** inside string literals, which §2.1 had left ambiguous — a string
+is data.
 
 ## M2 — Parser
 
@@ -60,6 +69,7 @@ evaluation in a worker with a step budget, examples loaded from `examples/`.
 ## Afterwards
 
 - `ahadu fmt` (TOOLING.md §1.6).
-- Reserved words that have no syntax yet: `አዲስ`, `ለ` (for), `አቁም` (break),
-  `ቀጥል` (continue). Each needs a spec change before an implementation.
+- Reserved words that have no syntax yet: `አዲስ`, `ለእያንዳንዱ` (for each),
+  `አቁም` (break), `ቀጥል` (continue). Each needs a spec change before an
+  implementation.
 - Language-server protocol support, reusing the parser's error recovery.

@@ -11,7 +11,13 @@
 
 export const VERSION = '2.0.0';
 
+export { tokenize } from './lexer/index.js';
+export type { KeywordType, LexResult, Token, TokenType } from './lexer/index.js';
+export { describeToken, isKeyword } from './lexer/index.js';
+
+export type { Diagnostic, Stage } from './diagnostics.js';
+export { formatDiagnostic, sortDiagnostics } from './diagnostics.js';
+
 // Stage exports are added as each stage lands:
-//   export { tokenize } from './lexer/index.js';
 //   export { parse } from './parser/index.js';
 //   export { run } from './interpreter/index.js';
