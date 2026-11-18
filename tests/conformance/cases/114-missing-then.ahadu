@@ -1,0 +1,5 @@
+# Regression: CHANGES C05 — v1-py treated ፦ as optional.
+# expect-error: AH2001
+ዕድሜ = 20
+ዕድሜ > 18 ከሆነ
+    ጻፍ("ትልቅ")

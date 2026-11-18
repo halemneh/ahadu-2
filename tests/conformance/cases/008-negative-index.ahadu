@@ -1,0 +1,8 @@
+# Regression: CHANGES C27 — v1-py rejected x[-n] while accepting x[-1].
+# expect: 5
+# expect: 1
+# expect: ም
+ዝ = [1፣ 2፣ 3፣ 4፣ 5]
+ጻፍ(ዝ[-1])
+ጻፍ(ዝ[-5])
+ጻፍ("ሰላም"[-1])

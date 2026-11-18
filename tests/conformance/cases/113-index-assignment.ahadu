@@ -1,0 +1,4 @@
+# Lists are immutable (§4.5); use አዋህድ or ሰርዝ instead.
+# expect-error: AH2009
+ዝ = [1፣ 2፣ 3]
+ዝ[0] = 9

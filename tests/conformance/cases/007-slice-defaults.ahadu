@@ -1,0 +1,10 @@
+# Regression: CHANGES C16 — v1-py defaulted a slice's end to n-1 and lost the last element.
+# expect: [1፣ 2፣ 3]
+# expect: [2፣ 3]
+# expect: [1፣ 2]
+# expect: []
+ዝ = [1፣ 2፣ 3]
+ጻፍ(ዝ[:])
+ጻፍ(ዝ[1:])
+ጻፍ(ዝ[:2])
+ጻፍ(ዝ[5:9])

@@ -1,0 +1,15 @@
+# Regression: CHANGES C21, C43 — bare ተመላሽ crashed v1-py, and there was no no-value.
+# expect: ተጠራ
+# expect: ምንም
+# expect: እውነት
+# expect: ምንም
+ተግባር ድምጽ_አልባ()፦
+    ጻፍ("ተጠራ")
+
+ተግባር ባዶ_መልስ()፦
+    ተመላሽ
+
+ውጤት = ድምጽ_አልባ()
+ጻፍ(ውጤት)
+ጻፍ(ውጤት == ምንም)
+ጻፍ(ባዶ_መልስ())

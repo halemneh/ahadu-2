@@ -1,0 +1,177 @@
+(* ==========================================================================
+   Ahadu 2.0 — Formal Grammar
+   Normative for syntax. Prose in LANGUAGE.md wins on any disagreement.
+
+   Notation:
+     A | B     alternation
+     [ A ]     optional
+     { A }     zero or more
+     "x"       terminal text
+     UPPER     token from the lexer
+     ·         a required single space inside one token
+   ========================================================================== *)
+
+(* ---------- Token-level ------------------------------------------------- *)
+
+INDENT      = (* 4 leading spaces, or one leading tab *) ;
+NEWLINE     = "\n" | "\r\n" | "\r" ;
+STOP        = "።" ;
+THEN        = "፦" | ":-" | "፡-" ;
+COMMA       = "," | "፣" ;
+COLON       = ":" | "፡" ;
+
+IF          = "ከሆነ" | "ከሖነ" | "ከኆነ" ;
+ELIF        = "ግን" ;
+ELSE        = "አለበለዚያ" | "ኣለበለዚያ" | "ዓለበለዚያ" | "ዐለበለዚያ" ;
+WHILE       = ( "እስከሆነ" | "እስከሖነ" | "እስከኆነ"
+              | "ዕስከሆነ" | "ዕስከሖነ" | "ዕስከኆነ" ) · "ድረስ" ;
+RETURN      = "ተመላሽ" ;
+FUNC        = "ተግባር" ;
+CLASS       = "ክላስ" ;
+INIT        = "ፍጠር" ;
+AND         = "እና" | "ዕና" ;
+OR          = "ወይም" ;
+NOT         = "ተቃርኖ" ;
+TRUE        = "እውነት" | "ዕውነት" ;
+FALSE       = "ሃሰት" | "ሀሰት" | "ኅሰት" | "ኃሰት" | "ሓሰት" | "ሐሰት"
+            | "ሃሠት" | "ሀሠት" | "ኅሠት" | "ኃሠት" | "ሓሠት" | "ሐሠት" ;
+NOTHING     = "ምንም" ;
+TYPE        = "ቁጥር" | "እውነታ" | "ፊደል" | "ጽሁፍ" | "ፅሁፍ" | "ስብስብ" ;
+
+NUMBER      = digit { digit } [ "." digit { digit } ] ;
+STRING      = '"' { char } '"' | "'" { char } "'" ;
+IDENT       = word_char { word_char } ;          (* must not start with 0-9 *)
+OF_IDENT    = "የ" word_char { word_char } ;      (* IDENT with hasOfPrefix *)
+
+(* ---------- Program ----------------------------------------------------- *)
+
+program     = { blank_line } { statement } EOF ;
+
+blank_line  = { INDENT } NEWLINE ;
+
+terminator  = NEWLINE | STOP | EOF ;
+
+(* A block's statements are each indented exactly one level deeper than the
+   line that opened the block. The lexer emits INDENT tokens; the parser
+   tracks the expected depth. Shown here as `indent_in` / `indent_out`. *)
+
+block       = THEN NEWLINE indent_in statement { statement } indent_out ;
+
+statement   = typed_decl
+            | func_decl
+            | class_decl
+            | return_stmt
+            | if_stmt
+            | while_stmt
+            | assign_stmt
+            | expr_stmt ;
+
+(* ---------- Declarations ----------------------------------------------- *)
+
+typed_decl  = TYPE IDENT "=" expression terminator ;
+
+func_decl   = FUNC IDENT "(" [ params ] ")" block ;
+
+params      = IDENT { COMMA IDENT } ;
+
+class_decl  = CLASS IDENT [ "(" IDENT ")" ] THEN NEWLINE
+              indent_in class_member { class_member } indent_out ;
+
+class_member = attr_decl
+             | init_decl
+             | func_decl
+             | blank_line ;
+
+attr_decl   = [ TYPE ] IDENT "=" expression terminator ;
+
+init_decl   = INIT "(" [ params ] ")" block ;
+
+(* ---------- Simple statements ------------------------------------------ *)
+
+return_stmt = RETURN [ expression ] terminator ;
+
+assign_stmt = assign_target "=" expression terminator ;
+
+assign_target = IDENT
+              | postfix_expr "." IDENT          (* must end in a member access *)
+              | OF_IDENT IDENT ;                (* "the IDENT of OF_IDENT" *)
+
+expr_stmt   = expression terminator ;
+
+(* ---------- Compound statements ---------------------------------------- *)
+
+(* Note the word order: the condition precedes the keyword. *)
+
+if_stmt     = expression IF block
+              { ELIF expression IF block }
+              [ ELSE block ] ;
+
+while_stmt  = expression WHILE block ;
+
+(* ---------- Expressions ------------------------------------------------- *)
+(* Listed loosest to tightest; see LANGUAGE.md §6.1.                        *)
+
+expression  = or_expr ;
+
+or_expr     = and_expr { OR and_expr } ;
+
+and_expr    = not_expr { AND not_expr } ;
+
+not_expr    = NOT not_expr
+            | compare_expr ;
+
+(* Non-associative: at most one comparison operator per chain. *)
+compare_expr = add_expr [ compare_op add_expr ] ;
+
+compare_op  = "==" | "!=" | "<" | "<=" | ">" | ">=" | "‹" | "‹=" | "›" | "›=" ;
+
+add_expr    = mul_expr { ( "+" | "-" ) mul_expr } ;
+
+mul_expr    = unary_expr { ( "*" | "/" | "%" ) unary_expr } ;
+
+unary_expr  = "-" unary_expr
+            | power_expr ;
+
+(* Right-associative, and tighter than unary minus on its left:
+   -2^2 = -(2^2), and 2^-1 is legal via the unary_expr on the right. *)
+power_expr  = postfix_expr [ "^" unary_expr ] ;
+
+postfix_expr = primary { call_suffix | index_suffix | member_suffix } ;
+
+call_suffix   = "(" [ arguments ] ")" ;
+index_suffix  = "[" ( index | slice ) "]" ;
+member_suffix = "." IDENT ;
+
+arguments   = expression { COMMA expression } ;
+
+index       = expression ;
+slice       = [ expression ] COLON [ expression ] ;
+
+primary     = NUMBER
+            | STRING
+            | TRUE | FALSE
+            | NOTHING
+            | list_literal
+            | of_access
+            | IDENT
+            | "(" expression ")" ;
+
+list_literal = "[" [ expression { COMMA expression } ] "]" ;
+
+of_access   = OF_IDENT IDENT ;                  (* read form; see §6.4 *)
+
+(* ---------- Notes on ambiguity ----------------------------------------- *)
+
+(* 1. `expression IF block` means the parser parses a full expression at
+      statement start, then checks whether the next token is IF or WHILE. If
+      it is, the already-parsed expression becomes the condition. If not, the
+      statement is an expr_stmt or assign_stmt. One token of lookahead past
+      the expression is enough; no backtracking over the expression is needed.
+
+   2. `OF_IDENT IDENT` versus a bare OF_IDENT: the lexer hands the parser a
+      single IDENT token carrying hasOfPrefix. In assign_target and of_access
+      it is consumed as a possessive only when the IMMEDIATELY following token
+      is an IDENT. Otherwise it is an ordinary variable named with a የ prefix.
+
+   3. Inside an unclosed "(" or "[", NEWLINE and INDENT tokens are skipped by
+      the parser, which is what permits multi-line list and argument lists. *)

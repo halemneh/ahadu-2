@@ -1,0 +1,74 @@
+{
+  "name": "@halemneh/ahadu",
+  "version": "2.0.0",
+  "description": "Ahadu 2.0 — an Amharic programming language: lexer, parser, and interpreter for Ge'ez-script source code",
+  "type": "module",
+  "license": "MIT",
+  "author": "Hailemichael Alemneh",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "ahadu": "dist/cli/main.js"
+  },
+  "files": [
+    "dist/",
+    "spec/"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./lexer": {
+      "types": "./dist/lexer/index.d.ts",
+      "import": "./dist/lexer/index.js"
+    },
+    "./parser": {
+      "types": "./dist/parser/index.d.ts",
+      "import": "./dist/parser/index.js"
+    },
+    "./interpreter": {
+      "types": "./dist/interpreter/index.d.ts",
+      "import": "./dist/interpreter/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "repl": "npm run build && node dist/cli/main.js",
+    "play": "vite --config tools/playground/vite.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:conformance": "vitest run tests/conformance/",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"{src,tests,tools}/**/*.ts\"",
+    "format:check": "prettier --check \"{src,tests,tools}/**/*.ts\"",
+    "check": "npm run lint && npm run format:check && npm run build && npm test"
+  },
+  "keywords": [
+    "amharic",
+    "geez",
+    "ethiopic",
+    "programming-language",
+    "interpreter",
+    "lexer",
+    "parser",
+    "education"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^9.39.3",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^7.1.5",
+    "vitest": "^3.2.4"
+  }
+}

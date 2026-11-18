@@ -1,0 +1,5 @@
+# Regression: CHANGES C11 — v1-py treated a bare እስከሆነ as a loop head.
+# expect-error: AH1004
+ቆጣሪ = 0
+ቆጣሪ < 5 እስከሆነ፦
+    ቆጣሪ = ቆጣሪ + 1

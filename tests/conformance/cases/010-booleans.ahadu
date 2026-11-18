@@ -1,0 +1,11 @@
+# Regression: CHANGES C25 — እውነት/ሃሰት were missing from v1-py's keyword table.
+# expect: እውነት
+# expect: ሃሰት
+# expect: እውነት
+# expect: ሃሰት
+# expect: እውነት
+ጻፍ(እውነት)
+ጻፍ(ተቃርኖ እውነት)
+ጻፍ(እውነት ወይም ሃሰት እና ሃሰት)
+ጻፍ(3 > 5)
+ጻፍ("ሀ" == "ሀ")

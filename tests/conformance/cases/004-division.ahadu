@@ -1,0 +1,7 @@
+# Regression: CHANGES C20 — v1-py dispatched '/' to a method that did not exist.
+# expect: 2.5
+# expect: 2
+# expect: -2.5
+ጻፍ(5 / 2)
+ጻፍ(4 / 2)
+ጻፍ(-5 / 2)

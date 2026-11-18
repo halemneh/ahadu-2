@@ -1,0 +1,6 @@
+# Regression: CHANGES C39 — v1-py silently computed (ሀ < ለ) < ሐ.
+# expect-error: AH2008
+ሀ = 1
+ለ = 2
+ሐ = 3
+ጻፍ(ሀ < ለ < ሐ)

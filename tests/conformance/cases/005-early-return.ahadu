@@ -1,0 +1,10 @@
+# Regression: CHANGES C17 — v1-py discarded a ተመላሽ that was not the last statement.
+# expect: 12
+# expect: 7
+ተግባር ትልቁ(ሀ፣ ለ)፦
+    ሀ > ለ ከሆነ፦
+        ተመላሽ ሀ
+    ተመላሽ ለ
+
+ጻፍ(ትልቁ(12፣ 7))
+ጻፍ(ትልቁ(3፣ 7))

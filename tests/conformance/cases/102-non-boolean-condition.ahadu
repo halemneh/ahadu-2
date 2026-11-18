@@ -1,0 +1,5 @@
+# Regression: CHANGES C24 — v1-py accepted any number as a condition.
+# expect-error: AH3005
+ቆጣሪ = 5
+ቆጣሪ ከሆነ፦
+    ጻፍ("አይገባም")

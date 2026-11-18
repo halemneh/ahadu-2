@@ -1,0 +1,13 @@
+# Regression: CHANGES C19 — v1-py's falsy symbol lookup made these "undefined".
+# expect: 0
+# expect: 0
+# expect: 0
+# expect: ሃሰት
+ቆጣሪ = 0
+ባዶ = ""
+ዝርዝር = []
+አልሆነም = ሃሰት
+ጻፍ(ቆጣሪ)
+ጻፍ(ርዝመት(ባዶ))
+ጻፍ(ርዝመት(ዝርዝር))
+ጻፍ(አልሆነም)

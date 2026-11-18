@@ -1,0 +1,16 @@
+# A function reads its declaring scope but cannot rebind it (§5.3).
+# expect: 10
+# expect: 11
+# expect: 10
+ዓለም = 10
+
+ተግባር አንብብ_ዓለም()፦
+    ተመላሽ ዓለም
+
+ተግባር ጨምር()፦
+    ዓለም = ዓለም + 1
+    ተመላሽ ዓለም
+
+ጻፍ(አንብብ_ዓለም())
+ጻፍ(ጨምር())
+ጻፍ(ዓለም)

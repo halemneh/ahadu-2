@@ -1,0 +1,7 @@
+# Regression: CHANGES C15 — v1-py's '+' appended instead of concatenating.
+# expect: [1፣ 2]
+# expect: [1፣ [2]]
+# expect: [1፣ 2፣ 3፣ 4]
+ጻፍ([1] + [2])
+ጻፍ(አዋህድ([1]፣ [2]))
+ጻፍ([1፣ 2] + [3፣ 4])
