@@ -11,6 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import { covers, diagnosticAt, positionAt } from '../../../tools/playground/locate.js';
 import type { EditorMetrics, Measure } from '../../../tools/playground/locate.js';
+import type { Position } from '../../../tools/playground/view.js';
 import { analyse } from '../../../tools/playground/view.js';
 import { diagnostic } from '../../../src/diagnostics.js';
 
@@ -25,7 +26,7 @@ const metrics: EditorMetrics = {
   scrollLeft: 0,
 };
 
-function at(source: string, x: number, y: number, m: Partial<EditorMetrics> = {}) {
+function at(source: string, x: number, y: number, m: Partial<EditorMetrics> = {}): Position {
   return positionAt(source, x, y, { ...metrics, ...m }, measure);
 }
 
