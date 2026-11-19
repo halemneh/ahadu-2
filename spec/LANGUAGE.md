@@ -272,11 +272,17 @@ Both ASCII and Ethiopic forms are accepted; they are exactly equivalent.
 | `COMMA` | `,` `፣` (U+1363) | |
 | `COLON` | `:` `፡` (U+1361) | slice separator only |
 | `DOT` | `.` | member access |
-| `THEN` | `፦` (U+1366) `:-` `፡-` | opens a block |
+| `THEN` | `፦` (U+1366) `:-` `፡-` | opens a block; the ASCII forms only outside brackets |
 | `STOP` | `።` (U+1362) | optional statement terminator |
 
 Longest-match wins: `<=` is one `LTE`, never `LT` then `ASSIGN`, and `!=` is
 one `NEQ`, never `NOT` then `ASSIGN`.
+
+The one exception is `:-` inside brackets. A block cannot open inside an
+unclosed `(` or `[`, but a slice with a negative end can — so within brackets
+`:` is always the slice separator, and `ዝ[:-1]` reads as `COLON` then `MINUS`
+rather than as a block opener. `፦` is a single code point and so never
+ambiguous; it opens a block anywhere.
 
 `።` (Ethiopic full stop) terminates a statement exactly as a newline does, and
 is optional. It is accepted because it is the natural end-of-sentence mark in
@@ -680,7 +686,17 @@ when `x` is a `ስብስብ`:
 - The initializer is required. `ቁጥር ቆጣሪ` with no `=` is error `AH2007`.
 - Annotations are entirely optional; plain `ቆጣሪ = 0` is equally valid and
   stays untyped.
-- Redeclaring a name already declared in the same scope is error `AH3016`.
+- A typed declaration for a name that already exists in the scope is not an
+  error: it assigns, and checks the value against whatever type is already
+  pinned. Re-typing a name therefore surfaces as `AH3009` against the first
+  declaration's type, which says more than "you declared this twice" would.
+
+  There was an `AH3016` here for redeclaration, and it could not survive
+  §5.3: a `ከሆነ` or `እስከሆነ ድረስ` block creates no scope, so a typed
+  declaration inside a loop body runs again on every iteration. A rule that
+  fires on the second *execution* of one declaration is not the rule anyone
+  wanted, and telling that apart from a second declaration in the text is a
+  static question, not a runtime one.
 
 Annotations exist because the original grammar specified them
 (`expression ::= KEYWORD:INT IDENTIFIER EQUAL arith_expr`) even though no v1
@@ -803,6 +819,13 @@ Semantics:
   `context.object_table` that does not exist; CHANGES §C18.)
 - Calling a class value constructs an object: attributes are initialized to
   their declared defaults in declaration order, then `ፍጠር` runs if present.
+  Inherited attributes come first, from the root of the chain down, so a
+  subclass redeclaring one overrides the default it inherited.
+- A default **expression is evaluated afresh for each object**, in the scope
+  where the class was declared. It is not evaluated once when the class is
+  declared — that would give every object of the class the same `ስብስብ`, since
+  lists are mutable references (§4.5), and mutating one object's list would
+  change them all.
   The constructor's arity is checked like any function's.
 - Inside a constructor or method, the object's attributes **and** its methods
   are in scope directly — `ስም = ስም_` assigns the attribute, and `ድምጽ()` calls
@@ -894,6 +917,12 @@ message that cannot be quoted precisely is hard to get help with.
 Runtime errors additionally render a call traceback (`የጥሪ መልሶ ምልከታ`), outermost
 frame first, with the global frame named `ዋና ፕሮግራም`.
 
+`AH3017` and `AH3018` are resource limits rather than mistakes in the program:
+they exist so that runaway recursion or an endless loop ends in an Ahadu error
+instead of taking down whatever is hosting the interpreter. A host sets the
+bounds; `AH3018` only fires where a step budget was asked for, as the
+playground does (TOOLING.md §2.2).
+
 Codes are stable across releases and are what tooling matches on; the Amharic
 text is what humans read and MAY be reworded. `AH1xxx` is lexical, `AH2xxx`
 syntactic, `AH3xxx` runtime — and that grouping is a commitment about *when* a
@@ -941,7 +970,8 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3013` | call of a non-callable value |
 | `AH3014` | member access on a non-object |
 | `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
-| `AH3016` | redeclaration in the same scope |
+| `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` |
+| `AH3018` | step limit exceeded — `ፕሮግራሙ ከመጠን በላይ ረዘመ።` |
 
 ### 9.3 Recovery
 

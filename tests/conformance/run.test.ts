@@ -8,13 +8,12 @@
  * parsing it would pile guesses on a known error (§9.3). An editor asks each
  * stage directly instead, and gets everything each one found.
  *
- * Per-stage behaviour is covered now — `tests/unit/lexer/corpus.test.ts` and
- * `tests/unit/parser/corpus.test.ts` run this same corpus through the lexer
- * and the parser. This suite skips itself until the evaluator exists, so a
- * checkout without it stays green; deleting the guard is part of landing M3.
+ * Per-stage behaviour is covered separately — `tests/unit/lexer/corpus.test.ts`
+ * and `tests/unit/parser/corpus.test.ts` run this same corpus through the
+ * lexer and the parser, to localize a failure. This suite is what defines the
+ * language.
  */
 
-import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -24,7 +23,6 @@ import { runSource } from '../helpers/run-source.js';
 const here = dirname(fileURLToPath(import.meta.url));
 const casesDir = join(here, 'cases');
 const examplesDir = resolve(here, '../../examples');
-const pipelineReady = existsSync(resolve(here, '../../src/interpreter/index.ts'));
 
 const cases = loadCases(casesDir);
 
@@ -44,10 +42,10 @@ describe('conformance corpus', () => {
   });
 });
 
-describe.skipIf(!pipelineReady)('conformance cases', () => {
+describe('conformance cases', () => {
   for (const c of cases) {
-    it(c.name, async () => {
-      const { output, errors } = await runSource(c.source);
+    it(c.name, () => {
+      const { output, errors } = runSource(c.source, { maxSteps: 1_000_000 });
 
       if (c.expectedErrors.length > 0) {
         expect(errors.map((e) => e.code)).toEqual(c.expectedErrors.map((e) => e.code));
@@ -64,11 +62,11 @@ describe.skipIf(!pipelineReady)('conformance cases', () => {
   }
 });
 
-describe.skipIf(!pipelineReady)('examples run clean', () => {
+describe('examples run clean', () => {
   for (const c of loadCases(examplesDir)) {
-    it(c.name, async () => {
-      const { errors } = await runSource(c.source);
-      expect(errors).toEqual([]);
+    it(c.name, () => {
+      const { errors } = runSource(c.source, { maxSteps: 1_000_000 });
+      expect(errors.map((e) => `${e.code} ${e.line}:${e.startCol} ${e.message}`)).toEqual([]);
     });
   }
 });

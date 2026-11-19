@@ -3,36 +3,70 @@
  * capturing host, so every conformance case goes through the same path a real
  * program would.
  *
- * The body lands with the interpreter. Until then it throws, and
- * `tests/conformance/run.test.ts` skips the suites that call it (guarded on
- * `src/interpreter/index.ts` existing), so a spec-only checkout stays green.
- * The types below are the contract the stages have to satisfy.
+ * A runner stops at the first stage that reports: lexing problems make the
+ * token stream untrustworthy, so parsing it would pile guesses on a known
+ * error (LANGUAGE.md §9.3).
  */
 
-/** A diagnostic from any stage. Re-exported from `src/` once the stages land. */
-export interface Diagnostic {
-  /** Stable code from LANGUAGE.md §9.2, e.g. `AH3003`. */
-  code: string;
-  /** Amharic message text. */
-  message: string;
-  line: number;
-  startCol: number;
-  endCol: number;
-  stage: 'lexer' | 'parser' | 'runtime';
-}
+import { tokenize } from '../../src/lexer/index.js';
+import { parse } from '../../src/parser/index.js';
+import { render, run } from '../../src/interpreter/index.js';
+import type { Frame, RunOptions } from '../../src/interpreter/index.js';
+import type { Diagnostic } from '../../src/diagnostics.js';
 
 export interface RunResult {
   /** Lines written by ጻፍ, in order, without trailing newlines. */
   output: string[];
-  /** Lexer diagnostics, then parser, then the single runtime error if any. */
+  /** Lexer diagnostics, or parser, or the single runtime error — never a mix. */
   errors: Diagnostic[];
   /** Rendered value of the last statement, or null when it produced ምንም. */
   value: string | null;
+  /** The call stack when a runtime error happened, outermost first. */
+  frames: readonly Frame[];
+  /** The stage that stopped the run, or null when it completed. */
+  stoppedAt: 'lexer' | 'parser' | 'runtime' | null;
 }
 
-export function runSource(_source: string): Promise<RunResult> {
-  throw new Error(
-    'runSource is not implemented yet — the interpreter stage has not landed. ' +
-      'See spec/TOOLING.md §3.',
+export interface RunSourceOptions extends RunOptions {
+  /** Lines served to `አንብብ`, in order. */
+  readonly input?: readonly string[];
+}
+
+export function runSource(source: string, options: RunSourceOptions = {}): RunResult {
+  const output: string[] = [];
+  const empty = { output, value: null, frames: [] as readonly Frame[] };
+
+  const lexed = tokenize(source);
+  if (lexed.diagnostics.length > 0) {
+    return { ...empty, errors: [...lexed.diagnostics], stoppedAt: 'lexer' };
+  }
+
+  const parsed = parse(lexed.tokens);
+  if (parsed.diagnostics.length > 0) {
+    return { ...empty, errors: [...parsed.diagnostics], stoppedAt: 'parser' };
+  }
+
+  const pending = [...(options.input ?? [])];
+  const result = run(
+    parsed.program,
+    {
+      write: (text) => {
+        // ጻፍ writes a trailing newline; the corpus compares whole lines.
+        for (const line of text.replace(/\n$/, '').split('\n')) output.push(line);
+      },
+      readLine: (prompt) => {
+        if (prompt !== null) output.push(prompt);
+        return pending.shift() ?? '';
+      },
+    },
+    options,
   );
+
+  return {
+    output,
+    errors: result.diagnostic === null ? [] : [result.diagnostic],
+    value: result.value.kind === 'nothing' ? null : render(result.value),
+    frames: result.frames,
+    stoppedAt: result.diagnostic === null ? null : 'runtime',
+  };
 }

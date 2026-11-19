@@ -1,0 +1,4 @@
+# The parent must already be declared (§7.6).
+# expect-error: AH3011
+ክላስ ልጅ(የማይኖር)፦
+    ሀ = 1

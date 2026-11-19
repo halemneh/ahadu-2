@@ -1,0 +1,3 @@
+# NaN and ±Infinity are not reachable values (§4.2).
+# expect-error: AH3006
+ጻፍ(10 ^ 400)

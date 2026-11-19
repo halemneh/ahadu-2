@@ -46,7 +46,7 @@ the line of *when a problem is detectable* — see §9.2 and the note under it.
 §5.2 also asked the lexer to detect over-indentation relative to a block
 opener, which only the parser can see; that is `AH2015` now.
 
-## M3 — Interpreter
+## M3 — Interpreter ✅
 
 §4, §5.3, §6–9 · `src/interpreter/`
 
@@ -56,16 +56,34 @@ concatenating `+` and in-place `አዋህድ` / `ሰርዝ` (C15, C32), slices d
 `n` (C16), dynamic method dispatch with constructor inheritance (C18), the
 seven built-ins (C13, C28), and the full `AH3xxx` catalogue with tracebacks.
 
-**Done when**: `npm run test:conformance` passes with the skip guard in
-`tests/conformance/run.test.ts` removed, and `tests/helpers/run-source.ts` is
-implemented rather than throwing.
+**Done**: 1,174 tests. The conformance suite runs for real — all 54 cases and
+all 7 examples — and every error code in the §9.2 catalogue now has a case,
+at all three stages.
 
-## M4 — CLI
+Found while implementing:
+
+- `AH3016` (redeclaration) could not survive §5.3. Blocks create no scope, so
+  a typed declaration inside a loop runs again every iteration, and a rule
+  that fires on the second *execution* of one declaration is not the rule
+  anyone wanted. Retired; re-typing surfaces as `AH3009` against the first
+  annotation, which says more.
+- `:-` inside brackets was ambiguous with a negative slice end, so `ዝ[:-1]`
+  could not be written. Inside brackets `:` is now always the slice
+  separator — a block cannot open there anyway (§3.5).
+- The call-depth guard was set above what the host stack allows, so runaway
+  recursion crashed instead of reporting. Default lowered to 200, and `run`
+  now catches a genuine stack overflow as `AH3017` too: the host's stack size
+  is not knowable from here.
+- `AH3017` and `AH3018` are new — resource limits, so that runaway recursion
+  and endless loops end in an Ahadu error rather than taking the host down.
+
+## M4 — CLI (mostly landed)
 
 `spec/TOOLING.md` §1 · `src/cli/`
 
-`run`, `tokens`, `ast`, `check`, `trace`, the REPL, `--json`, and the shared
-diagnostic renderer. stdout for program output, stderr for diagnostics.
+`run`, `tokens`, `ast`, `check`, `trace`, `--json`, and the shared diagnostic
+renderer with tracebacks are done; stdout carries program output and stderr
+the diagnostics. **Left**: the REPL, and `--no-color` / `--ascii`.
 
 ## M5 — Playground
 

@@ -1,0 +1,6 @@
+# Recursion with no base case ends in an Ahadu error, not a crash (§9.2).
+# expect-error: AH3017
+ተግባር ድግግሞሽ(ቁ)፦
+    ተመላሽ ድግግሞሽ(ቁ + 1)
+
+ጻፍ(ድግግሞሽ(1))

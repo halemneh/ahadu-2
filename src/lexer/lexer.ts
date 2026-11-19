@@ -313,7 +313,10 @@ class Lexer {
       case ':':
       case '፡': // ፡
         this.take();
-        if (this.peek() === '-') {
+        // `:-` opens a block — but only outside brackets. A block cannot open
+        // inside an unclosed `(` or `[`, while a slice with a negative end
+        // can: `ዝ[:-1]` has to read as COLON then MINUS, not as THEN (§3.5).
+        if (this.peek() === '-' && this.brackets === 0) {
           this.take();
           this.emit('THEN', null, line, col, col + 1);
         } else {

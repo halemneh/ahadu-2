@@ -5,7 +5,7 @@
  * check` and CI both build before testing.
  */
 
-import { execFileSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -22,13 +22,14 @@ interface Run {
 }
 
 function run(...args: string[]): Run {
-  try {
-    const stdout = execFileSync('node', [cli, ...args], { cwd: root, encoding: 'utf8' });
-    return { stdout, stderr: '', status: 0 };
-  } catch (error) {
-    const e = error as { stdout?: string; stderr?: string; status?: number };
-    return { stdout: e.stdout ?? '', stderr: e.stderr ?? '', status: e.status ?? 1 };
-  }
+  // spawnSync rather than execFileSync, which returns stdout alone and so
+  // cannot see what a successful run wrote to stderr — `ahadu trace` does.
+  const result = spawnSync('node', [cli, ...args], { cwd: root, encoding: 'utf8' });
+  return {
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+    status: result.status ?? 1,
+  };
 }
 
 describe.skipIf(!built)('ahadu tokens', () => {
@@ -163,17 +164,83 @@ describe.skipIf(!built)('ahadu check', () => {
   });
 });
 
-describe.skipIf(!built)('unimplemented stages say so', () => {
-  it.each(['trace'])('%s reports that it is not built yet', (command) => {
-    const { status, stderr } = run(command, 'examples/01-ሰላም.ahadu');
-    expect(status).toBe(2);
-    expect(stderr).toContain('ROADMAP.md');
+describe.skipIf(!built)('ahadu run', () => {
+  it('runs a program given as a bare path', () => {
+    const { stdout, status } = run('examples/01-ሰላም.ahadu');
+    expect(status).toBe(0);
+    expect(stdout).toBe('ሰላም ዓለም!\n');
   });
 
-  it('a bare path points at the tokens subcommand', () => {
-    const { status, stderr } = run('examples/01-ሰላም.ahadu');
+  it('runs the family program the original repository shipped', () => {
+    // Condition-first if/elif/else in a loop in a function — the program
+    // v1-ts could not parse at all (CHANGES C01).
+    const { stdout, status } = run('examples/03-ቤተሰብ.ahadu');
+    expect(status).toBe(0);
+    expect(stdout.trim().split('\n')).toEqual([
+      'ልጅ፡ ኃይለሚካኤል',
+      'ልጅ፡ ሰላም',
+      'እናት፡ መልኬ',
+      'አባት፡ ስለሺ',
+      'ልጅ፡ ገሊላ',
+    ]);
+  });
+
+  it('runs classes with inheritance and dynamic dispatch', () => {
+    const { stdout, status } = run('examples/06-ውርስ.ahadu');
+    expect(status).toBe(0);
+    expect(stdout.trim().split('\n')).toEqual(['ጆሮ ይላል፦ ውው!', 'ሚሚ ይላል፦ ሚያው!']);
+  });
+
+  it('keeps program output on stdout and diagnostics on stderr (§1.4)', () => {
+    const { stdout, stderr, status } = run('tests/conformance/cases/101-division-by-zero.ahadu');
+    expect(status).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toContain('[AH3003]');
+  });
+
+  it('prints a traceback for an error inside a call (§9.1)', () => {
+    const { stderr } = run('tests/conformance/cases/140-runaway-recursion.ahadu');
+    expect(stderr).toContain('የጥሪ መልሶ ምልከታ');
+    expect(stderr).toContain('ዋና ፕሮግራም');
+  });
+
+  it('stops before running when the parser reported', () => {
+    const { stdout, stderr, status } = run(
+      'tests/conformance/cases/122-condition-after-keyword.ahadu',
+    );
+    expect(status).toBe(1);
+    expect(stdout).toBe('');
+    expect(stderr).toContain('[AH2001]');
+  });
+});
+
+describe.skipIf(!built)('ahadu trace', () => {
+  it('prints each statement with the value worth showing', () => {
+    const { stderr, stdout, status } = run('trace', 'examples/02-ዑደት.ahadu');
+    expect(status).toBe(0);
+    // Program output still goes to stdout; the trace goes to stderr.
+    expect(stdout.trim().split('\n')).toEqual(['1', '2', '3', '4', '5']);
+    // An assignment shows the value assigned, not the ምንም it evaluates to.
+    expect(stderr).toContain('ቆጣሪ = ቆጣሪ + 1 → 1');
+    expect(stderr).toContain('ቆጣሪ = ቆጣሪ + 1 → 5');
+  });
+
+  it('shows a return, the most interesting line in a function', () => {
+    const { stderr } = run('trace', 'examples/04-ተግባሮች.ahadu');
+    expect(stderr).toContain('ተመላሽ ሀ → 12');
+  });
+
+  it('indents a statement by how deep in calls it is', () => {
+    const { stderr } = run('trace', 'examples/04-ተግባሮች.ahadu');
+    expect(stderr).toMatch(/\n {6,}\d+: /);
+  });
+});
+
+describe.skipIf(!built)('still-unbuilt pieces say so', () => {
+  it('the REPL reports that it is not built yet', () => {
+    const { status, stderr } = run();
     expect(status).toBe(2);
-    expect(stderr).toContain('ahadu tokens');
+    expect(stderr).toContain('ROADMAP.md');
   });
 
   it('--help prints usage and exits 0', () => {

@@ -52,6 +52,28 @@ export const AH2013 = 'AH2013';
 export const AH2014 = 'AH2014';
 export const AH2015 = 'AH2015';
 
+// ---------------------------------------------------------------------------
+// Runtime codes (§9.2)
+// ---------------------------------------------------------------------------
+
+export const AH3001 = 'AH3001';
+export const AH3002 = 'AH3002';
+export const AH3003 = 'AH3003';
+export const AH3004 = 'AH3004';
+export const AH3005 = 'AH3005';
+export const AH3006 = 'AH3006';
+export const AH3007 = 'AH3007';
+export const AH3008 = 'AH3008';
+export const AH3009 = 'AH3009';
+export const AH3010 = 'AH3010';
+export const AH3011 = 'AH3011';
+export const AH3012 = 'AH3012';
+export const AH3013 = 'AH3013';
+export const AH3014 = 'AH3014';
+export const AH3015 = 'AH3015';
+export const AH3017 = 'AH3017';
+export const AH3018 = 'AH3018';
+
 /**
  * Default Amharic text, keyed by code.
  *
@@ -82,6 +104,24 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH2013]: 'በክላስ ውስጥ መሆን የማይገባው ነገር አለ።',
   [AH2014]: '"ፍጠር" ዋጋ አይመልስም።',
   [AH2015]: 'ከሚያስፈልገው በላይ ክፍተት አለ።',
+
+  [AH3001]: 'ያልታወቀ ተለዋጭ',
+  [AH3002]: 'ሕጋዊ ያለሆነ ተግባር',
+  [AH3003]: 'በዘሮ ማካፈል አይቻልም።',
+  [AH3004]: 'ይህ ፓወር አይሰራም።',
+  [AH3005]: 'ሁኔታው እውነት ወይም ሃሰት መሆን አለበት።',
+  [AH3006]: 'ቁጥሩ ከመጠን አለፈ።',
+  [AH3007]: 'የቦታ ቁጥር ሙሉ ቁጥር መሆን አለበት።',
+  [AH3008]: 'ከስብስቡ ውጪ ያለ ቦታ',
+  [AH3009]: 'የተለዋጩ አይነት አይመጣጠንም።',
+  [AH3010]: 'የገቡት ግቤቶች ቁጥር አይመጣጠንም።',
+  [AH3011]: 'ያልታወቀ የወላጅ ክላስ',
+  [AH3012]: 'ያልተገለጸ ባህሪ',
+  [AH3013]: 'ይህ ሊጠራ አይችልም።',
+  [AH3014]: 'ይህ ባህሪ የለውም።',
+  [AH3015]: 'ጽሁፍን በቦታው መቀየር አይቻልም።',
+  [AH3017]: 'የጥሪ ጥልቀት ከመጠን አለፈ።',
+  [AH3018]: 'ፕሮግራሙ ከመጠን በላይ ረዘመ።',
 };
 
 export function diagnostic(

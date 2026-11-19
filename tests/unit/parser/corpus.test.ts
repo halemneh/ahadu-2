@@ -120,11 +120,9 @@ describe('the spec error catalogue is exercised (§9.2)', () => {
     expect(missing).toEqual([]);
   });
 
-  it('runtime codes are accounted for, pending the evaluator (M3)', () => {
+  it('every runtime code has a conformance case', () => {
     const missing = catalogue.filter((c) => c.startsWith('AH3') && !exercised.has(c));
-    // Tightened to [] when M3 lands. Listing the gap is the point: each of
-    // these is a promise the spec makes that nothing yet keeps.
-    expect(missing).toEqual(['AH3004', 'AH3006', 'AH3007', 'AH3011', 'AH3013', 'AH3014', 'AH3016']);
+    expect(missing).toEqual([]);
   });
 
   it('no case expects a code the spec does not define', () => {

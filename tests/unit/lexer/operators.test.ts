@@ -75,6 +75,36 @@ describe('Ethiopic spellings are exactly equivalent (§3.5)', () => {
   it('produces identical tokens for either spelling of a block opener', () => {
     expect(types('ከሆነ፦')).toEqual(types('ከሆነ:-'));
   });
+
+  it('reads : as the slice separator inside brackets, never as :- (§3.5)', () => {
+    // A block cannot open inside an unclosed bracket, but a slice with a
+    // negative end can: ዝ[:-1] must not lex :- as a block opener.
+    expect(types('ዝ[:-1]')).toEqual([
+      'IDENTIFIER',
+      'LBRACKET',
+      'COLON',
+      'MINUS',
+      'NUMBER',
+      'RBRACKET',
+    ]);
+    expect(types('ዝ[1:-1]')).toEqual([
+      'IDENTIFIER',
+      'LBRACKET',
+      'NUMBER',
+      'COLON',
+      'MINUS',
+      'NUMBER',
+      'RBRACKET',
+    ]);
+  });
+
+  it('still reads :- as a block opener outside brackets', () => {
+    expect(types('ከሆነ:-')).toEqual(['KEYWORD', 'THEN']);
+  });
+
+  it('reads ፦ as a block opener even inside brackets, being one code point', () => {
+    expect(types('(፦)')).toEqual(['LPAREN', 'THEN', 'RPAREN']);
+  });
 });
 
 describe('symbol aliases for word operators (§3.5, CHANGES C09)', () => {

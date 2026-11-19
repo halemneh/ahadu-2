@@ -1,0 +1,5 @@
+# AH3018 fires only where a host set a step budget, as the conformance runner
+# and the playground both do (§9.2, TOOLING.md §2.2).
+# expect-error: AH3018
+እውነት እስከሆነ ድረስ፦
+    ሀ = 1

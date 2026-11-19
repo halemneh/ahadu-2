@@ -1,0 +1,4 @@
+# Only objects have members (§7.6).
+# expect-error: AH3014
+ሀ = 5
+ጻፍ(ሀ.ለ)

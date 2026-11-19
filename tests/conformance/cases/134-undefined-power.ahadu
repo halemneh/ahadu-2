@@ -1,0 +1,4 @@
+# A negative base with a fractional exponent has no real result (§6.2).
+# v1-py returned a complex number here (CHANGES C38).
+# expect-error: AH3004
+ጻፍ((0 - 8) ^ 0.5)

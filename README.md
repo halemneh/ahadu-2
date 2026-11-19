@@ -25,11 +25,11 @@ specification-first rebuild in TypeScript.
 | --- | --- |
 | Language specification | **complete** — [`spec/LANGUAGE.md`](spec/LANGUAGE.md) |
 | Gap analysis of v1 | **complete** — [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md) |
-| Conformance corpus | 46 cases |
+| Conformance corpus | 54 cases, every error code in the spec exercised |
 | **Lexer** | **done** |
-| **Parser** | **done** — 821 tests, 99.7% statement coverage |
-| Interpreter | not yet implemented |
-| CLI | `ahadu tokens`, `ahadu ast`, `ahadu check` work; the rest is specified |
+| **Parser** | **done** |
+| **Interpreter** | **done** — 1,174 tests |
+| CLI | `ahadu run`, `tokens`, `ast`, `check`, `trace` work; REPL is next |
 | Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
 
 Implementation order and the acceptance bar for each stage are in
@@ -106,13 +106,24 @@ npm install
 npm run check          # lint, format, build, test
 ```
 
-Working today — the lexer and the parser, through the CLI:
+Ahadu programs run today:
 
 ```sh
 npm run build
+node dist/cli/main.js examples/03-ቤተሰብ.ahadu         # run a program
+node dist/cli/main.js trace examples/04-ተግባሮች.ahadu  # watch it run
 node dist/cli/main.js tokens examples/02-ዑደት.ahadu   # the token table
 node dist/cli/main.js ast examples/02-ዑደት.ahadu      # the parse tree
 node dist/cli/main.js check examples/02-ዑደት.ahadu    # diagnostics only
+```
+
+`trace` is the one worth seeing — it shows a recursion unfolding, with the
+value every statement produced:
+
+```
+    4: ተመላሽ ሀ → 12
+        9: ተመላሽ ቁ → 1
+      10: ተመላሽ ፊቦናቺ(ቁ - 1) + ፊቦናቺ(ቁ - 2) → 2
 ```
 
 ```
@@ -135,12 +146,11 @@ Errors are Amharic, carry their code, and point at the span:
        ^^^
 ```
 
-Once the evaluator lands:
+Still to come:
 
 ```sh
-npm run repl                              # interactive አሃዱ> prompt
-npx ahadu examples/01-ሰላም.ahadu           # run a program
-npm run play                              # playground on localhost:5173
+npm run repl                              # interactive አሃዱ> prompt (M4)
+npm run play                              # playground on localhost:5173 (M5)
 ```
 
 Every stage of the interpreter is inspectable from the command line, and the
