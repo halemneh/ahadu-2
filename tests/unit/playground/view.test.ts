@@ -20,7 +20,7 @@ import {
 } from '../../../tools/playground/view.js';
 import { diagnostic } from '../../../src/diagnostics.js';
 import { strings } from '../../../tools/playground/strings.js';
-import type { RunReply } from '../../../tools/playground/worker.js';
+import type { RunReply } from '../../../tools/playground/evaluate.js';
 
 const am = strings('am');
 
@@ -109,7 +109,7 @@ describe('the AST panel (§2.1)', () => {
   });
 
   it('gives a group header no span, since it stands for no node', () => {
-    const html = astRowsHtml(analyse('ጻፍ(1፣ 2)').rows);
+    const html = astRowsHtml(analyse('ጻፍ(1፣ 2)').rows, am);
     expect(html).toContain('args:');
     // The `args:` row itself carries no data-line.
     const headerRow = html.split('</span>').find((part) => part.includes('args:'));
@@ -117,7 +117,7 @@ describe('the AST panel (§2.1)', () => {
   });
 
   it('spans several lines for a multi-line construct', () => {
-    const html = astRowsHtml(analyse('ተግባር ሀ()፦\n    ተመላሽ 1').rows);
+    const html = astRowsHtml(analyse('ተግባር ሀ()፦\n    ተመላሽ 1').rows, am);
     expect(regions(html).some((r) => /^1:1-2:/.test(r))).toBe(true);
   });
 
@@ -171,7 +171,7 @@ describe('the errors panel (§1.3)', () => {
 describe('the output panel (§2.1)', () => {
   const clean: RunReply = {
     output: '',
-    diagnostic: null,
+    diagnostics: [],
     frames: [],
     value: null,
     stoppedAt: null,
@@ -200,7 +200,7 @@ describe('the output panel (§2.1)', () => {
       {
         ...clean,
         output: 'አንድ\n',
-        diagnostic: diagnostic('AH3003', 'runtime', 2, 1, 5, 'በዘሮ ማካፈል አይቻልም።'),
+        diagnostics: [diagnostic('AH3003', 'runtime', 2, 1, 5, 'በዘሮ ማካፈል አይቻልም።')],
         stoppedAt: 'runtime',
       },
       am,

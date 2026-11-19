@@ -17,7 +17,8 @@ npm run play:build    # static files into tools/playground/dist/
 | `view.ts` | what the panels show, plus line numbers and the position readout |
 | `highlight.ts` | the editor's backdrop, coloured from the lexer's own tokens |
 | `strings.ts` | the page's own text, in Amharic and English |
-| `worker.ts` | evaluation, off the main thread |
+| `evaluate.ts` | running a program, and what comes back — no globals |
+| `worker.ts` | binding `evaluate` to a worker's `self`, and nothing else |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
 Three things worth knowing before changing it.
@@ -48,3 +49,10 @@ reason; change it and the line numbers stop meaning anything.
 **The language toggle does not translate diagnostics.** Their text comes from
 the interpreter, where LANGUAGE.md §9 makes it normative. `strings.ts` says
 more about why.
+
+**The errors panel is additive.** It shows everything the lexer and the parser
+found, and *then* a runtime error with its traceback — never one in place of
+the others. It used to replace them, which made a file with five problems look
+like it had one, and `evaluate` compounded it by returning only the first
+diagnostic of the stage that stopped. Both are covered by
+`tests/unit/playground/run-reply.test.ts`; keep them that way.

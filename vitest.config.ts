@@ -5,7 +5,7 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/**/*.ts', 'tools/playground/{view,highlight}.ts'],
+      include: ['src/**/*.ts', 'tools/playground/{view,highlight,strings,evaluate}.ts'],
       // Glue is excluded, not the logic behind it. src/cli/main.ts is the
       // process shell — argv, stdin, exit codes — covered end to end by
       // commands.test.ts; the playground's main.ts and worker.ts need a DOM

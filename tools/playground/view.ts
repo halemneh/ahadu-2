@@ -13,7 +13,7 @@ import type { AstRow } from '../../src/parser/index.js';
 import { codePoints } from '../../src/interpreter/values.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 import type { Frame } from '../../src/interpreter/index.js';
-import type { RunReply } from './worker.js';
+import type { RunReply } from './evaluate.js';
 import type { Strings } from './strings.js';
 
 export interface Analysis {
@@ -187,13 +187,29 @@ export function diagnosticHtml(
   );
 }
 
-export function diagnosticsHtml(
-  source: string,
-  diagnostics: readonly Diagnostic[],
-  s: Strings,
-): string {
-  if (diagnostics.length === 0) return empty(s.emptyErrors);
-  return diagnostics.map((d) => diagnosticHtml(source, d, s)).join('');
+/** A diagnostic together with the call stack it carried, if it had one. */
+export interface Reported {
+  readonly diagnostic: Diagnostic;
+  readonly frames?: readonly Frame[];
+}
+
+/**
+ * The errors panel.
+ *
+ * Takes a list so a runtime error can sit *after* the lexer's and the
+ * parser's findings, carrying its own traceback, rather than replacing them.
+ * Replacing them is what made a file with five problems look like it had one.
+ */
+export function diagnosticsHtml(source: string, entries: readonly Reported[], s: Strings): string {
+  if (entries.length === 0) return empty(s.emptyErrors);
+  return entries
+    .map((entry) => diagnosticHtml(source, entry.diagnostic, s, entry.frames ?? []))
+    .join('');
+}
+
+/** Wraps plain diagnostics, which carry no traceback. */
+export function reported(diagnostics: readonly Diagnostic[]): Reported[] {
+  return diagnostics.map((diagnostic) => ({ diagnostic }));
 }
 
 /** The output panel after a run: what was printed, then the value or the error. */
@@ -202,9 +218,14 @@ export function outputHtml(reply: RunReply, s: Strings): string {
 
   if (reply.output !== '') parts.push(escapeHtml(reply.output.replace(/\n$/, '')));
 
-  if (reply.diagnostic !== null) {
+  const first = reply.diagnostics[0];
+  if (first !== undefined) {
+    // The one that stopped the run, and a count of the rest, so nobody has to
+    // guess whether the ስተቶች panel is holding more.
+    const rest = reply.diagnostics.length - 1;
+    const more = rest > 0 ? ` ${s.andMore(rest)}` : '';
     parts.push(
-      `<span class="value">[${reply.diagnostic.code}] ${escapeHtml(reply.diagnostic.message)}</span>`,
+      `<span class="value">[${first.code}] ${escapeHtml(first.message)}${escapeHtml(more)}</span>`,
     );
   } else if (reply.value !== null) {
     parts.push(

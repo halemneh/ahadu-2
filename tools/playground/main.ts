@@ -18,19 +18,19 @@ import type { Region } from './highlight.js';
 import {
   analyse,
   astRowsHtml,
-  diagnosticHtml,
   diagnosticsHtml,
   exampleName,
   gutterHtml,
   outputHtml,
   positionLabel,
+  reported,
   statusOf,
   tokenRowsHtml,
 } from './view.js';
-import type { Analysis } from './view.js';
+import type { Analysis, Reported } from './view.js';
 import { otherLanguage, strings } from './strings.js';
 import type { Language, Strings } from './strings.js';
-import type { RunReply, RunRequest } from './worker.js';
+import type { RunReply, RunRequest } from './evaluate.js';
 
 /** How long after a keystroke the editor re-lexes (TOOLING.md §2.2). */
 const DEBOUNCE_MS = 150;
@@ -92,8 +92,18 @@ const panels = {
 const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')];
 
 let current: Analysis = { tokens: [], diagnostics: [], rows: [] };
+/**
+ * The runtime error from the last run, if any.
+ *
+ * Kept apart from the live analysis so it can be shown *after* it rather than
+ * instead of it. Cleared when the source changes, since an error from a
+ * program that no longer exists is worse than none.
+ */
+let runtimeError: Reported | null = null;
 let hovered: Region | null = null;
 let worker: Worker | null = null;
+/** The pending re-analysis, so a run can cancel it and do the work itself. */
+let timer: number | undefined;
 let language: Language = 'am';
 let s: Strings = strings(language);
 
@@ -212,6 +222,21 @@ function updatePosition(): void {
   );
 }
 
+/**
+ * Paints the errors panel from the live analysis plus any runtime error.
+ *
+ * Everything the lexer and the parser found, in source order, and then the
+ * runtime error after them with its traceback — never one in place of the
+ * others.
+ */
+function paintErrors(): void {
+  const entries = reported(current.diagnostics);
+  if (runtimeError !== null) entries.push(runtimeError);
+
+  panels.errors.innerHTML = diagnosticsHtml(editor.value, entries, s);
+  errorCount.textContent = entries.length === 0 ? '' : String(entries.length);
+}
+
 function refresh(): void {
   current = analyse(editor.value);
 
@@ -219,10 +244,7 @@ function refresh(): void {
   paintEditor();
   panels.tokens.innerHTML = tokenRowsHtml(current.tokens, s);
   panels.ast.innerHTML = astRowsHtml(current.rows, s);
-  panels.errors.innerHTML = diagnosticsHtml(editor.value, current.diagnostics, s);
-
-  errorCount.textContent =
-    current.diagnostics.length === 0 ? '' : String(current.diagnostics.length);
+  paintErrors();
 
   const { text, state } = statusOf(current.diagnostics, s);
   status.textContent = text;
@@ -297,6 +319,13 @@ function stop(): void {
 function start(): void {
   dispose();
 
+  // A fresh run owns the runtime error; the previous one is history. Re-analyse
+  // rather than just repaint, in case the run came within the debounce of a
+  // keystroke and the live analysis is a moment behind the text.
+  runtimeError = null;
+  window.clearTimeout(timer);
+  refresh();
+
   showPanel('output');
   panels.output.innerHTML = `<span class="empty">${s.emptyRunning}</span>`;
   status.textContent = s.statusRunning;
@@ -308,16 +337,20 @@ function start(): void {
     const reply = event.data;
     panels.output.innerHTML = outputHtml(reply, s);
 
-    if (reply.diagnostic === null) {
+    const first = reply.diagnostics[0];
+    if (first === undefined) {
       status.textContent = s.statusDone;
       status.dataset.state = 'good';
     } else {
-      panels.errors.innerHTML = diagnosticHtml(editor.value, reply.diagnostic, s, reply.frames);
-      errorCount.textContent = '1';
-      status.textContent = reply.diagnostic.code;
+      // Only a runtime error is news: anything the lexer or the parser found
+      // is already in the live analysis, and adding it again would double it.
+      runtimeError =
+        reply.stoppedAt === 'runtime' ? { diagnostic: first, frames: reply.frames } : null;
+      status.textContent = first.code;
       status.dataset.state = 'bad';
     }
 
+    paintErrors();
     dispose();
   };
 
@@ -396,10 +429,10 @@ examplesSelect.addEventListener('change', () => {
 // Editing
 // ---------------------------------------------------------------------------
 
-let timer: number | undefined;
-
 editor.addEventListener('input', () => {
   remember(STORAGE_SOURCE, editor.value);
+  // The program has changed, so last run's error no longer describes it.
+  runtimeError = null;
   // The gutter and the readout follow every keystroke; the colours wait for
   // the debounce, since re-lexing is the expensive half.
   gutter.textContent = gutterHtml(editor.value);

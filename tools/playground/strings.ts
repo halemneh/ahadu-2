@@ -60,6 +60,8 @@ export interface Strings {
   readonly emptyErrors: string;
   readonly valuePrefix: string;
   readonly unexpected: string;
+  /** `(n)` → "and N more", for the rest of a batch of diagnostics. */
+  readonly andMore: (count: number) => string;
   /** The `line N, column M` line inside a diagnostic — ours, not the interpreter's. */
   readonly at: (line: number, column: number) => string;
   readonly traceAt: (line: number, name: string) => string;
@@ -102,6 +104,7 @@ const amharic: Strings = {
   emptyErrors: 'ምንም ስተት አልተገኘም።',
   valuePrefix: 'ዋጋ፦',
   unexpected: 'ያልተጠበቀ ስተት።',
+  andMore: (count) => `(እና ${count} ተጨማሪ)`,
   at: (line, column) => `መስመር ${line} ላይ: ${column}ኛው ካራክተር`,
   traceAt: (line, name) => `መስመር ${line} ላይ ${name}`,
 };
@@ -143,6 +146,7 @@ const english: Strings = {
   emptyErrors: 'No errors found.',
   valuePrefix: 'Value:',
   unexpected: 'Unexpected error.',
+  andMore: (count) => `(and ${count} more)`,
   at: (line, column) => `line ${line}, column ${column}`,
   traceAt: (line, name) => `line ${line} in ${name}`,
 };
