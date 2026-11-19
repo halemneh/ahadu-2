@@ -7,7 +7,14 @@ Browser editor with live **ውጤት** (output), **ቶከኖች** (tokens), **�
 ```sh
 npm run play          # dev server on localhost:5173
 npm run play:build    # static files into tools/playground/dist/
+npm run shot          # screenshots into tools/playground/shots/
 ```
+
+`npm run shot` drives the running dev server with `playwright-core` against
+the system Chrome — `playwright-core` ships no browsers and `channel: 'chrome'`
+borrows the one already installed, so nothing is downloaded. It is how the
+page gets looked at: this project has no browser in its test run, and a
+stylesheet cannot be reviewed by reading it.
 
 | File | |
 | --- | --- |
@@ -19,10 +26,22 @@ npm run play:build    # static files into tools/playground/dist/
 | `strings.ts` | the page's own text, in Amharic and English |
 | `evaluate.ts` | running a program, and what comes back — no globals |
 | `locate.ts` | which error the pointer is over, as arithmetic |
+| `shot.mjs` | screenshots, for reviewing how it looks |
 | `worker.ts` | binding `evaluate` to a worker's `self`, and nothing else |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
-Three things worth knowing before changing it.
+**The design language is surfaces, not lines.** There is not one border in
+`styles.css`: regions are told apart by a translucent `--layer` over the
+background and a shadow where one sits above another. The layers compose, so
+the snippet inside an error and the gutter inside the editor each get their
+own level without a new colour. Adding a `border` anywhere will look out of
+place rather than tidy — reach for a layer or a shadow instead.
+
+Because nothing has a border to carry focus, controls get a focus ring from
+`box-shadow`. Removing an outline without replacing it leaves the page
+unusable from a keyboard.
+
+Three more things worth knowing before changing it.
 
 **The editor is a transparent `<textarea>` over a `<pre>`.** Both use the same
 font and metrics, so they stay aligned without reimplementing text editing —

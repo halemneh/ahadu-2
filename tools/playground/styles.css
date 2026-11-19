@@ -1,86 +1,123 @@
 /*
  * Playground styles (TOOLING.md §2.1).
  *
+ * The design language is **surfaces, not lines**. Nothing here is separated by
+ * a border: regions are told apart by a translucent surface laid over the
+ * background, and by a soft shadow where one region sits above another. A page
+ * with a dozen hairlines reads as a grid of boxes; the same page built from
+ * tints and depth reads as panels of content, which is what it is.
+ *
+ * Two consequences worth knowing:
+ *
+ * - Surfaces are **translucent**, so they compose. `--layer` over `--layer` is
+ *   darker than one alone, which is how the snippet inside an error, or the
+ *   gutter inside the editor, gets its own level without a new colour or a
+ *   rule. Each theme therefore needs only one set of layer values.
+ * - With no borders to carry it, focus comes from a `box-shadow` ring.
+ *   Removing an outline without replacing it would leave the page unusable
+ *   from a keyboard.
+ *
  * No web font is loaded: the spec says nothing is sent anywhere, and fetching
  * Noto Serif Ethiopic from a font CDN would be a request. The stack below
  * prefers whatever Ethiopic face the system has.
  */
 
-/*
- * Two themes, as custom properties. The dark one is the default; the light one
- * applies when the system asks for it, and `data-theme` on the root overrides
- * both once someone has chosen for themselves.
- */
-
 :root,
 :root[data-theme='dark'] {
-  --bg: #16181d;
-  --panel: #1d2026;
-  --edge: #2b303a;
-  --ink: #e6e8ee;
-  --muted: #8b93a7;
-  --accent: #6bb3ff;
-  --kw: #c792ea;
-  --type: #82d2b0;
-  --str: #a5d6a7;
-  --num: #f7c67f;
-  --lit: #ff9e9e;
-  --comment: #6b7385;
-  --bad: #ff6b6b;
-  --bad-wash: rgb(255 107 107 / 14%);
-  --hot: #3a4a63;
-  --gutter: #6b7385;
-  --select: #3b5370;
-  --shadow: rgb(0 0 0 / 35%);
+  --bg: #15171c;
+  --ink: #e7e9ef;
+  --muted: #949cb0;
 
-  --code: 'Noto Sans Ethiopic', 'Noto Serif Ethiopic', 'Abyssinica SIL', 'Kefa', 'Nyala',
-    ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Translucent surfaces, meant to be stacked. */
+  --layer: rgb(255 255 255 / 4.5%);
+  --layer-strong: rgb(255 255 255 / 8%);
+  --layer-hover: rgb(255 255 255 / 11%);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 28%);
+  --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 10px 30px -8px rgb(0 0 0 / 60%);
+  /* Cast sideways, to lift the panel column off the editor column. */
+  --shadow-side: -10px 0 22px -16px rgb(0 0 0 / 70%);
+
+  --accent: #74b7ff;
+  --ring: rgb(116 183 255 / 55%);
+  --kw: #cb9bee;
+  --type: #86d6b4;
+  --str: #a9d9ab;
+  --num: #f8ca86;
+  --lit: #ffa4a4;
+  --comment: #767e91;
+  --bad: #ff7272;
+  --bad-wash: rgb(255 114 114 / 15%);
+  --hot: rgb(116 183 255 / 20%);
+  --gutter: rgb(231 233 239 / 35%);
+  --select: rgb(116 183 255 / 28%);
+
+  --code:
+    'Noto Sans Ethiopic', 'Noto Serif Ethiopic', 'Abyssinica SIL', 'Kefa', 'Nyala', ui-monospace,
+    'SF Mono', Menlo, monospace;
   --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* Colours chosen for contrast on white rather than lightened dark ones. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #fdfdfc;
-    --panel: #f1f2f4;
-    --edge: #d9dce2;
-    --ink: #1d2026;
-    --muted: #666d7d;
-    --accent: #0b64c8;
-    --kw: #8626b8;
-    --type: #0a6c53;
-    --str: #1d6f2b;
-    --num: #a8520a;
-    --lit: #b22150;
-    --comment: #767d8c;
-    --bad: #c5262c;
-    --bad-wash: rgb(197 38 44 / 10%);
-    --hot: #cfe2fb;
-    --gutter: #9aa1b0;
-    --select: #bcd8fa;
-    --shadow: rgb(0 0 0 / 12%);
+    --bg: #fcfcfb;
+    --ink: #1b1f27;
+    --muted: #636b7b;
+
+    --layer: rgb(18 22 31 / 4%);
+    --layer-strong: rgb(18 22 31 / 7%);
+    --layer-hover: rgb(18 22 31 / 10%);
+
+    --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
+    --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
+    --shadow-lg: 0 10px 30px -8px rgb(18 22 31 / 20%);
+    --shadow-side: -10px 0 22px -16px rgb(18 22 31 / 24%);
+
+    --accent: #0a5fc0;
+    --ring: rgb(10 95 192 / 45%);
+    --kw: #7f24b0;
+    --type: #0a6a51;
+    --str: #1c6b29;
+    --num: #a04d08;
+    --lit: #ab1f4c;
+    --comment: #747b8a;
+    --bad: #c0252b;
+    --bad-wash: rgb(192 37 43 / 11%);
+    --hot: rgb(10 95 192 / 14%);
+    --gutter: rgb(27 31 39 / 38%);
+    --select: rgb(10 95 192 / 20%);
   }
 }
 
 :root[data-theme='light'] {
-  --bg: #fdfdfc;
-  --panel: #f1f2f4;
-  --edge: #d9dce2;
-  --ink: #1d2026;
-  --muted: #666d7d;
-  --accent: #0b64c8;
-  --kw: #8626b8;
-  --type: #0a6c53;
-  --str: #1d6f2b;
-  --num: #a8520a;
-  --lit: #b22150;
-  --comment: #767d8c;
-  --bad: #c5262c;
-  --bad-wash: rgb(197 38 44 / 10%);
-  --hot: #cfe2fb;
-  --gutter: #9aa1b0;
-  --select: #bcd8fa;
-  --shadow: rgb(0 0 0 / 12%);
+  --bg: #fcfcfb;
+  --ink: #1b1f27;
+  --muted: #636b7b;
+
+  --layer: rgb(18 22 31 / 4%);
+  --layer-strong: rgb(18 22 31 / 7%);
+  --layer-hover: rgb(18 22 31 / 10%);
+
+  --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
+  --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
+  --shadow-lg: 0 10px 30px -8px rgb(18 22 31 / 20%);
+  --shadow-side: -10px 0 22px -16px rgb(18 22 31 / 24%);
+
+  --accent: #0a5fc0;
+  --ring: rgb(10 95 192 / 45%);
+  --kw: #7f24b0;
+  --type: #0a6a51;
+  --str: #1c6b29;
+  --num: #a04d08;
+  --lit: #ab1f4c;
+  --comment: #747b8a;
+  --bad: #c0252b;
+  --bad-wash: rgb(192 37 43 / 11%);
+  --hot: rgb(10 95 192 / 14%);
+  --gutter: rgb(27 31 39 / 38%);
+  --select: rgb(10 95 192 / 20%);
 }
 
 * {
@@ -101,15 +138,17 @@ body {
   font-family: var(--ui);
 }
 
-/* ---- top bar ---- */
+/* ---- top bar: a surface above the page, lifted by a shadow ---- */
 
 .bar {
+  position: relative;
+  z-index: 3;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--edge);
-  background: var(--panel);
+  background: var(--layer);
+  box-shadow: var(--shadow-md);
 }
 
 .bar h1 {
@@ -137,36 +176,70 @@ body {
   color: var(--muted);
 }
 
+/* Sized to its content: a select left to itself fills whatever it is given. */
+.examples select {
+  max-width: 14rem;
+}
+
+/* Controls are surfaces too: a tint, a small shadow, no outline. */
 select,
 button {
   font: inherit;
   color: var(--ink);
-  background: var(--bg);
-  border: 1px solid var(--edge);
+  background: var(--layer-strong);
+  border: 0;
   border-radius: 6px;
-  padding: 0.3rem 0.6rem;
+  padding: 0.33rem 0.62rem;
+  box-shadow: var(--shadow-sm);
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease;
 }
 
 button {
   cursor: pointer;
 }
 
+select:hover,
 button:hover {
-  border-color: var(--accent);
+  background: var(--layer-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* The ring replaces the outline a border-less control would otherwise lack. */
+select:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--shadow-sm),
+    0 0 0 3px var(--ring);
+}
+
+.run,
+.stop {
+  color: var(--bg);
+  font-weight: 600;
 }
 
 .run {
   background: var(--accent);
-  border-color: var(--accent);
-  color: var(--bg);
-  font-weight: 600;
 }
 
 .stop {
   background: var(--bad);
-  border-color: var(--bad);
-  color: var(--bg);
-  font-weight: 600;
+}
+
+.run:hover,
+.stop:hover {
+  filter: brightness(1.08);
+}
+
+.run:hover {
+  background: var(--accent);
+}
+
+.stop:hover {
+  background: var(--bad);
 }
 
 .icon-button {
@@ -206,8 +279,15 @@ button:hover {
   min-width: 0;
 }
 
-.left {
-  border-right: 1px solid var(--edge);
+/*
+ * The two columns are separated by depth rather than by a rule: the panel
+ * column is a surface sitting above the editor, casting sideways onto it.
+ */
+.right {
+  position: relative;
+  z-index: 1;
+  background: var(--layer);
+  box-shadow: var(--shadow-side);
 }
 
 /* ---- editor ---- */
@@ -222,9 +302,9 @@ button:hover {
 /*
  * Three layers share one set of metrics: the gutter, the coloured backdrop,
  * and the transparent textarea on top. `pre` rather than `pre-wrap` is what
- * makes line numbers possible at all — a wrapped line occupies several rows
- * on screen but has one number, so the gutter would drift out of step with
- * the text the moment any line got long.
+ * makes line numbers possible at all — a wrapped line occupies several rows on
+ * screen but has one number, so the gutter would drift out of step with the
+ * text. It is also what lets locate.ts map a row of pixels to one line.
  */
 
 .gutter,
@@ -247,8 +327,7 @@ button:hover {
   overflow: hidden;
   text-align: right;
   color: var(--gutter);
-  background: var(--panel);
-  border-right: 1px solid var(--edge);
+  background: var(--layer);
   user-select: none;
   pointer-events: none;
 }
@@ -274,19 +353,6 @@ button:hover {
   overflow: auto;
 }
 
-/* The position readout, under the editor (TOOLING.md §2.1). */
-.editor-status {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 0.25rem 0.9rem;
-  border-top: 1px solid var(--edge);
-  background: var(--panel);
-  color: var(--muted);
-  font-family: var(--code);
-  font-size: 0.78rem;
-}
-
 .editor::selection {
   background: var(--select);
 }
@@ -297,35 +363,45 @@ button:hover {
   color: var(--kw);
   font-weight: 600;
 }
+
 .tk-type {
   color: var(--type);
 }
+
 .tk-lit {
   color: var(--lit);
 }
+
 .tk-reserved {
   color: var(--lit);
   text-decoration: underline dotted;
 }
+
 .tk-str {
   color: var(--str);
 }
+
 .tk-num {
   color: var(--num);
 }
+
 .tk-id {
   color: var(--ink);
 }
+
 .tk-op {
   color: var(--accent);
 }
+
 .tk-then {
   color: var(--kw);
   font-weight: 600;
 }
+
 .tk-punct {
   color: var(--muted);
 }
+
 .tk-comment {
   color: var(--comment);
   font-style: italic;
@@ -349,41 +425,16 @@ button:hover {
   border-radius: 2px;
 }
 
-/*
- * The tooltip that explains an error the pointer is over.
- *
- * Positioned from script, since what it points at is painted text rather than
- * an element with bounds; see locate.ts.
- */
-.tip {
-  position: fixed;
-  z-index: 10;
-  max-width: 32rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--edge);
-  border-left: 2px solid var(--bad);
-  border-radius: 5px;
-  background: var(--panel);
-  box-shadow: 0 4px 14px var(--shadow);
-  font-family: var(--ui);
-  font-size: 0.84rem;
-  line-height: 1.45;
-  pointer-events: none;
-}
+/* ---- the position readout, under the editor (§2.1) ---- */
 
-.tip[hidden] {
-  display: none;
-}
-
-.tip .code {
-  color: var(--bad);
-  font-family: var(--code);
-  font-weight: 700;
-  margin-right: 0.35rem;
-}
-
-.tip .where {
+.editor-status {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.25rem 0.9rem;
+  background: var(--layer);
   color: var(--muted);
+  font-family: var(--code);
   font-size: 0.78rem;
 }
 
@@ -392,32 +443,46 @@ button:hover {
 .input-pane {
   display: flex;
   flex-direction: column;
-  border-top: 1px solid var(--edge);
   height: 8.5rem;
+  background: var(--layer);
 }
 
 .input-pane label {
-  padding: 0.4rem 0.9rem;
+  padding: 0.45rem 0.9rem 0.3rem;
   font-size: 0.8rem;
   color: var(--muted);
-  background: var(--panel);
 }
 
 .hint {
-  opacity: 0.7;
+  opacity: 0.72;
 }
 
+/*
+ * A surface of its own, over the pane's: without a border, an empty textarea
+ * is indistinguishable from the space around it, and nothing shows there is
+ * anywhere to type.
+ */
 #stdin {
   flex: 1;
-  margin: 0;
-  padding: 0.6rem 0.9rem;
+  margin: 0 0.9rem 0.9rem;
+  padding: 0.45rem 0.6rem;
   border: 0;
+  border-radius: 5px;
   resize: none;
-  background: var(--bg);
+  background: var(--layer);
   color: var(--ink);
   font-family: var(--code);
   font-size: 0.9rem;
   outline: none;
+  box-shadow: none;
+}
+
+#stdin:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+#stdin::selection {
+  background: var(--select);
 }
 
 /* ---- panels ---- */
@@ -425,23 +490,28 @@ button:hover {
 .tabs {
   display: flex;
   gap: 0.25rem;
-  padding: 0.4rem 0.6rem 0;
-  background: var(--panel);
-  border-bottom: 1px solid var(--edge);
+  padding: 0.45rem 0.6rem;
+  background: var(--layer);
 }
 
 .tab {
-  border: 0;
-  border-radius: 6px 6px 0 0;
   background: transparent;
+  box-shadow: none;
   color: var(--muted);
-  padding: 0.4rem 0.8rem;
+  padding: 0.33rem 0.75rem;
   font-size: 0.85rem;
 }
 
+.tab:hover {
+  background: var(--layer-strong);
+  box-shadow: none;
+}
+
+/* The selected tab is the one lifted off the strip. */
 .tab[aria-selected='true'] {
   background: var(--bg);
   color: var(--ink);
+  box-shadow: var(--shadow-sm);
 }
 
 .count:not(:empty) {
@@ -481,18 +551,19 @@ button:hover {
 
 .row {
   display: block;
-  padding: 0 0.2rem;
+  padding: 0 0.25rem;
   border-radius: 3px;
   cursor: default;
   white-space: pre;
 }
 
 .row:hover {
-  background: var(--hot);
+  background: var(--layer-strong);
 }
 
 .row .span {
   color: var(--muted);
+  opacity: 0.85;
 }
 
 .row .kind {
@@ -506,22 +577,18 @@ button:hover {
 /* ---- diagnostics ---- */
 
 /*
- * Each entry is separated by a hairline rule and some space, not by a box. A
- * panel of five errors is already busy; framing each one in its own card made
- * it busier. The snippet inside keeps a surface of its own, since that is what
- * distinguishes quoted code from prose.
+ * Entries are separated by space alone. A panel of five errors is already
+ * busy; a rule between each made it busier, and a box around each busier
+ * still. The snippet inside carries the only surface, which is enough to make
+ * each entry read as one thing.
  */
 .diag {
-  padding: 0.75rem 0.1rem;
+  padding: 0.3rem 0.1rem 1.15rem;
   white-space: normal;
 }
 
-.diag + .diag {
-  border-top: 1px solid var(--edge);
-}
-
-.diag:first-child {
-  padding-top: 0.2rem;
+.diag:last-child {
+  padding-bottom: 0.3rem;
 }
 
 .diag-head {
@@ -547,32 +614,32 @@ button:hover {
 }
 
 .diag-where {
-  margin-top: 0.25rem;
+  margin-top: 0.2rem;
   color: var(--muted);
   font-size: 0.8rem;
 }
 
 /*
- * The offending line, with its own background and its own gutter so it reads
- * as a quotation of the code rather than as more prose. Colours come from the
- * editor's highlighter, so the two cannot disagree.
+ * The offending line, on a surface of its own so it reads as a quotation of
+ * code rather than as more prose. Colours come from the editor's highlighter,
+ * so the two cannot disagree.
  */
 .snippet {
   display: flex;
-  margin-top: 0.5rem;
-  border: 1px solid var(--edge);
-  border-radius: 4px;
-  background: var(--bg);
+  margin-top: 0.45rem;
+  border-radius: 5px;
+  background: var(--layer);
+  box-shadow: var(--shadow-sm);
   overflow-x: auto;
   line-height: 1.6;
 }
 
+/* Its gutter is a second surface over the first, so no rule is needed. */
 .snippet-gutter {
   flex: none;
   min-width: 2.6rem;
   padding: 0.3rem 0.5rem;
-  border-right: 1px solid var(--edge);
-  background: var(--panel);
+  background: var(--layer);
   color: var(--gutter);
   font-size: 0.8rem;
   text-align: right;
@@ -587,26 +654,67 @@ button:hover {
 
 .diag .frames {
   margin-top: 0.5rem;
-  padding-top: 0.4rem;
-  border-top: 1px dashed var(--edge);
   color: var(--muted);
   font-size: 0.82rem;
+  opacity: 0.9;
 }
 
 .frame {
   display: block;
 }
 
+/* ---- the hover tooltip ---- */
+
+/*
+ * Positioned from script, since what it points at is painted text rather than
+ * an element with bounds; see locate.ts. It floats above everything, so its
+ * shadow is the deepest on the page, and a hairline of layer colour stands in
+ * for the border it does not have.
+ */
+.tip {
+  position: fixed;
+  z-index: 10;
+  max-width: 32rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  background: var(--bg);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 0 1px var(--layer-strong);
+  font-family: var(--ui);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.tip .code {
+  color: var(--bad);
+  font-family: var(--code);
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+
+.tip .where {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* ---- shared ---- */
+
 .empty {
   color: var(--muted);
   font-style: italic;
+  opacity: 0.85;
 }
 
 .value {
-  color: var(--muted);
-  border-top: 1px dashed var(--edge);
+  display: block;
   margin-top: 0.8rem;
-  padding-top: 0.5rem;
+  color: var(--muted);
 }
 
 @media (max-width: 860px) {
@@ -615,8 +723,8 @@ button:hover {
     grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   }
 
-  .left {
-    border-right: 0;
-    border-bottom: 1px solid var(--edge);
+  /* Stacked, the panel column sits below rather than beside. */
+  .right {
+    box-shadow: var(--shadow-md);
   }
 }

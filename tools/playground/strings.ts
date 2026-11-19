@@ -71,7 +71,7 @@ const amharic: Strings = {
   language: 'am',
 
   examples: 'ምሳሌዎች',
-  examplesNone: '—',
+  examplesNone: 'ምሳሌ ይምረጡ…',
   examplesPrograms: 'ፕሮግራሞች',
   examplesErrors: 'ስተት ያላቸው',
   run: '▸ አሂድ',
@@ -113,7 +113,7 @@ const english: Strings = {
   language: 'en',
 
   examples: 'Examples',
-  examplesNone: '—',
+  examplesNone: 'Choose an example…',
   examplesPrograms: 'Programs',
   examplesErrors: 'With errors',
   run: '▸ Run',

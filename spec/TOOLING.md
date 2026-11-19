@@ -142,6 +142,11 @@ brackets.
 └────┴──────────────────────┴────────────────────────────┘
 ```
 
+The page is built from **surfaces rather than lines**: no borders, only
+translucent layers over the background and shadows where one region sits above
+another. Layers compose, so a snippet inside an error panel or a gutter inside
+the editor takes its own level without a new colour.
+
 - A **line-number gutter** runs down the editor, and a **position readout**
   sits under it. The readout's column counts code points, so it agrees with
   the column in every diagnostic (LANGUAGE.md §2.2) — counting UTF-16 units

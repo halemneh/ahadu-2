@@ -21,5 +21,14 @@ export default tseslint.config(
     files: ['*.js', '*.config.ts'],
     ...tseslint.configs.disableTypeChecked,
   },
+  {
+    // Development scripts: plain ESM, outside the TypeScript project, and not
+    // shipped. Typing Playwright's page objects here would buy nothing.
+    files: ['**/*.mjs'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      parserOptions: { project: false, projectService: false },
+    },
+  },
   prettier,
 );
