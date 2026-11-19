@@ -7,27 +7,37 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <!--
+      Text with a data-i18n attribute is filled from tools/playground/strings.ts
+      on load and whenever the language changes, so neither language is the one
+      hard-coded in the markup.
+    -->
     <header class="bar">
       <h1>አሃዱ <span class="version">2.0</span></h1>
+
       <label class="examples">
-        ምሳሌዎች
-        <select id="examples" aria-label="ምሳሌዎች"></select>
+        <span data-i18n="examples"></span>
+        <select id="examples"></select>
       </label>
+
       <div class="spacer"></div>
+
       <output id="status" class="status" aria-live="polite"></output>
-      <button id="run" class="run" type="button">▸ አሂድ</button>
-      <button id="stop" class="stop" type="button" hidden>■ አቁም</button>
+
+      <button id="language" class="icon-button" type="button" data-i18n="languageToggle"></button>
+      <button id="theme" class="icon-button" type="button" aria-live="off">◐</button>
+      <button id="run" class="run" type="button" data-i18n="run"></button>
+      <button id="stop" class="stop" type="button" data-i18n="stop" hidden></button>
     </header>
 
     <main class="layout">
       <section class="left">
         <div class="editor-wrap">
           <!--
-            The backdrop carries the colours and the underlines; the textarea
-            sits on top of it with transparent text and a visible caret. Both
-            use the same font and metrics, which is what keeps them aligned
-            without reimplementing text editing.
+            The gutter, the coloured backdrop and the transparent textarea share
+            one set of metrics; see styles.css for why the editor does not wrap.
           -->
+          <pre id="gutter" class="gutter" aria-hidden="true"></pre>
           <pre id="backdrop" class="backdrop" aria-hidden="true"></pre>
           <textarea
             id="editor"
@@ -35,23 +45,29 @@
             spellcheck="false"
             autocapitalize="off"
             autocomplete="off"
-            aria-label="የአሃዱ ኮድ"
+            data-i18n-label="editorLabel"
           ></textarea>
         </div>
 
+        <div id="editor-status" class="editor-status"></div>
+
         <div class="input-pane">
-          <label for="stdin">ግቤት <span class="hint">— ለ"አንብብ"፣ በየመስመሩ</span></label>
-          <textarea id="stdin" spellcheck="false" aria-label="ግቤት"></textarea>
+          <label for="stdin">
+            <span data-i18n="inputLabel"></span>
+            <span class="hint" data-i18n="inputHint"></span>
+          </label>
+          <textarea id="stdin" spellcheck="false" data-i18n-label="inputLabel"></textarea>
         </div>
       </section>
 
       <section class="right">
         <div class="tabs" role="tablist">
-          <button class="tab" role="tab" data-panel="output" aria-selected="true">ውጤት</button>
-          <button class="tab" role="tab" data-panel="tokens" aria-selected="false">ቶከኖች</button>
-          <button class="tab" role="tab" data-panel="ast" aria-selected="false">ዛፍ</button>
+          <button class="tab" role="tab" data-panel="output" data-i18n="tabOutput" aria-selected="true"></button>
+          <button class="tab" role="tab" data-panel="tokens" data-i18n="tabTokens" aria-selected="false"></button>
+          <button class="tab" role="tab" data-panel="ast" data-i18n="tabAst" aria-selected="false"></button>
           <button class="tab" role="tab" data-panel="errors" aria-selected="false">
-            ስተቶች <span id="error-count" class="count"></span>
+            <span data-i18n="tabErrors"></span>
+            <span id="error-count" class="count"></span>
           </button>
         </div>
 

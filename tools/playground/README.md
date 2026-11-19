@@ -11,11 +11,12 @@ npm run play:build    # static files into tools/playground/dist/
 
 | File | |
 | --- | --- |
-| `index.html` | the page |
-| `styles.css` | styles; no web font is fetched, so nothing is sent anywhere |
+| `index.html` | the page; text carries `data-i18n` hooks rather than literals |
+| `styles.css` | styles and both themes; no web font is fetched, so nothing is sent anywhere |
 | `main.ts` | DOM glue: finds elements, wires events, paints strings |
-| `view.ts` | what the panels show, as functions from data to HTML |
+| `view.ts` | what the panels show, plus line numbers and the position readout |
 | `highlight.ts` | the editor's backdrop, coloured from the lexer's own tokens |
+| `strings.ts` | the page's own text, in Amharic and English |
 | `worker.ts` | evaluation, off the main thread |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
@@ -35,6 +36,15 @@ tokens at all, so `highlight.ts` finds a `#` in a column no token claimed,
 which is also why a `#` inside a string is safe.
 
 **`main.ts` holds no decisions.** Everything that chooses what appears lives in
-`view.ts` and `highlight.ts`, which have no DOM access and are covered by
-`tests/unit/playground/`. That split is the only reason the page is tested at
-all: there is no browser in this project's test run.
+`view.ts`, `highlight.ts` and `strings.ts`, which have no DOM access and are
+covered by `tests/unit/playground/`. That split is the only reason the page is
+tested at all: there is no browser in this project's test run.
+
+**The editor does not wrap, and that is deliberate.** A wrapped line occupies
+several rows on screen but has one number, so the gutter would drift out of
+step with the text. `styles.css` uses `pre` rather than `pre-wrap` for that
+reason; change it and the line numbers stop meaning anything.
+
+**The language toggle does not translate diagnostics.** Their text comes from
+the interpreter, where LANGUAGE.md §9 makes it normative. `strings.ts` says
+more about why.

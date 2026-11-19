@@ -6,7 +6,14 @@
  * prefers whatever Ethiopic face the system has.
  */
 
-:root {
+/*
+ * Two themes, as custom properties. The dark one is the default; the light one
+ * applies when the system asks for it, and `data-theme` on the root overrides
+ * both once someone has chosen for themselves.
+ */
+
+:root,
+:root[data-theme='dark'] {
   --bg: #16181d;
   --panel: #1d2026;
   --edge: #2b303a;
@@ -21,10 +28,56 @@
   --comment: #6b7385;
   --bad: #ff6b6b;
   --hot: #3a4a63;
+  --gutter: #6b7385;
+  --select: #3b5370;
+  --shadow: rgb(0 0 0 / 35%);
 
   --code: 'Noto Sans Ethiopic', 'Noto Serif Ethiopic', 'Abyssinica SIL', 'Kefa', 'Nyala',
     ui-monospace, 'SF Mono', Menlo, monospace;
   --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Colours chosen for contrast on white rather than lightened dark ones. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #fdfdfc;
+    --panel: #f1f2f4;
+    --edge: #d9dce2;
+    --ink: #1d2026;
+    --muted: #666d7d;
+    --accent: #0b64c8;
+    --kw: #8626b8;
+    --type: #0a6c53;
+    --str: #1d6f2b;
+    --num: #a8520a;
+    --lit: #b22150;
+    --comment: #767d8c;
+    --bad: #c5262c;
+    --hot: #cfe2fb;
+    --gutter: #9aa1b0;
+    --select: #bcd8fa;
+    --shadow: rgb(0 0 0 / 12%);
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #fdfdfc;
+  --panel: #f1f2f4;
+  --edge: #d9dce2;
+  --ink: #1d2026;
+  --muted: #666d7d;
+  --accent: #0b64c8;
+  --kw: #8626b8;
+  --type: #0a6c53;
+  --str: #1d6f2b;
+  --num: #a8520a;
+  --lit: #b22150;
+  --comment: #767d8c;
+  --bad: #c5262c;
+  --hot: #cfe2fb;
+  --gutter: #9aa1b0;
+  --select: #bcd8fa;
+  --shadow: rgb(0 0 0 / 12%);
 }
 
 * {
@@ -102,15 +155,20 @@ button:hover {
 .run {
   background: var(--accent);
   border-color: var(--accent);
-  color: #0d1117;
+  color: var(--bg);
   font-weight: 600;
 }
 
 .stop {
   background: var(--bad);
   border-color: var(--bad);
-  color: #0d1117;
+  color: var(--bg);
   font-weight: 600;
+}
+
+.icon-button {
+  min-width: 2.2rem;
+  text-align: center;
 }
 
 .status {
@@ -158,23 +216,44 @@ button:hover {
   overflow: hidden;
 }
 
+/*
+ * Three layers share one set of metrics: the gutter, the coloured backdrop,
+ * and the transparent textarea on top. `pre` rather than `pre-wrap` is what
+ * makes line numbers possible at all — a wrapped line occupies several rows
+ * on screen but has one number, so the gutter would drift out of step with
+ * the text the moment any line got long.
+ */
+
+.gutter,
 .backdrop,
 .editor {
   margin: 0;
-  padding: 0.9rem;
   border: 0;
   font-family: var(--code);
   font-size: 0.95rem;
   line-height: 1.6;
   tab-size: 4;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: break-word;
+  white-space: pre;
+}
+
+.gutter {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3.4rem;
+  padding: 0.9rem 0.6rem 0.9rem 0;
+  overflow: hidden;
+  text-align: right;
+  color: var(--gutter);
+  background: var(--panel);
+  border-right: 1px solid var(--edge);
+  user-select: none;
+  pointer-events: none;
 }
 
 .backdrop {
   position: absolute;
-  inset: 0;
+  inset: 0 0 0 3.4rem;
+  padding: 0.9rem;
   overflow: auto;
   color: var(--ink);
   pointer-events: none;
@@ -182,7 +261,8 @@ button:hover {
 
 .editor {
   position: absolute;
-  inset: 0;
+  inset: 0 0 0 3.4rem;
+  padding: 0.9rem;
   resize: none;
   background: transparent;
   color: transparent;
@@ -191,8 +271,21 @@ button:hover {
   overflow: auto;
 }
 
+/* The position readout, under the editor (TOOLING.md §2.1). */
+.editor-status {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.25rem 0.9rem;
+  border-top: 1px solid var(--edge);
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--code);
+  font-size: 0.78rem;
+}
+
 .editor::selection {
-  background: #3b5370;
+  background: var(--select);
 }
 
 /* ---- token colours, set from the lexer's own spans ---- */
@@ -308,7 +401,7 @@ button:hover {
   padding: 0 0.35rem;
   border-radius: 999px;
   background: var(--bad);
-  color: #0d1117;
+  color: var(--bg);
   font-size: 0.72rem;
   font-weight: 700;
 }

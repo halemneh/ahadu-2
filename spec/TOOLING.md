@@ -121,18 +121,44 @@ brackets.
 ### 2.1 Layout
 
 ```
-┌───────────────────────────┬────────────────────────────┐
-│                           │  Output │ Tokens │ AST     │
-│   editor                  ├────────────────────────────┤
-│   (Noto Serif Ethiopic)   │                            │
-│                           │   active panel             │
-│                           │                            │
-├───────────────────────────┤                            │
-│   ግቤት (input for አንብብ)    │                            │
-├───────────────────────────┴────────────────────────────┤
-│  ▸ አሂድ (run)   examples ▾           diagnostics: 0     │
-└────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│ አሃዱ 2.0   examples ▾        0 errors  En ◐  ▸ አሂድ      │
+├───────────────────────────┬────────────────────────────┤
+│  1 │                      │  ውጤት │ ቶከኖች │ ዛፍ │ ስተቶች ③ │
+│  2 │  editor              ├────────────────────────────┤
+│  3 │                      │                            │
+│  4 │                      │   active panel             │
+│    ├──────────────────────┤                            │
+│    │        መስመር 3፣ ዓምድ 12 │                            │
+│    ├──────────────────────┤                            │
+│    │  ግቤት (input for አንብብ) │                            │
+└────┴──────────────────────┴────────────────────────────┘
 ```
+
+- A **line-number gutter** runs down the editor, and a **position readout**
+  sits under it. The readout's column counts code points, so it agrees with
+  the column in every diagnostic (LANGUAGE.md §2.2) — counting UTF-16 units
+  instead would quietly disagree with the errors on the same screen.
+
+  The editor therefore does **not** wrap: a wrapped line occupies several rows
+  but has one number, so the gutter would drift out of step with the text as
+  soon as a line got long. Long lines scroll sideways.
+
+- A **ስተቶች** panel joins the three the first draft named, carrying the full
+  text of every diagnostic. The tab shows a count.
+
+- Two toggles: **theme** (light and dark, following the system until someone
+  chooses, then remembering the choice) and **language**, which switches the
+  page's own text between Amharic and English.
+
+  The language toggle does **not** translate a diagnostic's message. That text
+  comes from the interpreter, where §9 of the language spec makes it
+  normative — a learner reading `ያልታወቀ ተለዋጭ` is reading Ahadu, not this
+  page. A second catalogue here would drift from the spec's own wording. The
+  code beside it is already language-neutral, and the position line around it
+  is the page's and is translated. The English side is for finding one's way
+  around the tool: a teacher setting it up, or a reader of the spec who does
+  not read Amharic.
 
 - **Output** — what `ጻፍ` printed, plus the value of the last statement.
 - **Tokens** — the live token table; hovering a row highlights its source span,
@@ -159,7 +185,11 @@ brackets.
   teaching tool: the input is visible, and a program can be re-run against it
   unchanged.
 - The examples menu loads `examples/*.ahadu` from the repository, so the
-  playground and the conformance suite exercise the same programs.
+  playground and the conformance suite exercise the same programs. A second
+  group loads `examples/errors/*.ahadu`: programs that are meant to fail, so
+  the ስተቶች panel has something to show. They live in their own directory
+  because the conformance suite asserts that everything in `examples/` runs
+  clean — which is exactly what they do not do.
 - The editor's content is kept in `localStorage` so a reload does not lose
   work. Nothing is sent anywhere; the whole playground is static and runs the
   interpreter in the browser.

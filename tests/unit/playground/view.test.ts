@@ -19,7 +19,10 @@ import {
   tokenRowsHtml,
 } from '../../../tools/playground/view.js';
 import { diagnostic } from '../../../src/diagnostics.js';
+import { strings } from '../../../tools/playground/strings.js';
 import type { RunReply } from '../../../tools/playground/worker.js';
+
+const am = strings('am');
 
 /** Extracts the data-* attributes of every row, which is what highlighting uses. */
 function regions(html: string): string[] {
@@ -67,7 +70,7 @@ describe('analyse (§9.3)', () => {
 
 describe('the tokens panel (§2.1)', () => {
   it('shows one row per token, with span, kind and value', () => {
-    const html = tokenRowsHtml(analyse('ሀ = 1').tokens);
+    const html = tokenRowsHtml(analyse('ሀ = 1').tokens, am);
     expect(html).toContain('IDENTIFIER');
     expect(html).toContain('ASSIGN');
     expect(html).toContain('NUMBER');
@@ -75,19 +78,19 @@ describe('the tokens panel (§2.1)', () => {
   });
 
   it('gives each row the span it covers, for highlighting', () => {
-    expect(regions(tokenRowsHtml(analyse('ሀ = 1').tokens))[0]).toBe('1:1-1:1');
+    expect(regions(tokenRowsHtml(analyse('ሀ = 1').tokens, am))[0]).toBe('1:1-1:1');
   });
 
   it('marks a የ-prefixed name with its stem', () => {
-    expect(tokenRowsHtml(analyse('የሃይሌ ዕድሜ').tokens)).toContain('(የ + ሃይሌ)');
+    expect(tokenRowsHtml(analyse('የሃይሌ ዕድሜ').tokens, am)).toContain('(የ + ሃይሌ)');
   });
 
   it('says so when there is nothing to show', () => {
-    expect(tokenRowsHtml([])).toContain('ምንም ቶከን የለም');
+    expect(tokenRowsHtml([], am)).toContain('ምንም ቶከን የለም');
   });
 
   it('escapes a token value rather than letting it become markup', () => {
-    const html = tokenRowsHtml(analyse('ሀ = "<b>"').tokens);
+    const html = tokenRowsHtml(analyse('ሀ = "<b>"').tokens, am);
     expect(html).not.toContain('<b>');
     expect(html).toContain('&lt;b&gt;');
   });
@@ -95,13 +98,13 @@ describe('the tokens panel (§2.1)', () => {
 
 describe('the AST panel (§2.1)', () => {
   it('shows the tree', () => {
-    const html = astRowsHtml(analyse('1 + 2').rows);
+    const html = astRowsHtml(analyse('1 + 2').rows, am);
     expect(html).toContain('Program');
     expect(html).toContain('BinaryExpression ADD');
   });
 
   it('gives each node row the span it covers', () => {
-    const html = astRowsHtml(analyse('ሀ = 1').rows);
+    const html = astRowsHtml(analyse('ሀ = 1').rows, am);
     expect(regions(html).length).toBeGreaterThan(1);
   });
 
@@ -119,7 +122,7 @@ describe('the AST panel (§2.1)', () => {
   });
 
   it('says so when there is nothing to show', () => {
-    expect(astRowsHtml([])).toContain('ምንም ዛፍ የለም');
+    expect(astRowsHtml([], am)).toContain('ምንም ዛፍ የለም');
   });
 });
 
@@ -127,22 +130,22 @@ describe('the errors panel (§1.3)', () => {
   const d = diagnostic('AH3003', 'runtime', 2, 5, 9, 'በዘሮ ማካፈል አይቻልም።');
 
   it('always carries the code, so it can be quoted', () => {
-    expect(diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d)).toContain('[AH3003]');
+    expect(diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d, am)).toContain('[AH3003]');
   });
 
   it('shows the message, the position and the source line', () => {
-    const html = diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d);
+    const html = diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d, am);
     expect(html).toContain('በዘሮ');
     expect(html).toContain('መስመር 2 ላይ');
     expect(html).toContain('ጻፍ(ሀ / 0)');
   });
 
   it('carries the span so hovering it highlights the source', () => {
-    expect(regions(diagnosticHtml('ሀ\nጻፍ(ሀ / 0)', d))).toEqual(['2:5-2:9']);
+    expect(regions(diagnosticHtml('ሀ\nጻፍ(ሀ / 0)', d, am))).toEqual(['2:5-2:9']);
   });
 
   it('includes a traceback when the error was inside a call', () => {
-    const html = diagnosticHtml('ሀ', d, [
+    const html = diagnosticHtml('ሀ', d, am, [
       { name: 'ዋና ፕሮግራም', line: 4 },
       { name: 'ሀ', line: 2 },
     ]);
@@ -152,16 +155,16 @@ describe('the errors panel (§1.3)', () => {
   });
 
   it('leaves the traceback out otherwise', () => {
-    expect(diagnosticHtml('ሀ', d)).not.toContain('class="frames"');
+    expect(diagnosticHtml('ሀ', d, am)).not.toContain('class="frames"');
   });
 
   it('says so when a program is clean', () => {
-    expect(diagnosticsHtml('ሀ = 1', [])).toContain('ምንም ስተት አልተገኘም');
+    expect(diagnosticsHtml('ሀ = 1', [], am)).toContain('ምንም ስተት አልተገኘም');
   });
 
   it('survives a line number past the end of the source', () => {
     const beyond = diagnostic('AH2001', 'parser', 99, 1, 1, 'x');
-    expect(() => diagnosticHtml('ሀ', beyond)).not.toThrow();
+    expect(() => diagnosticHtml('ሀ', beyond, am)).not.toThrow();
   });
 });
 
@@ -175,36 +178,39 @@ describe('the output panel (§2.1)', () => {
   };
 
   it('shows what the program printed', () => {
-    expect(outputHtml({ ...clean, output: 'ሰላም\n' })).toBe('ሰላም');
+    expect(outputHtml({ ...clean, output: 'ሰላም\n' }, am)).toBe('ሰላም');
   });
 
   it('shows the value of the last statement after the output', () => {
-    const html = outputHtml({ ...clean, output: 'ሀ\n', value: '42' });
+    const html = outputHtml({ ...clean, output: 'ሀ\n', value: '42' }, am);
     expect(html).toContain('ሀ');
     expect(html).toContain('ዋጋ፦ 42');
   });
 
   it('shows nothing extra when the last statement produced ምንም', () => {
-    expect(outputHtml({ ...clean, output: 'ሀ\n' })).not.toContain('ዋጋ፦');
+    expect(outputHtml({ ...clean, output: 'ሀ\n' }, am)).not.toContain('ዋጋ፦');
   });
 
   it('says so when a program printed nothing at all', () => {
-    expect(outputHtml(clean)).toContain('ምንም ውጤት የለም');
+    expect(outputHtml(clean, am)).toContain('ምንም ውጤት የለም');
   });
 
   it('shows the error that stopped the program, after its output', () => {
-    const html = outputHtml({
-      ...clean,
-      output: 'አንድ\n',
-      diagnostic: diagnostic('AH3003', 'runtime', 2, 1, 5, 'በዘሮ ማካፈል አይቻልም።'),
-      stoppedAt: 'runtime',
-    });
+    const html = outputHtml(
+      {
+        ...clean,
+        output: 'አንድ\n',
+        diagnostic: diagnostic('AH3003', 'runtime', 2, 1, 5, 'በዘሮ ማካፈል አይቻልም።'),
+        stoppedAt: 'runtime',
+      },
+      am,
+    );
     expect(html).toContain('አንድ');
     expect(html).toContain('[AH3003]');
   });
 
   it('escapes program output rather than letting it become markup', () => {
-    const html = outputHtml({ ...clean, output: '<img onerror=x>\n' });
+    const html = outputHtml({ ...clean, output: '<img onerror=x>\n' }, am);
     expect(html).not.toContain('<img');
     expect(html).toContain('&lt;img');
   });
@@ -212,12 +218,12 @@ describe('the output panel (§2.1)', () => {
 
 describe('status and names', () => {
   it('is good when there is nothing wrong', () => {
-    expect(statusOf([])).toEqual({ text: 'ምንም ስተት የለም', state: 'good' });
+    expect(statusOf([], am)).toEqual({ text: 'ምንም ስተት የለም', state: 'good' });
   });
 
   it('counts the problems otherwise', () => {
     const d = diagnostic('AH2001', 'parser', 1, 1, 1, 'x');
-    expect(statusOf([d, d])).toEqual({ text: '2 ስተት', state: 'bad' });
+    expect(statusOf([d, d], am)).toEqual({ text: '2 ስተት', state: 'bad' });
   });
 
   it('names an example by its file name', () => {

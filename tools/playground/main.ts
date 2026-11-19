@@ -3,7 +3,8 @@
  *
  * This file is glue: it finds elements, wires events, and puts the strings
  * `view.ts` produces into the page. Everything that decides *what* appears
- * lives in `view.ts` and `highlight.ts`, where it is tested without a browser.
+ * lives in `view.ts`, `highlight.ts` and `strings.ts`, where it is tested
+ * without a browser.
  *
  * Lexing and parsing run on every keystroke, debounced, so the editor can
  * colour itself and underline diagnostics while a program is still being
@@ -20,11 +21,15 @@ import {
   diagnosticHtml,
   diagnosticsHtml,
   exampleName,
+  gutterHtml,
   outputHtml,
+  positionLabel,
   statusOf,
   tokenRowsHtml,
 } from './view.js';
 import type { Analysis } from './view.js';
+import { otherLanguage, strings } from './strings.js';
+import type { Language, Strings } from './strings.js';
 import type { RunReply, RunRequest } from './worker.js';
 
 /** How long after a keystroke the editor re-lexes (TOOLING.md §2.2). */
@@ -35,6 +40,10 @@ const MAX_STEPS = 5_000_000;
 
 const STORAGE_SOURCE = 'ahadu.playground.source';
 const STORAGE_INPUT = 'ahadu.playground.input';
+const STORAGE_LANGUAGE = 'ahadu.playground.language';
+const STORAGE_THEME = 'ahadu.playground.theme';
+
+type Theme = 'dark' | 'light';
 
 const STARTER = `# አሃዱ 2.0 — ኮድ ጻፉ፣ ከዚያ "አሂድ" ይጫኑ
 ዕድሜ = 20
@@ -61,11 +70,15 @@ function need<T extends HTMLElement>(id: string): T {
 }
 
 const editor = need<HTMLTextAreaElement>('editor');
+const gutter = need<HTMLPreElement>('gutter');
 const backdrop = need<HTMLPreElement>('backdrop');
+const editorStatus = need<HTMLElement>('editor-status');
 const inputBox = need<HTMLTextAreaElement>('stdin');
 const runButton = need<HTMLButtonElement>('run');
 const stopButton = need<HTMLButtonElement>('stop');
 const examplesSelect = need<HTMLSelectElement>('examples');
+const languageButton = need<HTMLButtonElement>('language');
+const themeButton = need<HTMLButtonElement>('theme');
 const status = need<HTMLOutputElement>('status');
 const errorCount = need<HTMLSpanElement>('error-count');
 
@@ -81,6 +94,8 @@ const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')];
 let current: Analysis = { tokens: [], diagnostics: [], rows: [] };
 let hovered: Region | null = null;
 let worker: Worker | null = null;
+let language: Language = 'am';
+let s: Strings = strings(language);
 
 // ---------------------------------------------------------------------------
 // Storage, which is a convenience and so tolerates being refused
@@ -103,6 +118,72 @@ function recall(key: string): string | null {
 }
 
 // ---------------------------------------------------------------------------
+// Language and theme
+// ---------------------------------------------------------------------------
+
+/** Fills every element carrying a data-i18n hook from the catalogue. */
+function applyLanguage(): void {
+  s = strings(language);
+  document.documentElement.lang = language;
+
+  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n]')) {
+    const key = element.dataset.i18n as keyof Strings | undefined;
+    if (key === undefined) continue;
+    const value = s[key];
+    if (typeof value === 'string') element.textContent = value;
+  }
+
+  // A few elements want the text as a label rather than as content.
+  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n-label]')) {
+    const key = element.dataset.i18nLabel as keyof Strings | undefined;
+    if (key === undefined) continue;
+    const value = s[key];
+    if (typeof value === 'string') element.setAttribute('aria-label', value);
+  }
+
+  languageButton.textContent = s.languageToggle;
+  languageButton.setAttribute('aria-label', s.languageToggle);
+  themeButton.setAttribute('aria-label', s.theme);
+  themeButton.title = s.theme;
+
+  fillExamples();
+  refresh();
+  updatePosition();
+}
+
+function setLanguage(next: Language): void {
+  language = next;
+  remember(STORAGE_LANGUAGE, next);
+  applyLanguage();
+}
+
+/** The theme in force: an explicit choice, or whatever the system asks for. */
+function systemTheme(): Theme {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(theme: Theme | null): void {
+  if (theme === null) {
+    delete document.documentElement.dataset.theme;
+    return;
+  }
+  document.documentElement.dataset.theme = theme;
+}
+
+function toggleTheme(): void {
+  const showing = (document.documentElement.dataset.theme as Theme | undefined) ?? systemTheme();
+  const next: Theme = showing === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  remember(STORAGE_THEME, next);
+}
+
+languageButton.addEventListener('click', () => {
+  setLanguage(otherLanguage(language));
+});
+
+themeButton.addEventListener('click', toggleTheme);
+
+// ---------------------------------------------------------------------------
 // Painting
 // ---------------------------------------------------------------------------
 
@@ -113,22 +194,37 @@ function paintEditor(): void {
     diagnostics: current.diagnostics,
     hovered,
   });
+  syncScroll();
+}
+
+function syncScroll(): void {
   backdrop.scrollTop = editor.scrollTop;
   backdrop.scrollLeft = editor.scrollLeft;
+  gutter.scrollTop = editor.scrollTop;
+}
+
+function updatePosition(): void {
+  editorStatus.textContent = positionLabel(
+    editor.value,
+    editor.selectionStart,
+    editor.selectionEnd,
+    s,
+  );
 }
 
 function refresh(): void {
   current = analyse(editor.value);
 
+  gutter.textContent = gutterHtml(editor.value);
   paintEditor();
-  panels.tokens.innerHTML = tokenRowsHtml(current.tokens);
-  panels.ast.innerHTML = astRowsHtml(current.rows);
-  panels.errors.innerHTML = diagnosticsHtml(editor.value, current.diagnostics);
+  panels.tokens.innerHTML = tokenRowsHtml(current.tokens, s);
+  panels.ast.innerHTML = astRowsHtml(current.rows, s);
+  panels.errors.innerHTML = diagnosticsHtml(editor.value, current.diagnostics, s);
 
   errorCount.textContent =
     current.diagnostics.length === 0 ? '' : String(current.diagnostics.length);
 
-  const { text, state } = statusOf(current.diagnostics);
+  const { text, state } = statusOf(current.diagnostics, s);
   status.textContent = text;
   status.dataset.state = state;
 }
@@ -194,7 +290,7 @@ function dispose(): void {
 
 function stop(): void {
   dispose();
-  status.textContent = 'ተቋርጧል';
+  status.textContent = s.statusStopped;
   status.dataset.state = 'bad';
 }
 
@@ -202,20 +298,21 @@ function start(): void {
   dispose();
 
   showPanel('output');
-  panels.output.innerHTML = '<span class="empty">ይሰራል…</span>';
+  panels.output.innerHTML = `<span class="empty">${s.emptyRunning}</span>`;
+  status.textContent = s.statusRunning;
   setRunning(true);
 
   worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 
   worker.onmessage = (event: MessageEvent<RunReply>): void => {
     const reply = event.data;
-    panels.output.innerHTML = outputHtml(reply);
+    panels.output.innerHTML = outputHtml(reply, s);
 
     if (reply.diagnostic === null) {
-      status.textContent = 'ተጠናቋል';
+      status.textContent = s.statusDone;
       status.dataset.state = 'good';
     } else {
-      panels.errors.innerHTML = diagnosticHtml(editor.value, reply.diagnostic, reply.frames);
+      panels.errors.innerHTML = diagnosticHtml(editor.value, reply.diagnostic, s, reply.frames);
       errorCount.textContent = '1';
       status.textContent = reply.diagnostic.code;
       status.dataset.state = 'bad';
@@ -225,7 +322,7 @@ function start(): void {
   };
 
   worker.onerror = (): void => {
-    panels.output.innerHTML = '<span class="empty">ያልተጠበቀ ስተት።</span>';
+    panels.output.innerHTML = `<span class="empty">${s.unexpected}</span>`;
     dispose();
   };
 
@@ -245,23 +342,53 @@ stopButton.addEventListener('click', stop);
 // conformance suite runs (§2.2)
 // ---------------------------------------------------------------------------
 
-const examples = import.meta.glob<string>('../../examples/*.ahadu', {
+const programs = import.meta.glob<string>('../../examples/*.ahadu', {
   query: '?raw',
   import: 'default',
   eager: true,
 });
 
-examplesSelect.append(new Option('—', ''));
-for (const path of Object.keys(examples).sort()) {
-  examplesSelect.append(new Option(exampleName(path), path));
+/**
+ * Programs that are meant to fail, kept in their own directory.
+ *
+ * They cannot live beside the others: `tests/conformance/run.test.ts` asserts
+ * that everything in `examples/` runs clean, which is exactly what these do
+ * not do.
+ */
+const broken = import.meta.glob<string>('../../examples/errors/*.ahadu', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+function fillExamples(): void {
+  const chosen = examplesSelect.value;
+  examplesSelect.replaceChildren();
+  examplesSelect.append(new Option(s.examplesNone, ''));
+
+  for (const [label, group] of [
+    [s.examplesPrograms, programs],
+    [s.examplesErrors, broken],
+  ] as const) {
+    const paths = Object.keys(group).sort();
+    if (paths.length === 0) continue;
+
+    const optgroup = document.createElement('optgroup');
+    optgroup.label = label;
+    for (const path of paths) optgroup.append(new Option(exampleName(path), path));
+    examplesSelect.append(optgroup);
+  }
+
+  examplesSelect.value = chosen;
 }
 
 examplesSelect.addEventListener('change', () => {
-  const source = examples[examplesSelect.value];
+  const source = programs[examplesSelect.value] ?? broken[examplesSelect.value];
   if (source === undefined) return;
   editor.value = source;
   remember(STORAGE_SOURCE, editor.value);
   refresh();
+  updatePosition();
   editor.focus();
 });
 
@@ -273,14 +400,19 @@ let timer: number | undefined;
 
 editor.addEventListener('input', () => {
   remember(STORAGE_SOURCE, editor.value);
+  // The gutter and the readout follow every keystroke; the colours wait for
+  // the debounce, since re-lexing is the expensive half.
+  gutter.textContent = gutterHtml(editor.value);
+  updatePosition();
   window.clearTimeout(timer);
   timer = window.setTimeout(refresh, DEBOUNCE_MS);
 });
 
-editor.addEventListener('scroll', () => {
-  backdrop.scrollTop = editor.scrollTop;
-  backdrop.scrollLeft = editor.scrollLeft;
-});
+for (const event of ['click', 'keyup', 'select'] as const) {
+  editor.addEventListener(event, updatePosition);
+}
+
+editor.addEventListener('scroll', syncScroll);
 
 inputBox.addEventListener('input', () => {
   remember(STORAGE_INPUT, inputBox.value);
@@ -296,6 +428,7 @@ editor.addEventListener('keydown', (event) => {
     editor.selectionEnd = from + 4;
     remember(STORAGE_SOURCE, editor.value);
     refresh();
+    updatePosition();
     return;
   }
 
@@ -310,8 +443,14 @@ editor.addEventListener('keydown', (event) => {
 // Start
 // ---------------------------------------------------------------------------
 
+const savedTheme = recall(STORAGE_THEME);
+applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : null);
+
+const savedLanguage = recall(STORAGE_LANGUAGE);
+language = savedLanguage === 'en' ? 'en' : 'am';
+
 editor.value = recall(STORAGE_SOURCE) ?? STARTER;
 inputBox.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
-panels.output.innerHTML = '<span class="empty">"አሂድ" ይጫኑ</span>';
-refresh();
+applyLanguage();
+panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;

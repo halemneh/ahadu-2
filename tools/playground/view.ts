@@ -10,9 +10,11 @@ import { tokenize } from '../../src/lexer/index.js';
 import type { Token } from '../../src/lexer/index.js';
 import { outlineAst, parse } from '../../src/parser/index.js';
 import type { AstRow } from '../../src/parser/index.js';
+import { codePoints } from '../../src/interpreter/values.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { RunReply } from './worker.js';
+import type { Strings } from './strings.js';
 
 export interface Analysis {
   readonly tokens: readonly Token[];
@@ -41,6 +43,62 @@ export function analyse(source: string): Analysis {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Editor furniture
+// ---------------------------------------------------------------------------
+
+export interface Position {
+  readonly line: number;
+  readonly column: number;
+}
+
+/**
+ * Where a character offset falls, as a line and column.
+ *
+ * The column counts **code points**, so the readout agrees with the columns
+ * in a diagnostic (LANGUAGE.md §2.2). Counting UTF-16 units instead would
+ * report a different column for the same place as soon as an astral character
+ * is on the line, and the editor would be quietly disagreeing with the errors
+ * it displays.
+ *
+ * The offset arrives from a textarea's `selectionStart`, which *is* a UTF-16
+ * index, so the conversion happens here.
+ */
+export function cursorPosition(source: string, offset: number): Position {
+  const upto = source.slice(0, Math.max(0, offset));
+  const breaks = upto.split('\n');
+  const lastLine = breaks[breaks.length - 1] ?? '';
+  return { line: breaks.length, column: codePoints(lastLine).length + 1 };
+}
+
+/** The line numbers for a source, one per line, as the gutter shows them. */
+export function lineNumbers(source: string): number[] {
+  return source.split('\n').map((_, i) => i + 1);
+}
+
+export function gutterHtml(source: string): string {
+  return lineNumbers(source)
+    .map((n) => String(n))
+    .join('\n');
+}
+
+/** The readout under the editor: a position, or a count when text is selected. */
+export function positionLabel(
+  source: string,
+  selectionStart: number,
+  selectionEnd: number,
+  s: Strings,
+): string {
+  const { line, column } = cursorPosition(source, selectionStart);
+  const selected = codePoints(source.slice(selectionStart, selectionEnd)).length;
+  const position = s.position(line, column);
+  return selected === 0 ? position : `${position}  ·  ${s.selection(selected)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Panels
+// ---------------------------------------------------------------------------
+
 /** The span attributes a row carries so the editor can highlight its source. */
 function spanAttributes(region: {
   line: number;
@@ -52,8 +110,12 @@ function spanAttributes(region: {
   return ` data-line="${region.line}" data-start="${region.startCol}" data-end-line="${endLine}" data-end="${region.endCol}"`;
 }
 
-export function tokenRowsHtml(tokens: readonly Token[]): string {
-  if (tokens.length === 0) return '<span class="empty">ምንም ቶከን የለም</span>';
+function empty(text: string): string {
+  return `<span class="empty">${escapeHtml(text)}</span>`;
+}
+
+export function tokenRowsHtml(tokens: readonly Token[], s: Strings): string {
+  if (tokens.length === 0) return empty(s.emptyTokens);
 
   return tokens
     .map((token) => {
@@ -78,8 +140,8 @@ export function tokenRowsHtml(tokens: readonly Token[]): string {
     .join('');
 }
 
-export function astRowsHtml(rows: readonly AstRow[]): string {
-  if (rows.length === 0) return '<span class="empty">ምንም ዛፍ የለም</span>';
+export function astRowsHtml(rows: readonly AstRow[], s: Strings): string {
+  if (rows.length === 0) return empty(s.emptyAst);
 
   return rows
     .map((row) => {
@@ -91,10 +153,17 @@ export function astRowsHtml(rows: readonly AstRow[]): string {
     .join('');
 }
 
-/** A diagnostic as the panel shows it: code, message, position, source line, traceback. */
+/**
+ * A diagnostic as the panel shows it.
+ *
+ * The message is the interpreter's own Amharic and is not translated — it is
+ * part of the language (LANGUAGE.md §9), not of this page. The position line
+ * around it is ours, so it follows the chosen language.
+ */
 export function diagnosticHtml(
   source: string,
   d: Diagnostic,
+  s: Strings,
   frames: readonly Frame[] = [],
 ): string {
   const line = source.split('\n')[d.line - 1] ?? '';
@@ -104,25 +173,31 @@ export function diagnosticHtml(
       : `<div class="frames">${frames
           .map(
             (frame, depth) =>
-              `${'  '.repeat(depth)}${depth === 0 ? '' : '↓ '}መስመር ${frame.line} ላይ ${escapeHtml(frame.name)}`,
+              `${'  '.repeat(depth)}${depth === 0 ? '' : '↓ '}${escapeHtml(
+                s.traceAt(frame.line, frame.name),
+              )}`,
           )
           .join('\n')}</div>`;
 
   return (
     `<div class="diag"${spanAttributes(d)}>` +
     `<span class="code">[${d.code}]</span> ${escapeHtml(d.message)}\n` +
-    `<span class="where">መስመር ${d.line} ላይ: ${d.startCol}ኛው ካራክተር</span>\n\n` +
+    `<span class="where">${escapeHtml(s.at(d.line, d.startCol))}</span>\n\n` +
     `    ${d.line}: ${escapeHtml(line)}\n${stack}</div>`
   );
 }
 
-export function diagnosticsHtml(source: string, diagnostics: readonly Diagnostic[]): string {
-  if (diagnostics.length === 0) return '<span class="empty">ምንም ስተት አልተገኘም።</span>';
-  return diagnostics.map((d) => diagnosticHtml(source, d)).join('');
+export function diagnosticsHtml(
+  source: string,
+  diagnostics: readonly Diagnostic[],
+  s: Strings,
+): string {
+  if (diagnostics.length === 0) return empty(s.emptyErrors);
+  return diagnostics.map((d) => diagnosticHtml(source, d, s)).join('');
 }
 
 /** The output panel after a run: what was printed, then the value or the error. */
-export function outputHtml(reply: RunReply): string {
+export function outputHtml(reply: RunReply, s: Strings): string {
   const parts: string[] = [];
 
   if (reply.output !== '') parts.push(escapeHtml(reply.output.replace(/\n$/, '')));
@@ -132,10 +207,12 @@ export function outputHtml(reply: RunReply): string {
       `<span class="value">[${reply.diagnostic.code}] ${escapeHtml(reply.diagnostic.message)}</span>`,
     );
   } else if (reply.value !== null) {
-    parts.push(`<span class="value">ዋጋ፦ ${escapeHtml(reply.value)}</span>`);
+    parts.push(
+      `<span class="value">${escapeHtml(s.valuePrefix)} ${escapeHtml(reply.value)}</span>`,
+    );
   }
 
-  return parts.length === 0 ? '<span class="empty">ምንም ውጤት የለም</span>' : parts.join('\n');
+  return parts.length === 0 ? empty(s.emptyOutput) : parts.join('\n');
 }
 
 export interface Status {
@@ -143,9 +220,9 @@ export interface Status {
   readonly state: 'good' | 'bad';
 }
 
-export function statusOf(diagnostics: readonly Diagnostic[]): Status {
-  if (diagnostics.length === 0) return { text: 'ምንም ስተት የለም', state: 'good' };
-  return { text: `${diagnostics.length} ስተት`, state: 'bad' };
+export function statusOf(diagnostics: readonly Diagnostic[], s: Strings): Status {
+  if (diagnostics.length === 0) return { text: s.statusClean, state: 'good' };
+  return { text: s.statusErrors(diagnostics.length), state: 'bad' };
 }
 
 /** The example name shown in the menu, from its path. */

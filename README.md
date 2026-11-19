@@ -174,6 +174,12 @@ program runs in a worker with a step budget — an endless loop reports
 `AH3018` instead of freezing the tab. The whole page is static and sends
 nothing anywhere.
 
+It has a line-number gutter, a position readout whose column agrees with the
+one in every diagnostic, light and dark themes, and a toggle that puts the
+page's own text into English. Error messages stay Amharic: they come from the
+interpreter, where the language spec makes them normative. The examples menu
+carries the working programs and a second group of deliberately broken ones.
+
 Every stage of the interpreter is inspectable from the command line, and the
 playground shows tokens and the AST live as you type. That is deliberate: the
 interpreter is itself a teaching artifact. See [`spec/TOOLING.md`](spec/TOOLING.md).
