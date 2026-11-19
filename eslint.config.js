@@ -29,6 +29,11 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: { project: false, projectService: false },
     },
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      // Annotating a script that is never imported adds noise, not safety.
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
   },
   prettier,
 );
