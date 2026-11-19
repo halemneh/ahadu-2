@@ -147,6 +147,19 @@ brackets.
 - A **ስተቶች** panel joins the three the first draft named, carrying the full
   text of every diagnostic. The tab shows a count.
 
+  Each diagnostic is a card — bordered, with the error colour down its left
+  edge — so a panel holding several reads as several things rather than as one
+  wall of text. Inside the card the offending line appears as a snippet with
+  its own background and its own gutter, coloured by the editor's highlighter
+  from the same tokens, so a snippet cannot disagree with the code it came
+  from. The diagnostic's span is underlined in place, which needs no caret row
+  to line up — and so avoids the alignment trouble Ethiopic's variable width
+  gives the CLI's `^^^` (§1).
+
+  The code appears as a badge rather than bracketed: `[AH3003]` is how a
+  plain-text stream has to say it, and a styled panel does not need the
+  brackets. The invariant is the same either way — the code is always shown.
+
 - Two toggles: **theme** (light and dark, following the system until someone
   chooses, then remembering the choice) and **language**, which switches the
   page's own text between Amharic and English.

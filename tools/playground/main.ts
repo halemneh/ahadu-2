@@ -233,7 +233,10 @@ function paintErrors(): void {
   const entries = reported(current.diagnostics);
   if (runtimeError !== null) entries.push(runtimeError);
 
-  panels.errors.innerHTML = diagnosticsHtml(editor.value, entries, s);
+  panels.errors.innerHTML = diagnosticsHtml(
+    { source: editor.value, strings: s, tokens: current.tokens },
+    entries,
+  );
   errorCount.textContent = entries.length === 0 ? '' : String(entries.length);
 }
 

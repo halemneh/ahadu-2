@@ -15,6 +15,7 @@ import type { Diagnostic } from '../../src/diagnostics.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { RunReply } from './evaluate.js';
 import type { Strings } from './strings.js';
+import { highlightLine } from './highlight.js';
 
 export interface Analysis {
   readonly tokens: readonly Token[];
@@ -153,44 +154,90 @@ export function astRowsHtml(rows: readonly AstRow[], s: Strings): string {
     .join('');
 }
 
-/**
- * A diagnostic as the panel shows it.
- *
- * The message is the interpreter's own Amharic and is not translated — it is
- * part of the language (LANGUAGE.md §9), not of this page. The position line
- * around it is ours, so it follows the chosen language.
- */
-export function diagnosticHtml(
-  source: string,
-  d: Diagnostic,
-  s: Strings,
-  frames: readonly Frame[] = [],
-): string {
-  const line = source.split('\n')[d.line - 1] ?? '';
-  const stack =
-    frames.length <= 1
-      ? ''
-      : `<div class="frames">${frames
-          .map(
-            (frame, depth) =>
-              `${'  '.repeat(depth)}${depth === 0 ? '' : '↓ '}${escapeHtml(
-                s.traceAt(frame.line, frame.name),
-              )}`,
-          )
-          .join('\n')}</div>`;
-
-  return (
-    `<div class="diag"${spanAttributes(d)}>` +
-    `<span class="code">[${d.code}]</span> ${escapeHtml(d.message)}\n` +
-    `<span class="where">${escapeHtml(s.at(d.line, d.startCol))}</span>\n\n` +
-    `    ${d.line}: ${escapeHtml(line)}\n${stack}</div>`
-  );
+/** What a diagnostic needs around it to be rendered. */
+export interface DiagnosticView {
+  readonly source: string;
+  readonly strings: Strings;
+  /**
+   * The tokens of `source`, used to colour the snippet.
+   *
+   * Optional: a runtime error arrives with them available, but a caller that
+   * has none still gets a readable snippet, just an uncoloured one.
+   */
+  readonly tokens?: readonly Token[];
 }
 
 /** A diagnostic together with the call stack it carried, if it had one. */
 export interface Reported {
   readonly diagnostic: Diagnostic;
   readonly frames?: readonly Frame[];
+}
+
+/** Wraps plain diagnostics, which carry no traceback. */
+export function reported(diagnostics: readonly Diagnostic[]): Reported[] {
+  return diagnostics.map((diagnostic) => ({ diagnostic }));
+}
+
+/**
+ * The offending line, as a snippet with its own gutter.
+ *
+ * Coloured by the editor's own highlighter, from the same tokens, so a snippet
+ * cannot disagree with the code it was taken from — and the diagnostic's span
+ * is underlined in place, which needs no caret row to line up.
+ */
+function snippetHtml(view: DiagnosticView, d: Diagnostic): string {
+  const raw = view.source.split('\n')[d.line - 1] ?? '';
+  const code =
+    view.tokens === undefined
+      ? escapeHtml(raw)
+      : highlightLine(view.source, view.tokens, d.line, d);
+
+  return (
+    `<div class="snippet">` +
+    `<span class="snippet-gutter" aria-hidden="true">${d.line}</span>` +
+    `<code class="snippet-code">${code === '' ? ' ' : code}</code>` +
+    `</div>`
+  );
+}
+
+function framesHtml(frames: readonly Frame[], s: Strings): string {
+  if (frames.length <= 1) return '';
+  const rows = frames
+    .map(
+      (frame, depth) =>
+        `<span class="frame" style="padding-left:${depth}rem">` +
+        `${depth === 0 ? '' : '↓ '}${escapeHtml(s.traceAt(frame.line, frame.name))}</span>`,
+    )
+    .join('');
+  return `<div class="frames">${rows}</div>`;
+}
+
+/**
+ * One diagnostic, as a card.
+ *
+ * Each is a bordered block with the error colour down its left edge, so a
+ * panel holding several reads as several things rather than as one wall of
+ * text (TOOLING.md §2.1).
+ *
+ * The message itself is the interpreter's own Amharic and is not translated —
+ * it is part of the language (LANGUAGE.md §9), not of this page. The code and
+ * the position line around it are ours.
+ */
+export function diagnosticHtml(view: DiagnosticView, entry: Reported): string {
+  const { diagnostic: d, frames = [] } = entry;
+  const s = view.strings;
+
+  return (
+    `<div class="diag"${spanAttributes(d)}>` +
+    `<div class="diag-head">` +
+    `<span class="code">${d.code}</span>` +
+    `<span class="diag-message">${escapeHtml(d.message)}</span>` +
+    `</div>` +
+    `<div class="diag-where">${escapeHtml(s.at(d.line, d.startCol))}</div>` +
+    snippetHtml(view, d) +
+    framesHtml(frames, s) +
+    `</div>`
+  );
 }
 
 /**
@@ -200,16 +247,9 @@ export interface Reported {
  * parser's findings, carrying its own traceback, rather than replacing them.
  * Replacing them is what made a file with five problems look like it had one.
  */
-export function diagnosticsHtml(source: string, entries: readonly Reported[], s: Strings): string {
-  if (entries.length === 0) return empty(s.emptyErrors);
-  return entries
-    .map((entry) => diagnosticHtml(source, entry.diagnostic, s, entry.frames ?? []))
-    .join('');
-}
-
-/** Wraps plain diagnostics, which carry no traceback. */
-export function reported(diagnostics: readonly Diagnostic[]): Reported[] {
-  return diagnostics.map((diagnostic) => ({ diagnostic }));
+export function diagnosticsHtml(view: DiagnosticView, entries: readonly Reported[]): string {
+  if (entries.length === 0) return empty(view.strings.emptyErrors);
+  return entries.map((entry) => diagnosticHtml(view, entry)).join('');
 }
 
 /** The output panel after a run: what was printed, then the value or the error. */

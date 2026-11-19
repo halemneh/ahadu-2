@@ -131,18 +131,20 @@ function markComments(grid: Cell[][]): void {
   }
 }
 
-/**
- * Renders source as HTML for the editor's backdrop.
- *
- * Every line is emitted, including empty ones, so the backdrop's line count
- * matches the textarea's exactly — otherwise the two drift apart as soon as
- * the program has a blank line in it.
- */
-export function highlight(input: HighlightInput): string {
-  const lines = input.source.split('\n');
-  const grid: Cell[][] = lines.map((line) =>
-    codePoints(line).map((char) => ({ char, cls: '', bad: false, hot: false })),
-  );
+/** What `build` needs: regions rather than diagnostics, since marks are positional. */
+interface Marks {
+  readonly source: string;
+  readonly tokens: readonly Token[];
+  /** Underlined as a problem. A `Diagnostic` already has this shape. */
+  readonly bad?: readonly Region[];
+  readonly hot?: Region | null;
+}
+
+/** Builds the per-column grid for a source, with every mark applied. */
+function build(input: Marks): Cell[][] {
+  const grid: Cell[][] = input.source
+    .split('\n')
+    .map((line) => codePoints(line).map((char) => ({ char, cls: '', bad: false, hot: false })));
 
   for (const token of input.tokens) {
     const cells = grid[token.line - 1];
@@ -157,42 +159,75 @@ export function highlight(input: HighlightInput): string {
 
   markComments(grid);
 
-  for (const d of input.diagnostics ?? []) markRegion(grid, d, 'bad');
-  if (input.hovered != null) markRegion(grid, input.hovered, 'hot');
+  for (const region of input.bad ?? []) markRegion(grid, region, 'bad');
+  if (input.hot != null) markRegion(grid, input.hot, 'hot');
 
-  return (
-    grid
-      .map((cells) => {
-        if (cells.length === 0) return '';
+  return grid;
+}
 
-        const parts: string[] = [];
-        let run = '';
-        let key = '';
+/** Emits one line, coalescing neighbouring columns that share their classes. */
+function renderLine(cells: readonly Cell[]): string {
+  if (cells.length === 0) return '';
 
-        const flush = (): void => {
-          if (run === '') return;
-          parts.push(
-            key === '' ? escapeHtml(run) : `<span class="${key}">${escapeHtml(run)}</span>`,
-          );
-          run = '';
-        };
+  const parts: string[] = [];
+  let run = '';
+  let key = '';
 
-        for (const cell of cells) {
-          const classes = [cell.cls, cell.bad ? 'tk-bad' : '', cell.hot ? 'tk-hot' : '']
-            .filter((c) => c !== '')
-            .join(' ');
-          if (classes !== key) {
-            flush();
-            key = classes;
-          }
-          run += cell.char;
-        }
-        flush();
+  const flush = (): void => {
+    if (run === '') return;
+    parts.push(key === '' ? escapeHtml(run) : `<span class="${key}">${escapeHtml(run)}</span>`);
+    run = '';
+  };
 
-        return parts.join('');
-      })
-      // A trailing newline keeps the last line scrollable into view, matching
-      // how a textarea treats one.
-      .join('\n')
-  );
+  for (const cell of cells) {
+    const classes = [cell.cls, cell.bad ? 'tk-bad' : '', cell.hot ? 'tk-hot' : '']
+      .filter((c) => c !== '')
+      .join(' ');
+    if (classes !== key) {
+      flush();
+      key = classes;
+    }
+    run += cell.char;
+  }
+  flush();
+
+  return parts.join('');
+}
+
+/**
+ * Renders source as HTML for the editor's backdrop.
+ *
+ * Every line is emitted, including empty ones, so the backdrop's line count
+ * matches the textarea's exactly — otherwise the two drift apart as soon as
+ * the program has a blank line in it.
+ */
+export function highlight(input: HighlightInput): string {
+  return build({
+    source: input.source,
+    tokens: input.tokens,
+    bad: input.diagnostics ?? [],
+    hot: input.hovered ?? null,
+  })
+    .map(renderLine)
+    .join('\n');
+}
+
+/**
+ * Renders a single line, for the snippet inside a diagnostic.
+ *
+ * The same colours as the editor, from the same tokens, so a snippet cannot
+ * disagree with the code it was taken from. The diagnostic's own span is
+ * marked, which underlines the offending characters *in place* — no caret row
+ * to align, and so none of the trouble Ethiopic's variable width gives the
+ * CLI's `^^^` (TOOLING.md §1).
+ */
+export function highlightLine(
+  source: string,
+  tokens: readonly Token[],
+  line: number,
+  mark?: Region | null,
+): string {
+  const grid = build({ source, tokens, bad: mark == null ? [] : [mark] });
+  const cells = grid[line - 1];
+  return cells === undefined ? '' : renderLine(cells);
 }

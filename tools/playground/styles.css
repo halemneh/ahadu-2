@@ -456,22 +456,96 @@ button:hover {
 
 /* ---- diagnostics ---- */
 
+/*
+ * Each one is a card, so a panel holding several reads as several things
+ * rather than as one wall of text. The error colour runs down the left edge,
+ * which separates them without a rule between.
+ */
 .diag {
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--bad);
+  border-radius: 6px;
+  background: var(--panel);
+  white-space: normal;
 }
 
+.diag:last-child {
+  margin-bottom: 0;
+}
+
+.diag-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+/* The code as a badge: a styled panel does not need the CLI's brackets. */
 .diag .code {
-  color: var(--bad);
+  flex: none;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+  background: var(--bad);
+  color: var(--bg);
+  font-size: 0.76rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.diag .where {
+.diag-message {
+  color: var(--ink);
+}
+
+.diag-where {
+  margin-top: 0.25rem;
   color: var(--muted);
+  font-size: 0.8rem;
+}
+
+/*
+ * The offending line, with its own background and its own gutter so it reads
+ * as a quotation of the code rather than as more prose. Colours come from the
+ * editor's highlighter, so the two cannot disagree.
+ */
+.snippet {
+  display: flex;
+  margin-top: 0.5rem;
+  border: 1px solid var(--edge);
+  border-radius: 4px;
+  background: var(--bg);
+  overflow-x: auto;
+  line-height: 1.6;
+}
+
+.snippet-gutter {
+  flex: none;
+  min-width: 2.6rem;
+  padding: 0.3rem 0.5rem;
+  border-right: 1px solid var(--edge);
+  background: var(--panel);
+  color: var(--gutter);
+  font-size: 0.8rem;
+  text-align: right;
+  user-select: none;
+}
+
+.snippet-code {
+  padding: 0.3rem 0.7rem;
+  white-space: pre;
+  font-family: var(--code);
 }
 
 .diag .frames {
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--edge);
   color: var(--muted);
-  margin-top: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.frame {
+  display: block;
 }
 
 .empty {

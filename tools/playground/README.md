@@ -56,3 +56,11 @@ the others. It used to replace them, which made a file with five problems look
 like it had one, and `evaluate` compounded it by returning only the first
 diagnostic of the stage that stopped. Both are covered by
 `tests/unit/playground/run-reply.test.ts`; keep them that way.
+
+**A diagnostic's snippet uses `highlightLine`, not its own colouring.** Same
+function as the editor's backdrop, same tokens, so a snippet cannot disagree
+with the code it was taken from — there is a test asserting the snippet for a
+line equals the editor's rendering of it. Marking the diagnostic's span also
+underlines the offending characters in place, which is why there is no caret
+row: nothing to align, and so none of the trouble Ethiopic's variable width
+gives the CLI's `^^^`.

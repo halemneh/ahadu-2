@@ -19,6 +19,7 @@ import {
   tokenRowsHtml,
 } from '../../../tools/playground/view.js';
 import { diagnostic } from '../../../src/diagnostics.js';
+import { highlight, highlightLine } from '../../../tools/playground/highlight.js';
 import { strings } from '../../../tools/playground/strings.js';
 import type { RunReply } from '../../../tools/playground/evaluate.js';
 
@@ -130,41 +131,56 @@ describe('the errors panel (§1.3)', () => {
   const d = diagnostic('AH3003', 'runtime', 2, 5, 9, 'በዘሮ ማካፈል አይቻልም።');
 
   it('always carries the code, so it can be quoted', () => {
-    expect(diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d, am)).toContain('[AH3003]');
+    // Shown as a badge rather than bracketed: the panel is styled, so the
+    // brackets the CLI needs are decoration here (TOOLING.md §2.1).
+    const html = diagnosticHtml({ source: 'ሀ = 1\nጻፍ(ሀ / 0)', strings: am }, { diagnostic: d });
+    expect(html).toContain('class="code">AH3003<');
   });
 
   it('shows the message, the position and the source line', () => {
-    const html = diagnosticHtml('ሀ = 1\nጻፍ(ሀ / 0)', d, am);
+    const html = diagnosticHtml({ source: 'ሀ = 1\nጻፍ(ሀ / 0)', strings: am }, { diagnostic: d });
     expect(html).toContain('በዘሮ');
     expect(html).toContain('መስመር 2 ላይ');
     expect(html).toContain('ጻፍ(ሀ / 0)');
   });
 
   it('carries the span so hovering it highlights the source', () => {
-    expect(regions(diagnosticHtml('ሀ\nጻፍ(ሀ / 0)', d, am))).toEqual(['2:5-2:9']);
+    expect(
+      regions(diagnosticHtml({ source: 'ሀ\nጻፍ(ሀ / 0)', strings: am }, { diagnostic: d })),
+    ).toEqual(['2:5-2:9']);
   });
 
   it('includes a traceback when the error was inside a call', () => {
-    const html = diagnosticHtml('ሀ', d, am, [
-      { name: 'ዋና ፕሮግራም', line: 4 },
-      { name: 'ሀ', line: 2 },
-    ]);
+    const html = diagnosticHtml(
+      { source: 'ሀ', strings: am },
+      {
+        diagnostic: d,
+        frames: [
+          { name: 'ዋና ፕሮግራም', line: 4 },
+          { name: 'ሀ', line: 2 },
+        ],
+      },
+    );
     expect(html).toContain('class="frames"');
     expect(html).toContain('ዋና ፕሮግራም');
     expect(html).toContain('↓');
   });
 
   it('leaves the traceback out otherwise', () => {
-    expect(diagnosticHtml('ሀ', d, am)).not.toContain('class="frames"');
+    expect(diagnosticHtml({ source: 'ሀ', strings: am }, { diagnostic: d })).not.toContain(
+      'class="frames"',
+    );
   });
 
   it('says so when a program is clean', () => {
-    expect(diagnosticsHtml('ሀ = 1', [], am)).toContain('ምንም ስተት አልተገኘም');
+    expect(diagnosticsHtml({ source: 'ሀ = 1', strings: am }, [])).toContain('ምንም ስተት አልተገኘም');
   });
 
   it('survives a line number past the end of the source', () => {
     const beyond = diagnostic('AH2001', 'parser', 99, 1, 1, 'x');
-    expect(() => diagnosticHtml('ሀ', beyond, am)).not.toThrow();
+    expect(() =>
+      diagnosticHtml({ source: 'ሀ', strings: am }, { diagnostic: beyond }),
+    ).not.toThrow();
   });
 });
 
@@ -238,5 +254,101 @@ describe('escapeHtml', () => {
 
   it('leaves Amharic alone', () => {
     expect(escapeHtml('ሰላም ዓለም')).toBe('ሰላም ዓለም');
+  });
+});
+
+describe('a diagnostic card (§2.1)', () => {
+  const source = 'ሀ = 1\nጻፍ(ሀ / 0)';
+  const d = diagnostic('AH3003', 'runtime', 2, 5, 9, 'በዘሮ ማካፈል አይቻልም።');
+  const tokens = analyse(source).tokens;
+  const view = { source, strings: am, tokens };
+
+  it('is one bordered block, so several read as several things', () => {
+    const html = diagnosticsHtml(view, [{ diagnostic: d }, { diagnostic: d }]);
+    expect(html.match(/class="diag"/g)).toHaveLength(2);
+  });
+
+  it('separates the code badge, the message and the position', () => {
+    const html = diagnosticHtml(view, { diagnostic: d });
+    expect(html).toContain('class="diag-head"');
+    expect(html).toContain('class="code">AH3003<');
+    expect(html).toContain('class="diag-message"');
+    expect(html).toContain('class="diag-where"');
+  });
+
+  it('quotes the offending line as a snippet with its own gutter', () => {
+    const html = diagnosticHtml(view, { diagnostic: d });
+    expect(html).toContain('class="snippet"');
+    expect(html).toContain('class="snippet-gutter" aria-hidden="true">2<');
+    expect(html).toContain('class="snippet-code"');
+  });
+
+  it('numbers the snippet by the line the error is on, not by 1', () => {
+    const html = diagnosticHtml(view, { diagnostic: d });
+    expect(html).toContain('>2<');
+    expect(html).not.toContain('class="snippet-gutter" aria-hidden="true">1<');
+  });
+
+  it('colours the snippet, and marks the span inside it', () => {
+    const html = diagnosticHtml(view, { diagnostic: d });
+    expect(html).toContain('tk-id'); // ጻፍ
+    expect(html).toContain('tk-num'); // 0
+    expect(html).toContain('tk-bad'); // the span the error covers
+  });
+
+  it('colours the snippet exactly as the editor colours that line', () => {
+    // Same highlighter, same tokens: a snippet cannot disagree with the code
+    // it was taken from.
+    const fromEditor = highlight({ source, tokens }).split('\n')[1];
+    const fromSnippet = highlightLine(source, tokens, 2);
+    expect(fromSnippet).toBe(fromEditor);
+  });
+
+  it('falls back to plain text when no tokens are supplied', () => {
+    const html = diagnosticHtml({ source, strings: am }, { diagnostic: d });
+    expect(html).toContain('class="snippet-code"');
+    expect(html).toContain('ጻፍ(ሀ / 0)');
+    expect(html).not.toContain('tk-');
+  });
+
+  it('keeps a snippet for an empty line, so the card does not collapse', () => {
+    const blank = diagnostic('AH2006', 'parser', 2, 1, 1, 'ብሎኩ ባዶ ነው።');
+    const html = diagnosticHtml({ source: 'ሀ\n\nለ', strings: am }, { diagnostic: blank });
+    expect(html).toContain('class="snippet-code"> <');
+  });
+
+  it('shows a traceback under a rule, one frame per row', () => {
+    const html = diagnosticHtml(view, {
+      diagnostic: d,
+      frames: [
+        { name: 'ዋና ፕሮግራም', line: 4 },
+        { name: 'አካፍል', line: 2 },
+      ],
+    });
+    expect(html).toContain('class="frames"');
+    expect(html.match(/class="frame"/g)).toHaveLength(2);
+    expect(html).toContain('↓');
+  });
+
+  it('indents each frame below the one that called it', () => {
+    const html = diagnosticHtml(view, {
+      diagnostic: d,
+      frames: [
+        { name: 'ሀ', line: 1 },
+        { name: 'ለ', line: 2 },
+        { name: 'ሐ', line: 3 },
+      ],
+    });
+    expect(html).toContain('padding-left:0rem');
+    expect(html).toContain('padding-left:2rem');
+  });
+
+  it('escapes the source it quotes', () => {
+    const html = diagnosticHtml(
+      { source: 'ሀ = "<img>"', strings: am },
+      { diagnostic: diagnostic('AH2001', 'parser', 1, 1, 1, 'x') },
+    );
+    expect(html).not.toContain('<img>');
+    expect(html).toContain('&lt;img&gt;');
   });
 });

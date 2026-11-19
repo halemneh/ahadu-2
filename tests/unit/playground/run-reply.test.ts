@@ -99,7 +99,7 @@ describe('the errors panel shows all of them', () => {
   it('renders one block per diagnostic', () => {
     const source = example('01-የቃላት-ስተቶች.ahadu');
     const entries = reported(analyse(source).diagnostics);
-    const html = diagnosticsHtml(source, entries, am);
+    const html = diagnosticsHtml({ source: source, strings: am }, entries);
 
     expect(entries.length).toBeGreaterThanOrEqual(4);
     expect(html.match(/class="diag"/g)).toHaveLength(entries.length);
@@ -108,9 +108,9 @@ describe('the errors panel shows all of them', () => {
   it('shows each code once, in source order', () => {
     const source = example('02-የአገባብ-ስተቶች.ahadu');
     const live = analyse(source).diagnostics;
-    const html = diagnosticsHtml(source, reported(live), am);
+    const html = diagnosticsHtml({ source, strings: am }, reported(live));
 
-    const shown = [...html.matchAll(/\[(AH\d{4})\]/g)].map((m) => m[1]);
+    const shown = [...html.matchAll(/class="code">(AH\d{4})</g)].map((m) => m[1]);
     expect(shown).toEqual(live.map((d) => d.code));
   });
 
@@ -133,15 +133,15 @@ describe('the errors panel shows all of them', () => {
       ],
     };
 
-    const html = diagnosticsHtml(source, [...reported(live), runtime], am);
+    const html = diagnosticsHtml({ source: source, strings: am }, [...reported(live), runtime]);
     expect(html.match(/class="diag"/g)).toHaveLength(live.length + 1);
-    expect(html).toContain('[AH3001]');
+    expect(html).toContain('class="code">AH3001<');
     // Only the runtime one carries a traceback.
     expect(html.match(/class="frames"/g)).toHaveLength(1);
   });
 
   it('says so when there is nothing wrong', () => {
-    expect(diagnosticsHtml('ሀ = 1', [], am)).toContain('ምንም ስተት አልተገኘም');
+    expect(diagnosticsHtml({ source: 'ሀ = 1', strings: am }, [])).toContain('ምንም ስተት አልተገኘም');
   });
 });
 

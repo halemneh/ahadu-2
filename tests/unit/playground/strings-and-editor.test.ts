@@ -72,22 +72,31 @@ describe('what each language changes', () => {
 
   it('translates the position line around a diagnostic', () => {
     const d = diagnostic('AH3001', 'runtime', 3, 7, 9, 'ያልታወቀ ተለዋጭ');
-    expect(diagnosticHtml('ሀ\nለ\nሐ', d, am)).toContain('መስመር 3 ላይ');
-    expect(diagnosticHtml('ሀ\nለ\nሐ', d, en)).toContain('line 3, column 7');
+    expect(diagnosticHtml({ source: 'ሀ\nለ\nሐ', strings: am }, { diagnostic: d })).toContain(
+      'መስመር 3 ላይ',
+    );
+    expect(diagnosticHtml({ source: 'ሀ\nለ\nሐ', strings: en }, { diagnostic: d })).toContain(
+      'line 3, column 7',
+    );
   });
 
   it('leaves the interpreter’s own message alone in both', () => {
     // The Amharic in a diagnostic is the language, not the page: LANGUAGE.md
     // §9 makes it normative, so neither catalogue restates it.
     const d = diagnostic('AH3001', 'runtime', 1, 1, 3, 'ያልታወቀ ተለዋጭ');
-    expect(diagnosticHtml('ሀለሐ', d, am)).toContain('ያልታወቀ ተለዋጭ');
-    expect(diagnosticHtml('ሀለሐ', d, en)).toContain('ያልታወቀ ተለዋጭ');
+    expect(diagnosticHtml({ source: 'ሀለሐ', strings: am }, { diagnostic: d })).toContain(
+      'ያልታወቀ ተለዋጭ',
+    );
+    expect(diagnosticHtml({ source: 'ሀለሐ', strings: en }, { diagnostic: d })).toContain(
+      'ያልታወቀ ተለዋጭ',
+    );
   });
 
   it('keeps the code visible in both, since it is language-neutral', () => {
     const d = diagnostic('AH3001', 'runtime', 1, 1, 1, 'ያልታወቀ ተለዋጭ');
-    expect(diagnosticHtml('ሀ', d, am)).toContain('[AH3001]');
-    expect(diagnosticHtml('ሀ', d, en)).toContain('[AH3001]');
+    const badge = 'class="code">AH3001<';
+    expect(diagnosticHtml({ source: 'ሀ', strings: am }, { diagnostic: d })).toContain(badge);
+    expect(diagnosticHtml({ source: 'ሀ', strings: en }, { diagnostic: d })).toContain(badge);
   });
 
   it('translates a traceback frame', () => {
@@ -96,8 +105,12 @@ describe('what each language changes', () => {
       { name: 'ዋና ፕሮግራም', line: 4 },
       { name: 'አካፍል', line: 2 },
     ];
-    expect(diagnosticHtml('ሀ\nለ', d, am, frames)).toContain('መስመር 4 ላይ ዋና ፕሮግራም');
-    expect(diagnosticHtml('ሀ\nለ', d, en, frames)).toContain('line 4 in ዋና ፕሮግራም');
+    expect(
+      diagnosticHtml({ source: 'ሀ\nለ', strings: am }, { diagnostic: d, frames: frames }),
+    ).toContain('መስመር 4 ላይ ዋና ፕሮግራም');
+    expect(
+      diagnosticHtml({ source: 'ሀ\nለ', strings: en }, { diagnostic: d, frames: frames }),
+    ).toContain('line 4 in ዋና ፕሮግራም');
   });
 });
 
