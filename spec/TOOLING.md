@@ -103,9 +103,16 @@ captures exactly what the program printed.
 
 ### 1.5 Performance budget
 
-These are the numbers the conformance suite asserts, on a 1,000-line program:
-lexing under 50 ms, parsing under 100 ms. The budget exists so that the
-playground can re-lex and re-parse on every keystroke.
+On a 1,000-line program: lexing under 50 ms, parsing under 100 ms. The budget
+exists so that the playground can re-lex and re-parse on every keystroke.
+
+These figures are for uninstrumented code on a developer machine, and that is
+**not** what the test suite enforces. Under v8 coverage on a shared CI runner
+the same work costs several times as much, so a test pinned to these numbers
+measures the runner's weather rather than the code: one did, passing for weeks
+at the edge and then failing at 63 ms. The suite enforces a ceiling an order of
+magnitude higher, which still catches what such a test is worth having — an
+accidental quadratic, which would cost seconds — without flaking.
 
 ### 1.6 `ahadu fmt`
 
