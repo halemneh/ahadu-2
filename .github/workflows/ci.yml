@@ -19,3 +19,6 @@ jobs:
       - run: npm run format:check
       - run: npm run build
       - run: npm run test:coverage
+      # The playground has its own build path — vite, over browser code —
+      # which `npm run build` (tsc over src/) never exercises.
+      - run: npm run play:build
