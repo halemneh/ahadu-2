@@ -37,6 +37,7 @@
     "dev": "tsc --watch",
     "repl": "npm run build && node dist/cli/main.js",
     "play": "vite --config tools/playground/vite.config.ts",
+    "play:build": "vite build --config tools/playground/vite.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

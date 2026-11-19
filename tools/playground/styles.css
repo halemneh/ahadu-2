@@ -1,0 +1,406 @@
+/*
+ * Playground styles (TOOLING.md §2.1).
+ *
+ * No web font is loaded: the spec says nothing is sent anywhere, and fetching
+ * Noto Serif Ethiopic from a font CDN would be a request. The stack below
+ * prefers whatever Ethiopic face the system has.
+ */
+
+:root {
+  --bg: #16181d;
+  --panel: #1d2026;
+  --edge: #2b303a;
+  --ink: #e6e8ee;
+  --muted: #8b93a7;
+  --accent: #6bb3ff;
+  --kw: #c792ea;
+  --type: #82d2b0;
+  --str: #a5d6a7;
+  --num: #f7c67f;
+  --lit: #ff9e9e;
+  --comment: #6b7385;
+  --bad: #ff6b6b;
+  --hot: #3a4a63;
+
+  --code: 'Noto Sans Ethiopic', 'Noto Serif Ethiopic', 'Abyssinica SIL', 'Kefa', 'Nyala',
+    ui-monospace, 'SF Mono', Menlo, monospace;
+  --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ui);
+}
+
+/* ---- top bar ---- */
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--edge);
+  background: var(--panel);
+}
+
+.bar h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: var(--code);
+  font-weight: 600;
+}
+
+.version {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.examples {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+select,
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.run {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0d1117;
+  font-weight: 600;
+}
+
+.stop {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #0d1117;
+  font-weight: 600;
+}
+
+.status {
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-width: 10ch;
+  text-align: right;
+}
+
+.status[data-state='bad'] {
+  color: var(--bad);
+}
+
+.status[data-state='good'] {
+  color: var(--type);
+}
+
+/* ---- layout ---- */
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 0;
+}
+
+.left,
+.right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.left {
+  border-right: 1px solid var(--edge);
+}
+
+/* ---- editor ---- */
+
+.editor-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.backdrop,
+.editor {
+  margin: 0;
+  padding: 0.9rem;
+  border: 0;
+  font-family: var(--code);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  tab-size: 4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  color: var(--ink);
+  pointer-events: none;
+}
+
+.editor {
+  position: absolute;
+  inset: 0;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+  outline: none;
+  overflow: auto;
+}
+
+.editor::selection {
+  background: #3b5370;
+}
+
+/* ---- token colours, set from the lexer's own spans ---- */
+
+.tk-kw {
+  color: var(--kw);
+  font-weight: 600;
+}
+.tk-type {
+  color: var(--type);
+}
+.tk-lit {
+  color: var(--lit);
+}
+.tk-reserved {
+  color: var(--lit);
+  text-decoration: underline dotted;
+}
+.tk-str {
+  color: var(--str);
+}
+.tk-num {
+  color: var(--num);
+}
+.tk-id {
+  color: var(--ink);
+}
+.tk-op {
+  color: var(--accent);
+}
+.tk-then {
+  color: var(--kw);
+  font-weight: 600;
+}
+.tk-punct {
+  color: var(--muted);
+}
+.tk-comment {
+  color: var(--comment);
+  font-style: italic;
+}
+
+.tk-bad {
+  text-decoration: underline wavy var(--bad);
+  text-underline-offset: 3px;
+}
+
+.tk-hot {
+  background: var(--hot);
+  border-radius: 2px;
+}
+
+/* ---- input pane ---- */
+
+.input-pane {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--edge);
+  height: 8.5rem;
+}
+
+.input-pane label {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--panel);
+}
+
+.hint {
+  opacity: 0.7;
+}
+
+#stdin {
+  flex: 1;
+  margin: 0;
+  padding: 0.6rem 0.9rem;
+  border: 0;
+  resize: none;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--code);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+/* ---- panels ---- */
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.4rem 0.6rem 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--edge);
+}
+
+.tab {
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.tab[aria-selected='true'] {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.count:not(:empty) {
+  display: inline-block;
+  margin-left: 0.3rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--bad);
+  color: #0d1117;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.panels {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0.9rem;
+  overflow: auto;
+  font-family: var(--code);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+/* ---- token and AST rows ---- */
+
+.row {
+  display: block;
+  padding: 0 0.2rem;
+  border-radius: 3px;
+  cursor: default;
+  white-space: pre;
+}
+
+.row:hover {
+  background: var(--hot);
+}
+
+.row .span {
+  color: var(--muted);
+}
+
+.row .kind {
+  color: var(--accent);
+}
+
+.row .val {
+  color: var(--str);
+}
+
+/* ---- diagnostics ---- */
+
+.diag {
+  margin-bottom: 1rem;
+}
+
+.diag .code {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.diag .where {
+  color: var(--muted);
+}
+
+.diag .frames {
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.value {
+  color: var(--muted);
+  border-top: 1px dashed var(--edge);
+  margin-top: 0.8rem;
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .left {
+    border-right: 0;
+    border-bottom: 1px solid var(--edge);
+  }
+}

@@ -137,11 +137,32 @@ function isNodeList(value: Node | readonly Node[]): value is readonly Node[] {
   return Array.isArray(value);
 }
 
-function line(prefix: string, last: boolean, text: string, node: Node): string {
-  return `${prefix}${last ? '└─ ' : '├─ '}${text}${heading(node)} [${formatSpan(node)}]`;
+/**
+ * One line of a rendered tree.
+ *
+ * `span` is null for a group header such as `args:`, which labels a list
+ * rather than standing for a node of its own. The playground's AST panel uses
+ * these to highlight the source a row covers, which is why the walk produces
+ * structure and the text is derived from it rather than the other way round.
+ */
+export interface AstRow {
+  /** The full line, prefix and heading included. */
+  readonly text: string;
+  /** How deep in the tree the row sits. */
+  readonly depth: number;
+  /** The node the row stands for, or null for a group header. */
+  readonly span: Span | null;
 }
 
-function render(node: Node, prefix: string, lines: string[]): void {
+function row(prefix: string, last: boolean, label: string, node: Node, depth: number): AstRow {
+  return {
+    text: `${prefix}${last ? '└─ ' : '├─ '}${label}${heading(node)} [${formatSpan(node)}]`,
+    depth,
+    span: node,
+  };
+}
+
+function walk(node: Node, prefix: string, depth: number, rows: AstRow[]): void {
   // An empty list contributes nothing, so it should not leave a label behind
   // with no children under it.
   const kids = children(node).filter(([, value]) => !isNodeList(value) || value.length > 0);
@@ -151,34 +172,47 @@ function render(node: Node, prefix: string, lines: string[]): void {
     const deeper = prefix + (last ? '   ' : '│  ');
 
     if (!isNodeList(value)) {
-      lines.push(line(prefix, last, label === null ? '' : `${label}: `, value));
-      render(value, deeper, lines);
+      rows.push(row(prefix, last, label === null ? '' : `${label}: `, value, depth));
+      walk(value, deeper, depth + 1, rows);
       return;
     }
 
     // An unlabelled list — a block's statements — hangs directly off the
     // parent; a labelled one gets a header line of its own.
     const base = label === null ? prefix : deeper;
-    if (label !== null) lines.push(`${prefix}${last ? '└─ ' : '├─ '}${label}:`);
+    if (label !== null) {
+      rows.push({
+        text: `${prefix}${last ? '└─ ' : '├─ '}${label}:`,
+        depth,
+        span: null,
+      });
+    }
 
     value.forEach((child, i) => {
       const lastChild = i === value.length - 1;
-      lines.push(line(base, lastChild, '', child));
-      render(child, base + (lastChild ? '   ' : '│  '), lines);
+      rows.push(row(base, lastChild, '', child, label === null ? depth : depth + 1));
+      walk(child, base + (lastChild ? '   ' : '│  '), label === null ? depth + 1 : depth + 2, rows);
     });
   });
 }
 
 /**
- * Renders a node and everything under it.
+ * Walks a node into one row per line.
  *
  * Statements and expressions appear with the field name they fill, so the
  * tree reads as the grammar rather than as an anonymous nest of boxes.
  */
+export function outlineAst(node: Node): AstRow[] {
+  const rows: AstRow[] = [{ text: `${heading(node)} [${formatSpan(node)}]`, depth: 0, span: node }];
+  walk(node, '', 1, rows);
+  return rows;
+}
+
+/** The rendered tree as text, which is what `ahadu ast` prints. */
 export function printAst(node: Node): string {
-  const lines = [`${heading(node)} [${formatSpan(node)}]`];
-  render(node, '', lines);
-  return lines.join('\n');
+  return outlineAst(node)
+    .map((r) => r.text)
+    .join('\n');
 }
 
 export type { Expression, Span, Statement };

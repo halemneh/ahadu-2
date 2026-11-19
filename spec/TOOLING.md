@@ -127,6 +127,8 @@ brackets.
 │   (Noto Serif Ethiopic)   │                            │
 │                           │   active panel             │
 │                           │                            │
+├───────────────────────────┤                            │
+│   ግቤት (input for አንብብ)    │                            │
 ├───────────────────────────┴────────────────────────────┤
 │  ▸ አሂድ (run)   examples ▾           diagnostics: 0     │
 └────────────────────────────────────────────────────────┘
@@ -146,7 +148,16 @@ brackets.
 - Evaluation runs only on **አሂድ**, in a Web Worker, with a step budget so an
   infinite loop cannot hang the tab. Exceeding it reports
   `ፕሮግራሙ ከመጠን በላይ ረዘመ` and offers a stop button.
-- `አንብብ` resolves from a modal input prompt.
+- `አንብብ` reads from an **input panel** beside the editor, filled in before
+  the program runs. Each call takes the next line.
+
+  A modal prompt was specified here and does not work: `አንብብ` is synchronous
+  (so that the whole interpreter can be), and the program runs in a worker, so
+  a prompt on the main thread could only answer it through
+  `SharedArrayBuffer` and `Atomics.wait` — which needs cross-origin isolation
+  headers, and so would stop the page being static. A panel is also the better
+  teaching tool: the input is visible, and a program can be re-run against it
+  unchanged.
 - The examples menu loads `examples/*.ahadu` from the repository, so the
   playground and the conformance suite exercise the same programs.
 - The editor's content is kept in `localStorage` so a reload does not lose

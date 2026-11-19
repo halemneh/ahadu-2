@@ -107,12 +107,31 @@ Found while implementing:
   What such a terminal actually costs you is caret alignment, which nothing
   in the CLI can fix; TOOLING.md §1 now says so.
 
-## M5 — Playground
+## M5 — Playground ✅
 
 `spec/TOOLING.md` §2 · `tools/playground/`
 
-Editor with live Output / Tokens / AST panels, debounced re-lex and re-parse,
+Editor with live ውጤት / ቶከኖች / ዛፍ / ስተቶች panels, debounced re-lex and re-parse,
 evaluation in a worker with a step budget, examples loaded from `examples/`.
+
+**Done**: 1,308 tests. The editor is a transparent `<textarea>` over a `<pre>`
+coloured from the lexer's own token spans — so a keyword variant the lexer
+accepts cannot fail to light up, and `ከሆነነገር` cannot pretend to be a keyword.
+The whole page is 44 kB of JavaScript with no dependencies.
+
+Found while implementing:
+
+- `አንብብ` could not work the way §2.2 specified. It is synchronous, so that
+  the interpreter can be, and the program runs in a worker — a modal prompt on
+  the main thread could only answer it through `SharedArrayBuffer` and
+  `Atomics.wait`, which needs cross-origin isolation headers and so would stop
+  the page being static. There is an input panel instead, which is also the
+  better teaching tool: the input is visible and a program can be re-run
+  against it unchanged.
+- Everything that decides what appears lives in `view.ts` and `highlight.ts`,
+  with no DOM access, because this project has no browser in its test run.
+  `main.ts` is glue. That split is the only reason the page is tested at all —
+  the same move that made the REPL testable in M4.
 
 ## Afterwards
 

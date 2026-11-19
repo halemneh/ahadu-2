@@ -29,8 +29,8 @@ specification-first rebuild in TypeScript.
 | **Lexer** | **done** |
 | **Parser** | **done** |
 | **Interpreter** | **done** |
-| **CLI and REPL** | **done** — 1,237 tests |
-| Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
+| **CLI and REPL** | **done** |
+| **Playground** | **done** — 1,308 tests |
 
 Implementation order and the acceptance bar for each stage are in
 [`ROADMAP.md`](ROADMAP.md).
@@ -160,11 +160,19 @@ blank line, and has `:tokens`, `:ast`, `:clear` and `:help`:
 40
 ```
 
-Still to come:
+And in the browser:
 
 ```sh
-npm run play                              # playground on localhost:5173 (M5)
+npm run play          # playground on localhost:5173
+npm run play:build    # static files, no server needed
 ```
+
+The playground colours the editor from the lexer's own token spans, so what it
+shows is by construction what Ahadu read. Diagnostics underline their span as
+you type, hovering a token or AST row lights up the source it covers, and the
+program runs in a worker with a step budget — an endless loop reports
+`AH3018` instead of freezing the tab. The whole page is static and sends
+nothing anywhere.
 
 Every stage of the interpreter is inspectable from the command line, and the
 playground shows tokens and the AST live as you type. That is deliberate: the

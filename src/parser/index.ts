@@ -9,4 +9,5 @@
 export { parse } from './parser.js';
 export type { ParseResult } from './parser.js';
 export * from './ast.js';
-export { printAst } from './print.js';
+export { outlineAst, printAst } from './print.js';
+export type { AstRow } from './print.js';

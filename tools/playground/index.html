@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="am">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>አሃዱ — Ahadu 2.0</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="bar">
+      <h1>አሃዱ <span class="version">2.0</span></h1>
+      <label class="examples">
+        ምሳሌዎች
+        <select id="examples" aria-label="ምሳሌዎች"></select>
+      </label>
+      <div class="spacer"></div>
+      <output id="status" class="status" aria-live="polite"></output>
+      <button id="run" class="run" type="button">▸ አሂድ</button>
+      <button id="stop" class="stop" type="button" hidden>■ አቁም</button>
+    </header>
+
+    <main class="layout">
+      <section class="left">
+        <div class="editor-wrap">
+          <!--
+            The backdrop carries the colours and the underlines; the textarea
+            sits on top of it with transparent text and a visible caret. Both
+            use the same font and metrics, which is what keeps them aligned
+            without reimplementing text editing.
+          -->
+          <pre id="backdrop" class="backdrop" aria-hidden="true"></pre>
+          <textarea
+            id="editor"
+            class="editor"
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="off"
+            aria-label="የአሃዱ ኮድ"
+          ></textarea>
+        </div>
+
+        <div class="input-pane">
+          <label for="stdin">ግቤት <span class="hint">— ለ"አንብብ"፣ በየመስመሩ</span></label>
+          <textarea id="stdin" spellcheck="false" aria-label="ግቤት"></textarea>
+        </div>
+      </section>
+
+      <section class="right">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-panel="output" aria-selected="true">ውጤት</button>
+          <button class="tab" role="tab" data-panel="tokens" aria-selected="false">ቶከኖች</button>
+          <button class="tab" role="tab" data-panel="ast" aria-selected="false">ዛፍ</button>
+          <button class="tab" role="tab" data-panel="errors" aria-selected="false">
+            ስተቶች <span id="error-count" class="count"></span>
+          </button>
+        </div>
+
+        <div class="panels">
+          <pre id="panel-output" class="panel" role="tabpanel"></pre>
+          <div id="panel-tokens" class="panel" role="tabpanel" hidden></div>
+          <div id="panel-ast" class="panel" role="tabpanel" hidden></div>
+          <div id="panel-errors" class="panel" role="tabpanel" hidden></div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

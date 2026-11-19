@@ -4,7 +4,11 @@
     "noEmit": true,
     "rootDir": ".",
     "allowJs": true,
-    "types": ["node"]
+    // The playground is browser code: it iterates a NodeList and uses Vite's
+    // import.meta.glob to pull in the examples. Neither belongs in the build
+    // config, which compiles src/ alone.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"]
   },
   "include": ["src/**/*.ts", "tests/**/*.ts", "tools/**/*.ts", "*.ts", "*.js"]
 }
