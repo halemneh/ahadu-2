@@ -116,6 +116,41 @@ await shoot('08-ast', {
   prepare: (page) => page.getByRole('tab', { name: /ዛፍ/ }).click(),
 });
 
+// A program that calls አንብብ, so the dialog is what Run opens.
+const readsInput = [
+  '# ከተጠቃሚው ግቤት መቀበል',
+  'ስም = አንብብ("ስም፦ ")',
+  'ጻፍ("እንደምን አለህ " + ስም + "!")',
+].join('\n');
+
+await shoot('10-input-dialog', {
+  theme: 'dark',
+  language: 'am',
+  source: readsInput,
+  input: 'ኃይለሚካኤል',
+  prepare: async (page) => {
+    await page.getByRole('button', { name: /አሂድ/ }).click();
+    await page.waitForTimeout(300);
+    if (await page.locator('#ask').isHidden()) {
+      throw new Error('the input dialog did not open for a program that calls አንብብ');
+    }
+  },
+});
+
+await shoot('11-input-answered', {
+  theme: 'light',
+  language: 'en',
+  source: readsInput,
+  input: 'ኃይለሚካኤል',
+  prepare: async (page) => {
+    await page.getByRole('button', { name: /Run/ }).first().click();
+    await page.waitForTimeout(250);
+    // The dialog's own Run button, which starts the program.
+    await page.locator('#ask-run').click();
+    await page.waitForTimeout(700);
+  },
+});
+
 await shoot('09-output', {
   theme: 'light',
   language: 'en',

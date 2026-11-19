@@ -31,8 +31,12 @@ export interface Strings {
 
   // Editor
   readonly editorLabel: string;
+
+  // The input dialog, shown only when a program calls አንብብ
   readonly inputLabel: string;
   readonly inputHint: string;
+  readonly inputWhy: string;
+  readonly cancel: string;
   /** `(line, column)` → the position readout under the editor. */
   readonly position: (line: number, column: number) => string;
   /** Shown instead of the position when text is selected. */
@@ -81,7 +85,9 @@ const amharic: Strings = {
 
   editorLabel: 'የአሃዱ ኮድ',
   inputLabel: 'ግቤት',
-  inputHint: '— ለ"አንብብ"፣ በየመስመሩ',
+  inputHint: 'በየመስመሩ አንድ መልስ።',
+  inputWhy: 'ይህ ፕሮግራም "አንብብ" ይጠቀማል።',
+  cancel: 'ተወው',
   position: (line, column) => `መስመር ${line}፣ ዓምድ ${column}`,
   selection: (count) => `${count} ተመርጧል`,
 
@@ -123,7 +129,9 @@ const english: Strings = {
 
   editorLabel: 'Ahadu code',
   inputLabel: 'Input',
-  inputHint: '— for አንብብ, one line each',
+  inputHint: 'One answer per line.',
+  inputWhy: 'This program calls አንብብ.',
+  cancel: 'Cancel',
   position: (line, column) => `Ln ${line}, Col ${column}`,
   selection: (count) => `${count} selected`,
 

@@ -31,15 +31,28 @@ stylesheet cannot be reviewed by reading it.
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
 **The design language is surfaces, not lines.** There is not one border in
-`styles.css`: regions are told apart by a translucent `--layer` over the
-background and a shadow where one sits above another. The layers compose, so
-the snippet inside an error and the gutter inside the editor each get their
-own level without a new colour. Adding a `border` anywhere will look out of
-place rather than tidy — reach for a layer or a shadow instead.
+`styles.css`. The page's major regions are told apart by the **shade** they
+are painted, from one scale of solid colours (`--bg` through `--surface-3`);
+smaller things stack a translucent `--layer` over whatever shade they land on,
+so a snippet inside a panel takes its own level without a shade of its own.
+Adding a `border` anywhere will look out of place rather than tidy — reach for
+a shade or a layer instead.
+
+Shadows are for what genuinely floats — the tooltip, the input dialog, a
+control under the pointer — and not for the boundaries between regions. A
+shadow needs an edge to fall across, and the longest edge on the page, between
+the editor and the panels, has nothing beside it to catch one.
 
 Because nothing has a border to carry focus, controls get a focus ring from
 `box-shadow`. Removing an outline without replacing it leaves the page
 unusable from a keyboard.
+
+**Input is a dialog, opened before the run.** `አንብብ` is synchronous and the
+program runs in a worker, so it cannot stop half way and wait for an answer.
+What can be asked ahead of time is whether the program will want input at
+all — `needsInput()` looks for the call in the tokens the page already lexed
+for highlighting. So the page carries no input box for the great majority of
+programs that never read anything.
 
 Three more things worth knowing before changing it.
 

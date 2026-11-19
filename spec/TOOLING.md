@@ -128,24 +128,35 @@ brackets.
 ### 2.1 Layout
 
 ```
-┌────────────────────────────────────────────────────────┐
-│ አሃዱ 2.0   examples ▾        0 errors  En ◐  ▸ አሂድ      │
-├───────────────────────────┬────────────────────────────┤
-│  1 │                      │  ውጤት │ ቶከኖች │ ዛፍ │ ስተቶች ③ │
-│  2 │  editor              ├────────────────────────────┤
-│  3 │                      │                            │
-│  4 │                      │   active panel             │
-│    ├──────────────────────┤                            │
-│    │        መስመር 3፣ ዓምድ 12 │                            │
-│    ├──────────────────────┤                            │
-│    │  ግቤት (input for አንብብ) │                            │
-└────┴──────────────────────┴────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ አሃዱ 2.0   examples ▾         0 errors  En ◐  ▸ አሂድ      │
+├─────────────────────────────────────────────────────────┤
+│  1 │                                                    │
+│  2 │  editor                                            │
+│  3 │                                                    │
+│  4 │                                                    │
+│    │                                    መስመር 3፣ ዓምድ 12  │
+├─────────────────────────────────────────────────────────┤
+│  ውጤት │ ቶከኖች │ ዛፍ │ ስተቶች ③                               │
+│                                                         │
+│   active panel                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
-The page is built from **surfaces rather than lines**: no borders, only
-translucent layers over the background and shadows where one region sits above
-another. Layers compose, so a snippet inside an error panel or a gutter inside
-the editor takes its own level without a new colour.
+The editor takes the **full width** and the panels sit **under** it. Ge'ez runs
+wide and a condition-first conditional is a long line by design, so splitting
+the width in two cost the editor the dimension it needed most. The panels lose
+less by being short than the editor lost by being narrow: tokens, tree rows and
+diagnostics are all lists, and a list scrolls.
+
+The page is built from **surfaces rather than lines**: not one border. The
+major regions are told apart by the **shade** they are painted, from one scale
+of solid colours — a solid step reads as a different plane at any size, and the
+longest edge on the page has nothing beside it for a shadow to fall across.
+Smaller things stack a translucent layer over whatever shade they land on, so a
+snippet inside a panel takes its own level without a shade of its own. Shadows
+are kept for what genuinely floats: the tooltip, the input dialog, a control
+under the pointer.
 
 - A **line-number gutter** runs down the editor, and a **position readout**
   sits under it. The readout's column counts code points, so it agrees with
@@ -210,16 +221,27 @@ the editor takes its own level without a new colour.
 - Evaluation runs only on **አሂድ**, in a Web Worker, with a step budget so an
   infinite loop cannot hang the tab. Exceeding it reports
   `ፕሮግራሙ ከመጠን በላይ ረዘመ` and offers a stop button.
-- `አንብብ` reads from an **input panel** beside the editor, filled in before
-  the program runs. Each call takes the next line.
+- `አንብብ` reads from an **input dialog**, which አሂድ opens *before* starting a
+  program that calls it. Each call takes the next line; a program that calls
+  it more times than there are lines reads `""` (§9 of LANGUAGE.md).
 
-  A modal prompt was specified here and does not work: `አንብብ` is synchronous
-  (so that the whole interpreter can be), and the program runs in a worker, so
-  a prompt on the main thread could only answer it through
-  `SharedArrayBuffer` and `Atomics.wait` — which needs cross-origin isolation
-  headers, and so would stop the page being static. A panel is also the better
-  teaching tool: the input is visible, and a program can be re-run against it
-  unchanged.
+  The timing is forced. `አንብብ` is synchronous, so that the whole interpreter
+  can be, and the program runs in a worker — so it cannot stop half way and
+  wait for an answer: a prompt on the main thread could only reach it through
+  `SharedArrayBuffer` and `Atomics.wait`, which needs cross-origin isolation
+  headers, and so would stop the page being static.
+
+  What *can* be asked ahead of the run is whether the program will want input
+  at all, because the call to `አንብብ` is right there in the tokens the page has
+  already lexed for highlighting. So the dialog is driven by the program rather
+  than by the user remembering to fill a box, and the page carries no input
+  panel for the great majority of programs that never read anything.
+
+  A name the program has rebound still counts as a call. Deciding otherwise
+  would mean resolving scopes in the editor; offering an input box to someone
+  who did not need one costs a keystroke, and missing one costs them their
+  input. The answer is remembered, so a program can be re-run against the same
+  input unchanged.
 - The examples menu loads `examples/*.ahadu` from the repository, so the
   playground and the conformance suite exercise the same programs. A second
   group loads `examples/errors/*.ahadu`: programs that are meant to fail, so

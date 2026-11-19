@@ -286,6 +286,30 @@ export function statusOf(diagnostics: readonly Diagnostic[], s: Strings): Status
   return { text: s.statusErrors(diagnostics.length), state: 'bad' };
 }
 
+/** The built-in that reads a line, which is the only reason input is needed. */
+const READ_LINE = 'አንብብ';
+
+/**
+ * Whether a program will ask for input.
+ *
+ * `አንብብ` is synchronous — so that the whole interpreter can be — and the
+ * program runs in a worker, so it cannot stop half way and wait for a dialog:
+ * answering it from the main thread would need `SharedArrayBuffer` and
+ * `Atomics.wait`, and so cross-origin isolation headers, and so the page would
+ * stop being static (TOOLING.md §2.2).
+ *
+ * What a program *can* be asked is whether it will want input at all, before
+ * it starts — the call is right there in the tokens. So the dialog opens ahead
+ * of the run rather than during it.
+ *
+ * A name the program has rebound is still counted: deciding otherwise would
+ * mean resolving scopes here, and offering an input box to someone who did
+ * not need one costs a keystroke, while missing one costs them their input.
+ */
+export function needsInput(tokens: readonly Token[]): boolean {
+  return tokens.some((token) => token.type === 'IDENTIFIER' && token.value === READ_LINE);
+}
+
 /** The example name shown in the menu, from its path. */
 export function exampleName(path: string): string {
   return (

@@ -2,20 +2,22 @@
  * Playground styles (TOOLING.md §2.1).
  *
  * The design language is **surfaces, not lines**. Nothing here is separated by
- * a border: regions are told apart by a translucent surface laid over the
- * background, and by a soft shadow where one region sits above another. A page
- * with a dozen hairlines reads as a grid of boxes; the same page built from
- * tints and depth reads as panels of content, which is what it is.
+ * a border: regions are told apart by the shade they are painted.
  *
- * Two consequences worth knowing:
+ * Three things follow from that:
  *
- * - Surfaces are **translucent**, so they compose. `--layer` over `--layer` is
- *   darker than one alone, which is how the snippet inside an error, or the
- *   gutter inside the editor, gets its own level without a new colour or a
- *   rule. Each theme therefore needs only one set of layer values.
+ * - The page's major regions — editor, panels, bars — each get a **solid**
+ *   shade from one scale, `--bg` through `--surface-3`. A solid step reads as
+ *   a different plane at any size, which a shadow does not: a shadow needs an
+ *   edge to fall across, and the longest edge on the page has nothing beside
+ *   it to catch one.
+ * - Smaller things stack **translucent** `--layer` over whatever shade they
+ *   land on, so a snippet inside a panel, or a hovered row, takes its own
+ *   level without needing a shade of its own.
  * - With no borders to carry it, focus comes from a `box-shadow` ring.
  *   Removing an outline without replacing it would leave the page unusable
- *   from a keyboard.
+ *   from a keyboard. Shadows are kept for things that genuinely float: the
+ *   tooltip, the dialog, a control under the pointer.
  *
  * No web font is loaded: the spec says nothing is sent anywhere, and fetching
  * Noto Serif Ethiopic from a font CDN would be a request. The stack below
@@ -24,20 +26,23 @@
 
 :root,
 :root[data-theme='dark'] {
+  /* One scale of solid shades: the page's regions are told apart by these. */
   --bg: #15171c;
+  --surface-1: #1b1e25;
+  --surface-2: #21252d;
+  --surface-3: #272c35;
+
   --ink: #e7e9ef;
   --muted: #949cb0;
 
-  /* Translucent surfaces, meant to be stacked. */
-  --layer: rgb(255 255 255 / 4.5%);
-  --layer-strong: rgb(255 255 255 / 8%);
-  --layer-hover: rgb(255 255 255 / 11%);
+  /* Translucent, for things that sit on top of whatever shade they land on. */
+  --layer: rgb(255 255 255 / 5%);
+  --layer-strong: rgb(255 255 255 / 9%);
+  --layer-hover: rgb(255 255 255 / 13%);
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 28%);
   --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 45%);
-  --shadow-lg: 0 10px 30px -8px rgb(0 0 0 / 60%);
-  /* Cast sideways, to lift the panel column off the editor column. */
-  --shadow-side: -10px 0 22px -16px rgb(0 0 0 / 70%);
+  --shadow-lg: 0 14px 40px -10px rgb(0 0 0 / 70%);
 
   --accent: #74b7ff;
   --ring: rgb(116 183 255 / 55%);
@@ -62,7 +67,11 @@
 /* Colours chosen for contrast on white rather than lightened dark ones. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #fcfcfb;
+    --bg: #fdfdfc;
+    --surface-1: #f3f4f1;
+    --surface-2: #eaebe7;
+    --surface-3: #e1e3de;
+
     --ink: #1b1f27;
     --muted: #636b7b;
 
@@ -72,8 +81,7 @@
 
     --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
     --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
-    --shadow-lg: 0 10px 30px -8px rgb(18 22 31 / 20%);
-    --shadow-side: -10px 0 22px -16px rgb(18 22 31 / 24%);
+    --shadow-lg: 0 14px 40px -10px rgb(18 22 31 / 26%);
 
     --accent: #0a5fc0;
     --ring: rgb(10 95 192 / 45%);
@@ -92,7 +100,11 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #fcfcfb;
+  --bg: #fdfdfc;
+  --surface-1: #f3f4f1;
+  --surface-2: #eaebe7;
+  --surface-3: #e1e3de;
+
   --ink: #1b1f27;
   --muted: #636b7b;
 
@@ -102,8 +114,7 @@
 
   --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
   --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
-  --shadow-lg: 0 10px 30px -8px rgb(18 22 31 / 20%);
-  --shadow-side: -10px 0 22px -16px rgb(18 22 31 / 24%);
+  --shadow-lg: 0 14px 40px -10px rgb(18 22 31 / 26%);
 
   --accent: #0a5fc0;
   --ring: rgb(10 95 192 / 45%);
@@ -138,17 +149,14 @@ body {
   font-family: var(--ui);
 }
 
-/* ---- top bar: a surface above the page, lifted by a shadow ---- */
+/* ---- top bar ---- */
 
 .bar {
-  position: relative;
-  z-index: 3;
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 1rem;
-  background: var(--layer);
-  box-shadow: var(--shadow-md);
+  background: var(--surface-2);
 }
 
 .bar h1 {
@@ -264,30 +272,29 @@ button:focus-visible {
 
 /* ---- layout ---- */
 
+/*
+ * The editor fills the upper part of the page and the panels sit under it, so
+ * a line of Ahadu has the full width rather than half of it — Ge'ez runs wide,
+ * and a condition-first conditional is a long line by design.
+ */
 .layout {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
   min-height: 0;
 }
 
-.left,
-.right {
+.top,
+.bottom {
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
 }
 
-/*
- * The two columns are separated by depth rather than by a rule: the panel
- * column is a surface sitting above the editor, casting sideways onto it.
- */
-.right {
-  position: relative;
-  z-index: 1;
-  background: var(--layer);
-  box-shadow: var(--shadow-side);
+/* Told apart from the editor by its shade, not by a shadow or a rule. */
+.bottom {
+  background: var(--surface-1);
 }
 
 /* ---- editor ---- */
@@ -327,7 +334,7 @@ button:focus-visible {
   overflow: hidden;
   text-align: right;
   color: var(--gutter);
-  background: var(--layer);
+  background: var(--surface-1);
   user-select: none;
   pointer-events: none;
 }
@@ -427,62 +434,21 @@ button:focus-visible {
 
 /* ---- the position readout, under the editor (§2.1) ---- */
 
+/*
+ * Painted as the editor, not as a band: it describes the editor, and a strip
+ * of its own directly above the tab strip read as one thick seam. The whole
+ * upper region is one shade, and the page's major division is the step from
+ * it to the tabs.
+ */
 .editor-status {
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
   padding: 0.25rem 0.9rem;
-  background: var(--layer);
+  background: var(--bg);
   color: var(--muted);
   font-family: var(--code);
   font-size: 0.78rem;
-}
-
-/* ---- input pane ---- */
-
-.input-pane {
-  display: flex;
-  flex-direction: column;
-  height: 8.5rem;
-  background: var(--layer);
-}
-
-.input-pane label {
-  padding: 0.45rem 0.9rem 0.3rem;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.hint {
-  opacity: 0.72;
-}
-
-/*
- * A surface of its own, over the pane's: without a border, an empty textarea
- * is indistinguishable from the space around it, and nothing shows there is
- * anywhere to type.
- */
-#stdin {
-  flex: 1;
-  margin: 0 0.9rem 0.9rem;
-  padding: 0.45rem 0.6rem;
-  border: 0;
-  border-radius: 5px;
-  resize: none;
-  background: var(--layer);
-  color: var(--ink);
-  font-family: var(--code);
-  font-size: 0.9rem;
-  outline: none;
-  box-shadow: none;
-}
-
-#stdin:focus-visible {
-  box-shadow: 0 0 0 2px var(--ring);
-}
-
-#stdin::selection {
-  background: var(--select);
 }
 
 /* ---- panels ---- */
@@ -491,7 +457,7 @@ button:focus-visible {
   display: flex;
   gap: 0.25rem;
   padding: 0.45rem 0.6rem;
-  background: var(--layer);
+  background: var(--surface-2);
 }
 
 .tab {
@@ -507,11 +473,10 @@ button:focus-visible {
   box-shadow: none;
 }
 
-/* The selected tab is the one lifted off the strip. */
+/* The selected tab is painted as the panel below it, so the two read as one. */
 .tab[aria-selected='true'] {
-  background: var(--bg);
+  background: var(--surface-1);
   color: var(--ink);
-  box-shadow: var(--shadow-sm);
 }
 
 .count:not(:empty) {
@@ -629,7 +594,6 @@ button:focus-visible {
   margin-top: 0.45rem;
   border-radius: 5px;
   background: var(--layer);
-  box-shadow: var(--shadow-sm);
   overflow-x: auto;
   line-height: 1.6;
 }
@@ -717,14 +681,85 @@ button:focus-visible {
   color: var(--muted);
 }
 
-@media (max-width: 860px) {
+@media (max-height: 640px) {
+  /* Short windows give the panels less, since the editor is the point. */
   .layout {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
   }
+}
 
-  /* Stacked, the panel column sits below rather than beside. */
-  .right {
-    box-shadow: var(--shadow-md);
-  }
+/* ---- the input dialog ---- */
+
+/*
+ * Opened before a run, not during one: `አንብብ` is synchronous and the program
+ * runs in a worker, so it cannot stop half way and wait for an answer. What
+ * can be asked ahead of time is whether the program will want input at all —
+ * the call is there in the tokens. See view.ts.
+ *
+ * This genuinely floats above the page, so here a shadow is the right tool.
+ */
+.ask {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgb(0 0 0 / 45%);
+}
+
+.ask[hidden] {
+  display: none;
+}
+
+.ask-box {
+  width: min(32rem, 100%);
+  padding: 1.1rem 1.2rem 1rem;
+  border-radius: 10px;
+  background: var(--surface-1);
+  box-shadow: var(--shadow-lg);
+}
+
+.ask-box h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.ask-why {
+  margin: 0.3rem 0 0.7rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+#ask-input {
+  width: 100%;
+  min-height: 7rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  border-radius: 6px;
+  resize: vertical;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--code);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  outline: none;
+}
+
+#ask-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+#ask-input::selection {
+  background: var(--select);
+}
+
+.ask-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
 }

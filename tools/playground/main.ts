@@ -22,6 +22,7 @@ import {
   escapeHtml,
   exampleName,
   gutterHtml,
+  needsInput,
   outputHtml,
   positionLabel,
   reported,
@@ -77,7 +78,10 @@ const gutter = need<HTMLPreElement>('gutter');
 const backdrop = need<HTMLPreElement>('backdrop');
 const editorStatus = need<HTMLElement>('editor-status');
 const tip = need<HTMLElement>('tip');
-const inputBox = need<HTMLTextAreaElement>('stdin');
+const ask = need<HTMLElement>('ask');
+const askInput = need<HTMLTextAreaElement>('ask-input');
+const askRun = need<HTMLButtonElement>('ask-run');
+const askCancel = need<HTMLButtonElement>('ask-cancel');
 const runButton = need<HTMLButtonElement>('run');
 const stopButton = need<HTMLButtonElement>('stop');
 const examplesSelect = need<HTMLSelectElement>('examples');
@@ -411,15 +415,61 @@ function stop(): void {
   status.dataset.state = 'bad';
 }
 
+/**
+ * Asks for input, then runs — or runs straight away.
+ *
+ * The dialog opens *before* the program starts rather than when `አንብብ` is
+ * reached, because a synchronous call inside a worker cannot wait for one
+ * (view.ts explains the constraint).
+ */
 function start(): void {
-  dispose();
-
-  // A fresh run owns the runtime error; the previous one is history. Re-analyse
-  // rather than just repaint, in case the run came within the debounce of a
-  // keystroke and the live analysis is a moment behind the text.
-  runtimeError = null;
+  // Re-analyse rather than just repaint, in case the run came within the
+  // debounce of a keystroke and the live analysis is a moment behind.
   window.clearTimeout(timer);
+  runtimeError = null;
   refresh();
+
+  if (!needsInput(current.tokens)) {
+    launch(inputLines());
+    return;
+  }
+
+  ask.hidden = false;
+  askInput.focus();
+  askInput.setSelectionRange(askInput.value.length, askInput.value.length);
+}
+
+function closeAsk(): void {
+  ask.hidden = true;
+}
+
+function inputLines(): string[] {
+  return askInput.value === '' ? [] : askInput.value.split('\n');
+}
+
+askCancel.addEventListener('click', closeAsk);
+
+askRun.addEventListener('click', () => {
+  remember(STORAGE_INPUT, askInput.value);
+  closeAsk();
+  launch(inputLines());
+});
+
+askInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeAsk();
+  // Enter adds a line; the modifier runs, as in the editor.
+  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    askRun.click();
+  }
+});
+
+ask.addEventListener('click', (event) => {
+  if (event.target === ask) closeAsk();
+});
+
+function launch(input: readonly string[]): void {
+  dispose();
 
   showPanel('output');
   panels.output.innerHTML = `<span class="empty">${s.emptyRunning}</span>`;
@@ -454,11 +504,7 @@ function start(): void {
     dispose();
   };
 
-  const request: RunRequest = {
-    source: editor.value,
-    input: inputBox.value === '' ? [] : inputBox.value.split('\n'),
-    maxSteps: MAX_STEPS,
-  };
+  const request: RunRequest = { source: editor.value, input, maxSteps: MAX_STEPS };
   worker.postMessage(request);
 }
 
@@ -542,10 +588,6 @@ for (const event of ['click', 'keyup', 'select'] as const) {
 
 editor.addEventListener('scroll', syncScroll);
 
-inputBox.addEventListener('input', () => {
-  remember(STORAGE_INPUT, inputBox.value);
-});
-
 editor.addEventListener('keydown', (event) => {
   // Tab inserts one indent level rather than leaving the editor (§3.7).
   if (event.key === 'Tab') {
@@ -578,7 +620,7 @@ const savedLanguage = recall(STORAGE_LANGUAGE);
 language = savedLanguage === 'en' ? 'en' : 'am';
 
 editor.value = recall(STORAGE_SOURCE) ?? STARTER;
-inputBox.value = recall(STORAGE_INPUT) ?? '';
+askInput.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
 applyLanguage();
 panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;

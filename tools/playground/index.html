@@ -31,7 +31,7 @@
     </header>
 
     <main class="layout">
-      <section class="left">
+      <section class="top">
         <div class="editor-wrap">
           <!--
             The gutter, the coloured backdrop and the transparent textarea share
@@ -50,17 +50,9 @@
         </div>
 
         <div id="editor-status" class="editor-status"></div>
-
-        <div class="input-pane">
-          <label for="stdin">
-            <span data-i18n="inputLabel"></span>
-            <span class="hint" data-i18n="inputHint"></span>
-          </label>
-          <textarea id="stdin" spellcheck="false" data-i18n-label="inputLabel"></textarea>
-        </div>
       </section>
 
-      <section class="right">
+      <section class="bottom">
         <div class="tabs" role="tablist">
           <button class="tab" role="tab" data-panel="output" data-i18n="tabOutput" aria-selected="true"></button>
           <button class="tab" role="tab" data-panel="tokens" data-i18n="tabTokens" aria-selected="false"></button>
@@ -82,6 +74,22 @@
 
     <!-- Explains the error the pointer is over; positioned from script. -->
     <div id="tip" class="tip" role="status" hidden></div>
+
+    <!--
+      Asked before a run, not during one: አንብብ is synchronous and the program
+      runs in a worker, so it cannot stop half way and wait. See view.ts.
+    -->
+    <div id="ask" class="ask" hidden>
+      <div class="ask-box" role="dialog" aria-modal="true" aria-labelledby="ask-title">
+        <h2 id="ask-title" data-i18n="inputLabel"></h2>
+        <p class="ask-why"><span data-i18n="inputWhy"></span> <span data-i18n="inputHint"></span></p>
+        <textarea id="ask-input" spellcheck="false" data-i18n-label="inputLabel"></textarea>
+        <div class="ask-actions">
+          <button id="ask-cancel" type="button" data-i18n="cancel"></button>
+          <button id="ask-run" class="run" type="button" data-i18n="run"></button>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="./main.ts"></script>
   </body>
