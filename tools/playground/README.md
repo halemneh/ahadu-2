@@ -18,6 +18,7 @@ npm run play:build    # static files into tools/playground/dist/
 | `highlight.ts` | the editor's backdrop, coloured from the lexer's own tokens |
 | `strings.ts` | the page's own text, in Amharic and English |
 | `evaluate.ts` | running a program, and what comes back — no globals |
+| `locate.ts` | which error the pointer is over, as arithmetic |
 | `worker.ts` | binding `evaluate` to a worker's `self`, and nothing else |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
@@ -44,7 +45,9 @@ tested at all: there is no browser in this project's test run.
 **The editor does not wrap, and that is deliberate.** A wrapped line occupies
 several rows on screen but has one number, so the gutter would drift out of
 step with the text. `styles.css` uses `pre` rather than `pre-wrap` for that
-reason; change it and the line numbers stop meaning anything.
+reason; change it and the line numbers stop meaning anything — and `locate.ts`
+stops being able to tell which line the pointer is on, since it maps a row of
+pixels to exactly one source line.
 
 **The language toggle does not translate diagnostics.** Their text comes from
 the interpreter, where LANGUAGE.md §9 makes it normative. `strings.ts` says

@@ -19,6 +19,7 @@ import {
   analyse,
   astRowsHtml,
   diagnosticsHtml,
+  escapeHtml,
   exampleName,
   gutterHtml,
   outputHtml,
@@ -28,6 +29,8 @@ import {
   tokenRowsHtml,
 } from './view.js';
 import type { Analysis, Reported } from './view.js';
+import { diagnosticAt, positionAt } from './locate.js';
+import type { EditorMetrics } from './locate.js';
 import { otherLanguage, strings } from './strings.js';
 import type { Language, Strings } from './strings.js';
 import type { RunReply, RunRequest } from './evaluate.js';
@@ -73,6 +76,7 @@ const editor = need<HTMLTextAreaElement>('editor');
 const gutter = need<HTMLPreElement>('gutter');
 const backdrop = need<HTMLPreElement>('backdrop');
 const editorStatus = need<HTMLElement>('editor-status');
+const tip = need<HTMLElement>('tip');
 const inputBox = need<HTMLTextAreaElement>('stdin');
 const runButton = need<HTMLButtonElement>('run');
 const stopButton = need<HTMLButtonElement>('stop');
@@ -255,7 +259,95 @@ function refresh(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Hover: a panel row lights up the source it covers (§2.1)
+// Hover in the editor: the error under the pointer explains itself (§2.2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Measures text in the editor's font.
+ *
+ * A canvas rather than a hidden element, so measuring costs no layout. The
+ * font is read from the editor itself, so a change to styles.css cannot put
+ * the measurement out of step with what is drawn.
+ */
+const measure = ((): ((text: string) => number) => {
+  const context = document.createElement('canvas').getContext('2d');
+  let font = '';
+
+  return (text: string): number => {
+    if (context === null) return 0;
+    const computed = getComputedStyle(editor);
+    const wanted = `${computed.fontSize} ${computed.fontFamily}`;
+    if (wanted !== font) {
+      context.font = wanted;
+      font = wanted;
+    }
+    return context.measureText(text).width;
+  };
+})();
+
+function editorMetrics(): EditorMetrics {
+  const computed = getComputedStyle(editor);
+  return {
+    lineHeight: Number.parseFloat(computed.lineHeight),
+    paddingTop: Number.parseFloat(computed.paddingTop),
+    paddingLeft: Number.parseFloat(computed.paddingLeft),
+    scrollTop: editor.scrollTop,
+    scrollLeft: editor.scrollLeft,
+  };
+}
+
+function hideTip(): void {
+  tip.hidden = true;
+}
+
+/**
+ * Shows the error under the pointer, if there is one.
+ *
+ * The editor is a textarea with its text painted behind it, so there is no
+ * element to hover — the position is worked out arithmetically (locate.ts).
+ */
+function showTipAt(event: MouseEvent): void {
+  if (current.diagnostics.length === 0) {
+    hideTip();
+    return;
+  }
+
+  const box = editor.getBoundingClientRect();
+  const at = positionAt(
+    editor.value,
+    event.clientX - box.left,
+    event.clientY - box.top,
+    editorMetrics(),
+    measure,
+  );
+
+  const found = diagnosticAt(current.diagnostics, at);
+  if (found === null) {
+    hideTip();
+    return;
+  }
+
+  tip.innerHTML =
+    `<span class="code">${found.code}</span>${escapeHtml(found.message)}` +
+    `<br /><span class="where">${escapeHtml(s.at(found.line, found.startCol))}</span>`;
+  tip.hidden = false;
+
+  // Below the pointer by default, above it when there is no room.
+  const size = tip.getBoundingClientRect();
+  const left = Math.min(event.clientX + 12, window.innerWidth - size.width - 8);
+  const below = event.clientY + 18;
+  const top = below + size.height > window.innerHeight ? event.clientY - size.height - 12 : below;
+  tip.style.left = `${Math.max(8, left)}px`;
+  tip.style.top = `${Math.max(8, top)}px`;
+}
+
+editor.addEventListener('mousemove', showTipAt);
+editor.addEventListener('mouseleave', hideTip);
+editor.addEventListener('scroll', hideTip);
+editor.addEventListener('blur', hideTip);
+
+// ---------------------------------------------------------------------------
+// Hover in a panel: a row lights up the source it covers (§2.1)
 // ---------------------------------------------------------------------------
 
 function regionOf(element: HTMLElement): Region | null {

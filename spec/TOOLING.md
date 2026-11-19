@@ -154,14 +154,15 @@ brackets.
 - A **ስተቶች** panel joins the three the first draft named, carrying the full
   text of every diagnostic. The tab shows a count.
 
-  Each diagnostic is a card — bordered, with the error colour down its left
-  edge — so a panel holding several reads as several things rather than as one
-  wall of text. Inside the card the offending line appears as a snippet with
-  its own background and its own gutter, coloured by the editor's highlighter
-  from the same tokens, so a snippet cannot disagree with the code it came
-  from. The diagnostic's span is underlined in place, which needs no caret row
-  to line up — and so avoids the alignment trouble Ethiopic's variable width
-  gives the CLI's `^^^` (§1).
+  Entries are separated by a hairline rule and some space rather than framed
+  individually: a panel of five errors is busy enough without five boxes in
+  it. The offending line inside each does keep a surface of its own — its own
+  background and its own gutter — because that is what distinguishes quoted
+  code from prose. It is coloured by the editor's highlighter from the same
+  tokens, so a snippet cannot disagree with the code it came from, and the
+  diagnostic's span is underlined in place, which needs no caret row to line
+  up — and so avoids the alignment trouble Ethiopic's variable width gives the
+  CLI's `^^^` (§1).
 
   The code appears as a badge rather than bracketed: `[AH3003]` is how a
   plain-text stream has to say it, and a styled panel does not need the
@@ -187,10 +188,20 @@ brackets.
 
 ### 2.2 Behavior
 
-- Lexing and parsing re-run on every keystroke, debounced 150 ms. Diagnostics
-  underline their span in the editor with the Amharic message on hover. The
-  Tokens and AST panels stay useful while the program is incomplete, which is
-  what the error recovery in LANGUAGE.md §9.3 is for.
+- Lexing and parsing re-run on every keystroke, debounced 150 ms. The Tokens
+  and AST panels stay useful while the program is incomplete, which is what
+  the error recovery in LANGUAGE.md §9.3 is for.
+
+- Diagnostics mark their span in the editor — a wavy underline and a faint
+  wash — and hovering one shows its code, message and position.
+
+  There is no element to hover: the editor is a textarea with its text painted
+  behind it, so the span under the pointer is worked out arithmetically from
+  the pointer's offset, the line height and a measurement of the text in the
+  editor's own font. That is only tractable because the editor does not wrap,
+  so a row of pixels is exactly one source line. Where spans overlap, the
+  narrowest wins, so a precise error inside a wider one is the one explained
+  rather than the one buried.
 - Evaluation runs only on **አሂድ**, in a Web Worker, with a step budget so an
   infinite loop cannot hang the tab. Exceeding it reports
   `ፕሮግራሙ ከመጠን በላይ ረዘመ` and offers a stop button.

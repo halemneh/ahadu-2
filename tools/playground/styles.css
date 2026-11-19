@@ -27,6 +27,7 @@
   --lit: #ff9e9e;
   --comment: #6b7385;
   --bad: #ff6b6b;
+  --bad-wash: rgb(255 107 107 / 14%);
   --hot: #3a4a63;
   --gutter: #6b7385;
   --select: #3b5370;
@@ -53,6 +54,7 @@
     --lit: #b22150;
     --comment: #767d8c;
     --bad: #c5262c;
+    --bad-wash: rgb(197 38 44 / 10%);
     --hot: #cfe2fb;
     --gutter: #9aa1b0;
     --select: #bcd8fa;
@@ -74,6 +76,7 @@
   --lit: #b22150;
   --comment: #767d8c;
   --bad: #c5262c;
+  --bad-wash: rgb(197 38 44 / 10%);
   --hot: #cfe2fb;
   --gutter: #9aa1b0;
   --select: #bcd8fa;
@@ -328,14 +331,60 @@ button:hover {
   font-style: italic;
 }
 
+/*
+ * An error in the editor: a wavy underline and a faint wash behind it. The
+ * underline alone was easy to miss against coloured code, and the wash is kept
+ * weak so it reads as a mark on the text rather than as a selection.
+ */
 .tk-bad {
+  background: var(--bad-wash);
+  border-radius: 2px;
   text-decoration: underline wavy var(--bad);
   text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 
 .tk-hot {
   background: var(--hot);
   border-radius: 2px;
+}
+
+/*
+ * The tooltip that explains an error the pointer is over.
+ *
+ * Positioned from script, since what it points at is painted text rather than
+ * an element with bounds; see locate.ts.
+ */
+.tip {
+  position: fixed;
+  z-index: 10;
+  max-width: 32rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--edge);
+  border-left: 2px solid var(--bad);
+  border-radius: 5px;
+  background: var(--panel);
+  box-shadow: 0 4px 14px var(--shadow);
+  font-family: var(--ui);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.tip .code {
+  color: var(--bad);
+  font-family: var(--code);
+  font-weight: 700;
+  margin-right: 0.35rem;
+}
+
+.tip .where {
+  color: var(--muted);
+  font-size: 0.78rem;
 }
 
 /* ---- input pane ---- */
@@ -457,22 +506,22 @@ button:hover {
 /* ---- diagnostics ---- */
 
 /*
- * Each one is a card, so a panel holding several reads as several things
- * rather than as one wall of text. The error colour runs down the left edge,
- * which separates them without a rule between.
+ * Each entry is separated by a hairline rule and some space, not by a box. A
+ * panel of five errors is already busy; framing each one in its own card made
+ * it busier. The snippet inside keeps a surface of its own, since that is what
+ * distinguishes quoted code from prose.
  */
 .diag {
-  margin-bottom: 0.85rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid var(--edge);
-  border-left: 3px solid var(--bad);
-  border-radius: 6px;
-  background: var(--panel);
+  padding: 0.75rem 0.1rem;
   white-space: normal;
 }
 
-.diag:last-child {
-  margin-bottom: 0;
+.diag + .diag {
+  border-top: 1px solid var(--edge);
+}
+
+.diag:first-child {
+  padding-top: 0.2rem;
 }
 
 .diag-head {
@@ -481,15 +530,15 @@ button:hover {
   gap: 0.5rem;
 }
 
-/* The code as a badge: a styled panel does not need the CLI's brackets. */
+/*
+ * The code, in the error colour as text rather than as a filled pill — the
+ * brackets a plain-text stream needs are what the colour replaces here.
+ */
 .diag .code {
   flex: none;
-  padding: 0.05rem 0.4rem;
-  border-radius: 4px;
-  background: var(--bad);
-  color: var(--bg);
-  font-size: 0.76rem;
+  color: var(--bad);
   font-weight: 700;
+  font-size: 0.82rem;
   letter-spacing: 0.02em;
 }
 
