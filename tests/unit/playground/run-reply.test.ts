@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { evaluate } from '../../../tools/playground/evaluate.js';
+import type { RunReply } from '../../../tools/playground/evaluate.js';
 import { analyse, diagnosticsHtml, outputHtml, reported } from '../../../tools/playground/view.js';
 import { strings } from '../../../tools/playground/strings.js';
 
@@ -19,7 +20,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const am = strings('am');
 const en = strings('en');
 
-function run(source: string) {
+function run(source: string): RunReply {
   return evaluate({ source, input: [], maxSteps: 200_000 });
 }
 
