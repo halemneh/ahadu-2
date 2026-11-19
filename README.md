@@ -28,8 +28,8 @@ specification-first rebuild in TypeScript.
 | Conformance corpus | 54 cases, every error code in the spec exercised |
 | **Lexer** | **done** |
 | **Parser** | **done** |
-| **Interpreter** | **done** — 1,174 tests |
-| CLI | `ahadu run`, `tokens`, `ast`, `check`, `trace` work; REPL is next |
+| **Interpreter** | **done** |
+| **CLI and REPL** | **done** — 1,237 tests |
 | Playground | specified — [`spec/TOOLING.md`](spec/TOOLING.md) |
 
 Implementation order and the acceptance bar for each stage are in
@@ -110,6 +110,7 @@ Ahadu programs run today:
 
 ```sh
 npm run build
+node dist/cli/main.js                                # REPL
 node dist/cli/main.js examples/03-ቤተሰብ.ahadu         # run a program
 node dist/cli/main.js trace examples/04-ተግባሮች.ahadu  # watch it run
 node dist/cli/main.js tokens examples/02-ዑደት.ahadu   # the token table
@@ -146,10 +147,22 @@ Errors are Amharic, carry their code, and point at the span:
        ^^^
 ```
 
+The REPL keeps its bindings between entries, reads an indented block until a
+blank line, and has `:tokens`, `:ast`, `:clear` and `:help`:
+
+```
+አሃዱ> ዕድሜ = 20
+አሃዱ> ዕድሜ > 18 ከሆነ፦
+   ...     ጻፍ("ትልቅ ሰው")
+   ...
+ትልቅ ሰው
+አሃዱ> ዕድሜ * 2
+40
+```
+
 Still to come:
 
 ```sh
-npm run repl                              # interactive አሃዱ> prompt (M4)
 npm run play                              # playground on localhost:5173 (M5)
 ```
 

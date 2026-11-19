@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const cli = resolve(root, 'dist/cli/main.js');
 const built = existsSync(cli);
 
@@ -19,6 +19,15 @@ interface Run {
   stdout: string;
   stderr: string;
   status: number;
+}
+
+function runWithInput(input: string, ...args: string[]): Run {
+  const result = spawnSync('node', [cli, ...args], { cwd: root, encoding: 'utf8', input });
+  return {
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+    status: result.status ?? 1,
+  };
 }
 
 function run(...args: string[]): Run {
@@ -236,11 +245,54 @@ describe.skipIf(!built)('ahadu trace', () => {
   });
 });
 
-describe.skipIf(!built)('still-unbuilt pieces say so', () => {
-  it('the REPL reports that it is not built yet', () => {
-    const { status, stderr } = run();
-    expect(status).toBe(2);
-    expect(stderr).toContain('ROADMAP.md');
+describe.skipIf(!built)('the REPL end to end', () => {
+  it('starts, evaluates, and exits on :quit', () => {
+    const { stdout, status } = runWithInput('ሀ = 5\nሀ + 2\n:quit\n');
+    expect(status).toBe(0);
+    expect(stdout).toContain('7');
+  });
+
+  it('reads Ethiopic input correctly', () => {
+    // Decoding stdin a byte at a time would turn every three-byte Ethiopic
+    // character into three replacement characters.
+    const { stdout } = runWithInput('ጻፍ("ኃይለሚካኤል")\n:quit\n');
+    expect(stdout).toContain('ኃይለሚካኤል');
+    expect(stdout).not.toContain('\uFFFD');
+  });
+
+  it('reads a block until a blank line', () => {
+    const input = 'ዕድሜ = 20\nዕድሜ > 18 ከሆነ፦\n    ጻፍ("ትልቅ")\nአለበለዚያ፦\n    ጻፍ("ልጅ")\n\n:quit\n';
+    const { stdout, stderr } = runWithInput(input);
+    expect(stdout).toContain('ትልቅ');
+    expect(stderr).not.toContain('[AH');
+  });
+
+  it('serves አንብብ from the session input', () => {
+    const { stdout } = runWithInput('ጻፍ(አንብብ("ስም፦ "))\nኃይሌ\n:quit\n');
+    expect(stdout).toContain('ኃይሌ');
+  });
+});
+
+describe.skipIf(!built)('global flags', () => {
+  it('emits no escape sequences when output is not a terminal', () => {
+    // spawnSync gives pipes, not a tty, so colour is off either way.
+    const { stdout, stderr } = run('check', 'tests/conformance/cases/105-chained-comparison.ahadu');
+    expect(stdout).not.toContain('\u001B[');
+    expect(stderr).not.toContain('\u001B[');
+  });
+
+  it('accepts --no-color without changing plain output', () => {
+    const bare = run('check', 'examples/01-ሰላም.ahadu');
+    const flagged = run('check', 'examples/01-ሰላም.ahadu', '--no-color');
+    expect(flagged.stdout).toBe(bare.stdout);
+    expect(flagged.status).toBe(bare.status);
+  });
+
+  it('--help exits 0 and lists the REPL', () => {
+    const { stdout, status } = run('--help');
+    expect(status).toBe(0);
+    expect(stdout).toContain('start the REPL');
+    expect(stdout).toContain('--no-color');
   });
 
   it('--help prints usage and exits 0', () => {

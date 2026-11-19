@@ -191,6 +191,44 @@ export class Interpreter {
     return last;
   }
 
+  /**
+   * Runs a program and returns the outcome instead of throwing.
+   *
+   * Separate from `runProgram` so the REPL can feed one interpreter many
+   * programs and keep its bindings between them (TOOLING.md §1.2). The step
+   * budget is per call, so a long session is not slowly starved of it.
+   */
+  tryRun(program: Program): RunResult {
+    this.steps = 0;
+    try {
+      return { value: this.runProgram(program), diagnostic: null, frames: [] };
+    } catch (thrown) {
+      if (thrown instanceof AhaduError) {
+        return { value: NOTHING, diagnostic: thrown.diagnosticValue, frames: thrown.frames };
+      }
+      if (thrown instanceof ReturnSignal) {
+        // The parser reports AH2005 for a return outside a function, so this
+        // is only reachable if a program was run with diagnostics outstanding.
+        return { value: thrown.value, diagnostic: null, frames: [] };
+      }
+      if (thrown instanceof RangeError) {
+        // A real stack overflow, which means the depth limit was set higher
+        // than this host can take. Still an Ahadu error: nothing escapes.
+        const frames = this.callStack;
+        return {
+          value: NOTHING,
+          diagnostic: runtimeDiagnostic(
+            AH3017,
+            { line: deepestLine(frames), startCol: 1, endCol: 1 },
+            err.callDepthExceeded(frames.length),
+          ),
+          frames,
+        };
+      }
+      throw thrown;
+    }
+  }
+
   /** Runs a block in the scope it was reached from: blocks get no scope (§5.3). */
   private executeBlock(block: Block, scope: Scope): Value {
     let last: Value = NOTHING;
@@ -908,32 +946,5 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
  * stood; 2.0 has no exception handling (§9.3). Never throws.
  */
 export function run(program: Program, host: Host, options: RunOptions = {}): RunResult {
-  const interpreter = new Interpreter(host, options);
-  try {
-    return { value: interpreter.runProgram(program), diagnostic: null, frames: [] };
-  } catch (thrown) {
-    if (thrown instanceof AhaduError) {
-      return { value: NOTHING, diagnostic: thrown.diagnosticValue, frames: thrown.frames };
-    }
-    if (thrown instanceof ReturnSignal) {
-      // The parser reports AH2005 for a return outside a function, so this is
-      // only reachable if a program was run with diagnostics outstanding.
-      return { value: thrown.value, diagnostic: null, frames: [] };
-    }
-    if (thrown instanceof RangeError) {
-      // A real stack overflow, which means the depth limit was set higher than
-      // this host can take. Still an Ahadu error: nothing escapes (§9.2).
-      const frames = interpreter.callStack;
-      return {
-        value: NOTHING,
-        diagnostic: runtimeDiagnostic(
-          AH3017,
-          { line: deepestLine(frames), startCol: 1, endCol: 1 },
-          err.callDepthExceeded(frames.length),
-        ),
-        frames,
-      };
-    }
-    throw thrown;
-  }
+  return new Interpreter(host, options).tryRun(program);
 }

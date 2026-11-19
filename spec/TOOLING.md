@@ -17,8 +17,24 @@ ahadu fmt <file>              canonical formatting (later; see §1.6)
 ```
 
 Global flags: `--json` (machine-readable output for any subcommand),
-`--no-color`, `--ascii` (render `፦` as `:-` etc. for terminals with poor
-Ethiopic font coverage).
+`--no-color`, `--help`.
+
+Colour is used sparingly — the code and caret of a diagnostic, the REPL's
+prompt — and is off unless the stream is a terminal. `--no-color` forces it
+off, as does a `NO_COLOR` environment variable of any value, per the de facto
+convention.
+
+There was an `--ascii` flag here, meant to render `፦` as `:-` for terminals
+with poor Ethiopic font coverage. It is gone: every message Ahadu prints is
+Amharic, so a terminal that cannot draw Ge'ez cannot show them whatever the
+punctuation looks like, and transliterating four marks while leaving the words
+alone achieves nothing the flag claimed.
+
+The real cost of such a terminal is the caret line: Ethiopic syllables are
+often drawn wide or variable-width, so the `^` under a span can sit beside the
+span rather than beneath it. Nothing in the CLI can fix that — the line and
+column in the message are the reliable part, which is one more reason they are
+always printed.
 
 ### 1.1 Stage output is the debugging story
 

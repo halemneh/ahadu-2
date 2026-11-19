@@ -77,13 +77,35 @@ Found while implementing:
 - `AH3017` and `AH3018` are new — resource limits, so that runaway recursion
   and endless loops end in an Ahadu error rather than taking the host down.
 
-## M4 — CLI (mostly landed)
+## M4 — CLI and REPL ✅
 
 `spec/TOOLING.md` §1 · `src/cli/`
 
-`run`, `tokens`, `ast`, `check`, `trace`, `--json`, and the shared diagnostic
-renderer with tracebacks are done; stdout carries program output and stderr
-the diagnostics. **Left**: the REPL, and `--no-color` / `--ascii`.
+`run`, `tokens`, `ast`, `check`, `trace`, the REPL, `--json`, `--no-color`,
+and the shared diagnostic renderer with tracebacks. stdout carries program
+output and stderr the diagnostics.
+
+**Done**: 1,237 tests. The REPL takes its I/O as an argument, so a session is
+an ordinary function call in a test rather than a spawned process with timing
+to get wrong; `commands.test.ts` still drives the real binary end to end.
+
+Found while implementing:
+
+- `readLineSync` decoded standard input **one byte at a time**, so every
+  three-byte Ethiopic character became three replacement characters. It had
+  been there since M3 and only affected `አንብብ`, which no example used — the
+  REPL made it the first thing you see. There is an `አንብብ` example now, and a
+  test that asserts no U+FFFD comes back.
+- The REPL re-checked whether an entry looked complete after every line, so
+  `ዕድሜ > 18 ከሆነ፦` / `ጻፍ("ትልቅ")` ran as soon as the body's first line parsed,
+  orphaning the `አለበለዚያ` that followed. An open block now runs on a blank
+  line, as §1.2 says, while an unclosed bracket still runs the moment it
+  closes — the two are told apart.
+- `--ascii` is gone from the spec. It was meant to help terminals with poor
+  Ethiopic font coverage, but every message Ahadu prints is Amharic, so
+  transliterating four punctuation marks achieves nothing the flag claimed.
+  What such a terminal actually costs you is caret alignment, which nothing
+  in the CLI can fix; TOOLING.md §1 now says so.
 
 ## M5 — Playground
 
