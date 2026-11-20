@@ -1,17 +1,23 @@
 # Builds the site and publishes it to GitHub Pages.
 #
-# Needs Pages enabled once, in Settings → Pages → Source: **GitHub Actions**.
 # Nothing is committed: the built site is uploaded as an artifact and served
 # from there, so `tools/site/dist/` stays out of the repository.
 #
-# GitHub Pages serves a **private** repository only on a paid plan. On the
-# free plan the repository has to be public for this to work; see DEPLOY.md.
+# **Manual until Pages is turned on.** GitHub Pages serves a private
+# repository only on a paid plan, and this repository is private on the free
+# one, so `configure-pages` cannot find a Pages site and the job fails. A
+# workflow that fails on every push teaches everyone to ignore a red tick, so
+# it waits to be asked.
+#
+# To make it live: Settings → Pages → Source: **GitHub Actions** (possible
+# once the repository is public, or on Pro), then put the push trigger back —
+# uncomment the two lines below. DEPLOY.md has the whole picture.
 
 name: Pages
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 permissions:

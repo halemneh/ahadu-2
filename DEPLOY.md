@@ -35,11 +35,16 @@ than building a workaround for a few weeks.
 
 ### Turning it on
 
-1. **Settings → Pages → Source: GitHub Actions.**
-2. Push. `.github/workflows/pages.yml` builds and deploys on every push to
-   `main`. Nothing is committed — the built site is uploaded as an artifact,
-   so `tools/site/dist/` stays out of the repository.
-3. **Settings → Pages → Custom domain:** `ahaducode.com`, then tick **Enforce
+1. **Settings → Pages → Source: GitHub Actions.** This option only appears
+   once the repository is public, or on a paid plan — it is the same
+   condition as above, in the place you will meet it.
+2. In `.github/workflows/pages.yml`, uncomment the two `push:` lines. The
+   workflow ships **manual-only**, because until Pages exists the build fails
+   on every push and a permanently red tick is worse than no tick. Nothing is
+   committed either way — the site is uploaded as an artifact, so
+   `tools/site/dist/` stays out of the repository.
+3. Push, or run the workflow by hand from the Actions tab.
+4. **Settings → Pages → Custom domain:** `ahaducode.com`, then tick **Enforce
    HTTPS** once the certificate is issued (a few minutes).
 
 ### DNS for ahaducode.com
