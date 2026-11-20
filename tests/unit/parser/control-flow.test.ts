@@ -21,10 +21,10 @@ describe('the condition comes first (§7.3, CHANGES C01)', () => {
   });
 
   it('reads the original repository own example line', () => {
-    const statement = only('ስም == "መልኬ" ከሆነ፦\n    ጻፍ("እናት")');
+    const statement = only('ስም == "አልማዝ" ከሆነ፦\n    ጻፍ("እናት")');
     expect(statement.type).toBe('IfStatement');
     if (statement.type !== 'IfStatement') return;
-    expect(sexpr(statement.condition)).toBe('(EQ ስም "መልኬ")');
+    expect(sexpr(statement.condition)).toBe('(EQ ስም "አልማዝ")');
   });
 
   it('accepts every ከሆነ spelling', () => {

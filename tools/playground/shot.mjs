@@ -127,7 +127,7 @@ await shoot('10-input-dialog', {
   theme: 'dark',
   language: 'am',
   source: readsInput,
-  input: 'ኃይለሚካኤል',
+  input: 'ተስፋማርያም',
   prepare: async (page) => {
     await page.getByRole('button', { name: /አሂድ/ }).click();
     await page.waitForTimeout(300);
@@ -141,7 +141,7 @@ await shoot('11-input-answered', {
   theme: 'light',
   language: 'en',
   source: readsInput,
-  input: 'ኃይለሚካኤል',
+  input: 'ተስፋማርያም',
   prepare: async (page) => {
     await page.getByRole('button', { name: /Run/ }).first().click();
     await page.waitForTimeout(250);

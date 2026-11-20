@@ -15,15 +15,11 @@ grammar, Ahadu follows **Amharic word order**:
 The condition comes first, then `ከሆነ` ("if it is") — the way the clause is
 ordered in Amharic. Same for loops: `ቆጣሪ < 5 እስከሆነ ድረስ፦`.
 
-Ahadu was originally designed and built by Hailemichael Alemneh as a CS senior
-project ([paper and presentation](https://github.com/halemneh/Ahadu)). 2.0 is a
-specification-first rebuild in TypeScript.
-
-## Hosting
-
-The site is static files; `npm run site:build` produces them.
-[DEPLOY.md](DEPLOY.md) covers hosting it free on Cloudflare Pages and
-pointing ahaducode.com at it.
+Ahadu began as a senior project: a Python interpreter, a Flask playground, and
+a paper describing the language. 2.0 is a specification-first rebuild in
+TypeScript, written against a written spec rather than against the old code.
+The predecessors are not public; `spec/CHANGES-FROM-V1.md` records what they
+did and every place 2.0 deliberately differs.
 
 ## Status
 
@@ -53,9 +49,9 @@ their resolutions in [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md).
 ```ahadu
 # አስተያየት
 
-ስም = "ኃይለሚካኤል"          # ተለዋጭ
+ስም = "ተስፋማርያም"          # ተለዋጭ
 ቁጥር ዕድሜ = 22            # አይነት ያለው ተለዋጭ (አማራጭ)
-ቤተሰብ = ["ሰላም"፣ "መልኬ"]   # ስብስብ
+ቤተሰብ = ["ሰላም"፣ "አልማዝ"]   # ስብስብ
 
 ዕድሜ >= 18 ከሆነ፦          # ሁኔታ
     ጻፍ(ስም + " ትልቅ ሰው ነው")
@@ -86,9 +82,9 @@ their resolutions in [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md).
             ተመላሽ "አንደኛ ደረጃ"
         ተመላሽ "ሁለተኛ ደረጃ"
 
-ሃይሌ = ተማሪ("ኃይለሚካኤል")
-የሃይሌ ክፍል = 10            # "the ክፍል of ሃይሌ"
-ጻፍ(ሃይሌ.ደረጃ())
+አበበ = ተማሪ("ተስፋማርያም")
+የአበበ ክፍል = 10            # "the ክፍል of አበበ"
+ጻፍ(አበበ.ደረጃ())
 ```
 
 Types: `ቁጥር` (number) · `ጽሁፍ` (text) · `እውነታ` (boolean) · `ስብስብ` (list) ·
@@ -209,6 +205,12 @@ tests/
 examples/             runnable Ahadu programs, also used by the playground
 tools/playground/     browser editor with live token and AST panels
 ```
+
+## Hosting
+
+The website is static files; `npm run site:build` produces them, the playground
+included. [DEPLOY.md](DEPLOY.md) covers hosting it free and pointing a domain
+at it.
 
 ## How this repository works
 

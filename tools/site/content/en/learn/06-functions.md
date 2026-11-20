@@ -98,11 +98,11 @@ would.
 ```
 
 ```ግቤት
-ኃይለሚካኤል
+አበበ
 ```
 
 ```ውጤት
-ስምህ ማን ነው? እንኳን ደህና መጣህ ኃይለሚካኤል
+ስምህ ማን ነው? እንኳን ደህና መጣህ አበበ
 ```
 
 Running this one asks you for the answer first.

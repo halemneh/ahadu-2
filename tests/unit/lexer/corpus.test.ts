@@ -118,7 +118,7 @@ describe('legacy programs from the original repository', () => {
   });
 
   it('puts the condition before the keyword in the token stream', () => {
-    const { tokens } = tokenize('ስም == "መልኬ" ከሆነ፦');
+    const { tokens } = tokenize('ስም == "አልማዝ" ከሆነ፦');
     expect(tokens.map((t) => t.type)).toEqual([
       'IDENTIFIER',
       'EQ',

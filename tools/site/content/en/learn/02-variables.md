@@ -99,14 +99,14 @@ a number is even.
 On text, `+` joins.
 
 ```ahadu
-የመጀመሪያ = "ኃይለ"
-የአባት = "ሚካኤል"
+የመጀመሪያ = "ተስፋ"
+የአባት = "ማርያም"
 
 ጻፍ(የመጀመሪያ + የአባት)
 ```
 
 ```ውጤት
-ኃይለሚካኤል
+ተስፋማርያም
 ```
 
 A number and a piece of text cannot be added, though. This is an error:

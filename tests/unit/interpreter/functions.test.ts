@@ -152,20 +152,20 @@ describe('classes (§7.6)', () => {
   );
 
   it('constructs with the constructor, and reads attributes back', () => {
-    expect(out(`${student}ሃይሌ = ተማሪ("ኃይለሚካኤል")\nጻፍ(ሃይሌ.ስም)`)).toEqual(['ኃይለሚካኤል']);
+    expect(out(`${student}አበበ = ተማሪ("ተስፋማርያም")\nጻፍ(አበበ.ስም)`)).toEqual(['ተስፋማርያም']);
   });
 
   it('initializes attributes to their declared defaults', () => {
-    expect(out(`${student}ሃይሌ = ተማሪ("ሀ")\nጻፍ(ሃይሌ.ክፍል)`)).toEqual(['0']);
+    expect(out(`${student}አበበ = ተማሪ("ሀ")\nጻፍ(አበበ.ክፍል)`)).toEqual(['0']);
   });
 
   it('assigns an attribute in either spelling', () => {
-    const source = `${student}ሃይሌ = ተማሪ("ሀ")\nየሃይሌ ክፍል = 10\nጻፍ(ሃይሌ.ክፍል)\nሃይሌ.ክፍል = 12\nጻፍ(የሃይሌ ክፍል)`;
+    const source = `${student}አበበ = ተማሪ("ሀ")\nየአበበ ክፍል = 10\nጻፍ(አበበ.ክፍል)\nአበበ.ክፍል = 12\nጻፍ(የአበበ ክፍል)`;
     expect(out(source)).toEqual(['10', '12']);
   });
 
   it('runs a method against the object it was called on', () => {
-    const source = `${student}ሃይሌ = ተማሪ("ሀ")\nየሃይሌ ክፍል = 10\nጻፍ(ሃይሌ.ደረጃ())`;
+    const source = `${student}አበበ = ተማሪ("ሀ")\nየአበበ ክፍል = 10\nጻፍ(አበበ.ደረጃ())`;
     expect(out(source)).toEqual(['ሁለተኛ']);
   });
 
@@ -207,11 +207,11 @@ describe('classes (§7.6)', () => {
   });
 
   it('checks an annotated attribute on assignment', () => {
-    expect(code(`${student}ሃይሌ = ተማሪ("ሀ")\nየሃይሌ ክፍል = "ጽሁፍ"`)).toBe('AH3009');
+    expect(code(`${student}አበበ = ተማሪ("ሀ")\nየአበበ ክፍል = "ጽሁፍ"`)).toBe('AH3009');
   });
 
   it('refuses an attribute the class never declared (§7.6)', () => {
-    const source = `${student}ሃይሌ = ተማሪ("ሀ")\nየሃይሌ ዕድሜ = 22`;
+    const source = `${student}አበበ = ተማሪ("ሀ")\nየአበበ ዕድሜ = 22`;
     expect(code(source)).toBe('AH3012');
     expect(message(source)).toContain('ዕድሜ');
     expect(message(source)).toContain('ተማሪ');
@@ -229,8 +229,8 @@ describe('classes (§7.6)', () => {
   });
 
   it('checks the constructor’s arity', () => {
-    expect(code(`${student}ሃይሌ = ተማሪ()`)).toBe('AH3010');
-    expect(code(`${student}ሃይሌ = ተማሪ("ሀ"፣ "ለ")`)).toBe('AH3010');
+    expect(code(`${student}አበበ = ተማሪ()`)).toBe('AH3010');
+    expect(code(`${student}አበበ = ተማሪ("ሀ"፣ "ለ")`)).toBe('AH3010');
   });
 
   it('constructs with no arguments when there is no ፍጠር', () => {

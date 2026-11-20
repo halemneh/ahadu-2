@@ -83,7 +83,7 @@ describe('the tokens panel (§2.1)', () => {
   });
 
   it('marks a የ-prefixed name with its stem', () => {
-    expect(tokenRowsHtml(analyse('የሃይሌ ዕድሜ').tokens, am)).toContain('(የ + ሃይሌ)');
+    expect(tokenRowsHtml(analyse('የአበበ ዕድሜ').tokens, am)).toContain('(የ + አበበ)');
   });
 
   it('says so when there is nothing to show', () => {

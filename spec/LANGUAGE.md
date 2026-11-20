@@ -5,11 +5,11 @@ Ahadu language. Where an implementation disagrees with this document, the
 implementation is wrong.
 
 **Version**: 2.0.0
-**Supersedes**: the implicit specification embodied in
-[halemneh/Ahadu](https://github.com/halemneh/Ahadu) (Python, "v1-py") and
-[halemneh/Amharic-Interpreter](https://github.com/halemneh/Amharic-Interpreter)
-(TypeScript, "v1-ts"). Every deliberate divergence from those is recorded in
-[CHANGES-FROM-V1.md](./CHANGES-FROM-V1.md).
+**Supersedes**: the implicit specification embodied in two earlier,
+non-public implementations — a Python one ("v1-py") and a TypeScript one
+("v1-ts"). Every deliberate divergence from those is recorded in
+[CHANGES-FROM-V1.md](./CHANGES-FROM-V1.md), which describes them in enough
+detail to follow without access to either.
 
 **Conventions**: MUST / MUST NOT / SHOULD / MAY carry their RFC 2119 meaning.
 Code points are written `U+XXXX`. In grammar fragments, `·` marks a required
@@ -109,7 +109,7 @@ Rules:
   either; they are number literals (§3.4.1), so `፩` is the number 1 and never
   part of a name.
 - Identifiers are compared by exact code-point sequence. There is **no**
-  normalization and no spelling-variant folding: `ሃይሌ` and `ኃይሌ` are two
+  normalization and no spelling-variant folding: `ሃና` and `ኃና` are two
   different variables. (Keywords are the sole exception — §3.2.)
 - Identifiers are case-sensitive in their ASCII portion.
 
@@ -162,15 +162,15 @@ Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, 
 
 ### 3.3 The possessive prefix `የ`
 
-Amharic expresses "the X of Y" with the prefix `የ` on Y: `የሃይሌ ዕድሜ` is
+Amharic expresses "the X of Y" with the prefix `የ` on Y: `የአበበ ዕድሜ` is
 "Hailé's age". Ahadu supports this for attribute access.
 
 The lexer MUST NOT split `የ` from the word it is attached to. Instead:
 
 - A maximal word run that begins with `የ` (U+12E8) and has at least one further
   word character produces an `IDENTIFIER` token whose `name` is the **full**
-  text (`የሃይሌ`) and whose `hasOfPrefix` flag is true, plus a `stem` field
-  holding the text after `የ` (`ሃይሌ`).
+  text (`የአበበ`) and whose `hasOfPrefix` flag is true, plus a `stem` field
+  holding the text after `የ` (`አበበ`).
 - A bare `የ` with no following word character is an illegal character
   (`AH1001`).
 
@@ -466,7 +466,7 @@ unclosed, which is what makes a multi-line list literal or argument list legal:
 
 ```ahadu
 ቤተሰብ = [
-    "ኃይለሚካኤል"፣
+    "ተስፋማርያም"፣
     "ሰላም"
 ]
 ```
@@ -598,9 +598,9 @@ Amharic.
 ጽሁፍ[1]             # index into a string
 ዝርዝር[1:3]          # slice
 ተግባር(ሀ፣ ለ)         # call
-ሃይሌ.ስም             # attribute
-ሃይሌ.ደረጃ()          # method call
-የሃይሌ ስም            # attribute, Amharic order (read, §7.5 for write)
+አበበ.ስም             # attribute
+አበበ.ደረጃ()          # method call
+የአበበ ስም            # attribute, Amharic order (read, §7.5 for write)
 ```
 
 - `obj.attr` and `የobj attr` denote the same attribute. The `የ` form reads in
@@ -653,8 +653,8 @@ when `x` is a `ስብስብ`:
 ስም = "ሰላም"
 ቆጣሪ = ቆጣሪ + 1
 ዝርዝር[0] = 5
-ሃይሌ.ዕድሜ = 22
-የሃይሌ ዕድሜ = 22
+አበበ.ዕድሜ = 22
+የአበበ ዕድሜ = 22
 ```
 
 - Assignment is a **statement**, never an expression. `ሀ = ለ = 1` and
@@ -794,9 +794,9 @@ three names are reserved.
             ተመላሽ "ሁለተኛ ደረጃ"
         ተመላሽ "ዩኒቨርሲቲ"
 
-ሃይሌ = ተማሪ("ኃይለሚካኤል")
-የሃይሌ ክፍል = 10
-ጻፍ(ሃይሌ.ስም + " — " + ሃይሌ.ደረጃ())
+አበበ = ተማሪ("ተስፋማርያም")
+የአበበ ክፍል = 10
+ጻፍ(አበበ.ስም + " — " + አበበ.ደረጃ())
 ```
 
 A class body contains, in any order and all indented one level:
@@ -840,7 +840,7 @@ Semantics:
   value is always the new object.
 - Assigning to an attribute that was never declared is error `AH3012`. Objects
   do not grow new attributes at runtime.
-- Methods are bound: `ሃይሌ.ደረጃ` is a callable value even when not immediately
+- Methods are bound: `አበበ.ደረጃ` is a callable value even when not immediately
   called.
 
 ---

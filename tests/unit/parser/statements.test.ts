@@ -20,18 +20,18 @@ describe('assignment (§7.1)', () => {
   });
 
   it('assigns to an attribute, dot form', () => {
-    expect(only('ሃይሌ.ዕድሜ = 22')).toMatchObject({
+    expect(only('አበበ.ዕድሜ = 22')).toMatchObject({
       type: 'AssignmentStatement',
       target: { type: 'MemberAccess', property: 'ዕድሜ', spelling: 'dot' },
     });
   });
 
   it('assigns to an attribute, የ form', () => {
-    expect(only('የሃይሌ ዕድሜ = 22')).toMatchObject({
+    expect(only('የአበበ ዕድሜ = 22')).toMatchObject({
       type: 'AssignmentStatement',
       target: {
         type: 'MemberAccess',
-        object: { type: 'Identifier', name: 'ሃይሌ' },
+        object: { type: 'Identifier', name: 'አበበ' },
         property: 'ዕድሜ',
         spelling: 'of',
       },

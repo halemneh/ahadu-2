@@ -136,9 +136,9 @@ describe('አይነት (§8)', () => {
 
 describe('አንብብ (§8)', () => {
   it('reads a line', () => {
-    const result = runSource('ስም = አንብብ()\nጻፍ("ሰላም " + ስም)', { input: ['ኃይለሚካኤል'] });
+    const result = runSource('ስም = አንብብ()\nጻፍ("ሰላም " + ስም)', { input: ['ተስፋማርያም'] });
     expect(result.errors).toEqual([]);
-    expect(result.output).toEqual(['ሰላም ኃይለሚካኤል']);
+    expect(result.output).toEqual(['ሰላም ተስፋማርያም']);
   });
 
   it('prints its prompt first', () => {
@@ -221,7 +221,7 @@ describe('slicing (§6.5, CHANGES C16)', () => {
 
   it('slices a string by code point', () => {
     expect(shows('"ሰላም"[0:2]')).toBe('ሰላ');
-    expect(shows('"ኃይለሚካኤል"[0:4]')).toBe('ኃይለሚ');
+    expect(shows('"ተስፋማርያም"[0:4]')).toBe('ተስፋማ');
   });
 
   it('clamps rather than failing on range', () => {

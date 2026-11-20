@@ -25,8 +25,8 @@ describe('identifiers', () => {
   });
 
   it('is compared by exact code points, with no spelling folding (§3.1)', () => {
-    // ሃይሌ and ኃይሌ are two different variables, unlike keyword variants.
-    const names = values('ሃይሌ ኃይሌ');
+    // ሃና and ኃና are two different variables, unlike keyword variants.
+    const names = values('ሃና ኃና');
     expect(names[0]).not.toBe(names[1]);
   });
 
@@ -119,16 +119,16 @@ describe('keywords', () => {
 
 describe('the possessive የ prefix (§3.3, CHANGES C23)', () => {
   it('keeps the prefix attached and records the stem', () => {
-    // v1-py emitted OF then ሃይሌ, which made የ-prefixed names unusable.
-    expect(lex('የሃይሌ')).toEqual([
+    // v1-py emitted OF then አበበ, which made የ-prefixed names unusable.
+    expect(lex('የአበበ')).toEqual([
       {
         type: 'IDENTIFIER',
-        value: 'የሃይሌ',
+        value: 'የአበበ',
         line: 1,
         startCol: 1,
         endCol: 4,
         hasOfPrefix: true,
-        stem: 'ሃይሌ',
+        stem: 'አበበ',
       },
     ]);
   });
@@ -139,11 +139,11 @@ describe('the possessive የ prefix (§3.3, CHANGES C23)', () => {
   });
 
   it('leaves the possessive reading to the parser', () => {
-    expect(types('የሃይሌ ዕድሜ = 22')).toEqual(['IDENTIFIER', 'IDENTIFIER', 'ASSIGN', 'NUMBER']);
+    expect(types('የአበበ ዕድሜ = 22')).toEqual(['IDENTIFIER', 'IDENTIFIER', 'ASSIGN', 'NUMBER']);
   });
 
   it('does not set the flag on a name without the prefix', () => {
-    expect(tokenize('ሃይሌ').tokens[0]?.hasOfPrefix).toBeUndefined();
+    expect(tokenize('አበበ').tokens[0]?.hasOfPrefix).toBeUndefined();
   });
 
   it('reports a bare የ as an illegal character', () => {

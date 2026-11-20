@@ -47,7 +47,7 @@ export interface FunctionValue {
   readonly body: Block;
   /** The scope the function was declared in — closures are lexical (§5.3). */
   readonly closure: Scope;
-  /** Set when the function was reached through an object, so `ሃይሌ.ደረጃ` is callable (§7.6). */
+  /** Set when the function was reached through an object, so `አበበ.ደረጃ` is callable (§7.6). */
   readonly boundTo: ObjectValue | null;
 }
 

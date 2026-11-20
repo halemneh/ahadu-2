@@ -57,20 +57,20 @@ describe('a run reports every diagnostic from the stage that stopped it', () => 
   it('serves አንብብ from the input panel, one line per call (§2.2)', () => {
     const reply = evaluate({
       source: 'ጻፍ("ሰላም " + አንብብ())\nጻፍ("እና " + አንብብ())',
-      input: ['ኃይሌ', 'ሰላም'],
+      input: ['አበበ', 'ሰላም'],
       maxSteps: 200_000,
     });
     expect(reply.diagnostics).toEqual([]);
-    expect(reply.output).toBe('ሰላም ኃይሌ\nእና ሰላም\n');
+    expect(reply.output).toBe('ሰላም አበበ\nእና ሰላም\n');
   });
 
   it('echoes an አንብብ prompt into the output, as a terminal would', () => {
     const reply = evaluate({
       source: 'ስም = አንብብ("ስም፦ ")\nጻፍ(ስም)',
-      input: ['ኃይሌ'],
+      input: ['አበበ'],
       maxSteps: 200_000,
     });
-    expect(reply.output).toBe('ስም፦ ኃይሌ\n');
+    expect(reply.output).toBe('ስም፦ አበበ\n');
   });
 
   it('gives አንብብ an empty line when the panel runs out', () => {

@@ -52,7 +52,7 @@ describe.skipIf(!built)('ahadu tokens', () => {
 
   it('marks a የ-prefixed name with its stem', () => {
     const { stdout } = run('tokens', 'examples/05-ክላስ.ahadu');
-    expect(stdout).toContain('(የ + ሃይሌ)');
+    expect(stdout).toContain('(የ + ተማሪው)');
   });
 
   it('exits 1 and writes a framed diagnostic to stderr', () => {
@@ -186,11 +186,11 @@ describe.skipIf(!built)('ahadu run', () => {
     const { stdout, status } = run('examples/03-ቤተሰብ.ahadu');
     expect(status).toBe(0);
     expect(stdout.trim().split('\n')).toEqual([
-      'ልጅ፡ ኃይለሚካኤል',
-      'ልጅ፡ ሰላም',
-      'እናት፡ መልኬ',
-      'አባት፡ ስለሺ',
-      'ልጅ፡ ገሊላ',
+      'ልጅ፡ አበበ',
+      'ልጅ፡ ትዕግስት',
+      'እናት፡ አልማዝ',
+      'አባት፡ ከበደ',
+      'ልጅ፡ ሰናይት',
     ]);
   });
 
@@ -255,8 +255,8 @@ describe.skipIf(!built)('the REPL end to end', () => {
   it('reads Ethiopic input correctly', () => {
     // Decoding stdin a byte at a time would turn every three-byte Ethiopic
     // character into three replacement characters.
-    const { stdout } = runWithInput('ጻፍ("ኃይለሚካኤል")\n:quit\n');
-    expect(stdout).toContain('ኃይለሚካኤል');
+    const { stdout } = runWithInput('ጻፍ("ተስፋማርያም")\n:quit\n');
+    expect(stdout).toContain('ተስፋማርያም');
     expect(stdout).not.toContain('\uFFFD');
   });
 
@@ -268,8 +268,8 @@ describe.skipIf(!built)('the REPL end to end', () => {
   });
 
   it('serves አንብብ from the session input', () => {
-    const { stdout } = runWithInput('ጻፍ(አንብብ("ስም፦ "))\nኃይሌ\n:quit\n');
-    expect(stdout).toContain('ኃይሌ');
+    const { stdout } = runWithInput('ጻፍ(አንብብ("ስም፦ "))\nአበበ\n:quit\n');
+    expect(stdout).toContain('አበበ');
   });
 });
 

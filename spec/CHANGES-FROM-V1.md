@@ -3,14 +3,16 @@
 Two predecessor implementations exist, and they do not describe the same
 language:
 
-- **v1-py** — [halemneh/Ahadu](https://github.com/halemneh/Ahadu). Python.
-  Complete pipeline: lexer → parser → tree-walking interpreter, plus a Flask
-  playground. This is the *de facto* definition of Ahadu: the paper, the
-  presentation, and all example programs target it.
-- **v1-ts** — [halemneh/Amharic-Interpreter](https://github.com/halemneh/Amharic-Interpreter).
-  TypeScript, spec-driven, ~7.6k lines of tests. Lexer and parser only; no
-  evaluator. Hardened in ways v1-py never was (BOM, zero-width code points,
-  error recovery, position spans), but it diverges from v1-py on core syntax.
+- **v1-py** — Python. A complete pipeline: lexer → parser → tree-walking
+  interpreter, plus a Flask playground. This is the *de facto* definition of
+  Ahadu: the paper, the presentation, and all example programs target it.
+- **v1-ts** — TypeScript, spec-driven, ~7.6k lines of tests. Lexer and parser
+  only; no evaluator. Hardened in ways v1-py never was (BOM, zero-width code
+  points, error recovery, position spans), but it diverges from v1-py on core
+  syntax.
+
+Neither is public. Every claim made about them below is quoted or described in
+enough detail to be followed without them.
 
 Neither had a written language specification. This document records every
 divergence, defect, and gap found while reading both, and the resolution 2.0
@@ -30,7 +32,7 @@ Severity: **critical** = the language is wrong or a correct program fails ·
 v1-py, the paper, and every example program put the condition **first**:
 
 ```ahadu
-ስም == "መልኬ" ከሆነ፦          # "if the name is መልኬ"
+ስም == "አልማዝ" ከሆነ፦          # "if the name is አልማዝ"
 ቆጣሪ < 5 እስከሆነ ድረስ፦        # "while the counter is under 5"
 ```
 
@@ -38,7 +40,7 @@ v1-ts parses the keyword **first** (`src/parser/parser.ts:188`,
 `parseIfStatement` consumes `IF` then reads the condition):
 
 ```ahadu
-ከሆነ ስም == "መልኬ":-
+ከሆነ ስም == "አልማዝ":-
 እስከሆነ ድረስ ቆጣሪ < 5:-
 ```
 
@@ -106,7 +108,7 @@ principle 4, and the inline path was the least reliable code in v1-py.
 
 `አዲስ` ("new") is in v1-py's keyword table but no parser rule or interpreter
 path ever references it; objects are constructed by calling the class name
-(`ሃይሌ = ተማሪ("…")`). v1-ts built a whole `NewExpression` node and
+(`አበበ = ተማሪ("…")`). v1-ts built a whole `NewExpression` node and
 `parseNewExpression` for a syntax the language never had.
 
 **Resolution**: construction is a call on the class value (§7.6). `አዲስ` is

@@ -76,12 +76,12 @@ Write a program that prints your name and your city on two lines.
 <summary>Show the answer</summary>
 
 ```ahadu
-ጻፍ("ስም፦"፣ "ኃይለሚካኤል")
+ጻፍ("ስም፦"፣ "አበበ")
 ጻፍ("ከተማ፦"፣ "አዲስ አበባ")
 ```
 
 ```ውጤት
-ስም፦ ኃይለሚካኤል
+ስም፦ አበበ
 ከተማ፦ አዲስ አበባ
 ```
 

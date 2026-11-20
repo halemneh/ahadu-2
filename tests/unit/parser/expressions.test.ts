@@ -179,14 +179,14 @@ describe('trailing commas are not accepted (§3.4 grammar)', () => {
 
 describe('the possessive የ form (§3.3, §6.4, CHANGES C23)', () => {
   it('reads የobj attr as a member access', () => {
-    expect(sx('የሃይሌ ዕድሜ')).toBe('(OF ሃይሌ ዕድሜ)');
+    expect(sx('የአበበ ዕድሜ')).toBe('(OF አበበ ዕድሜ)');
   });
 
   it('names the object without the prefix', () => {
-    const node = expression('የሃይሌ ዕድሜ');
+    const node = expression('የአበበ ዕድሜ');
     expect(node.type).toBe('MemberAccess');
     if (node.type !== 'MemberAccess') return;
-    expect(node.object).toMatchObject({ type: 'Identifier', name: 'ሃይሌ' });
+    expect(node.object).toMatchObject({ type: 'Identifier', name: 'አበበ' });
     expect(node.property).toBe('ዕድሜ');
     // The የ is one code point, so the object's span starts just after it.
     expect(node.startCol).toBe(1);
@@ -199,8 +199,8 @@ describe('the possessive የ form (§3.3, §6.4, CHANGES C23)', () => {
   });
 
   it('denotes the same thing as the dot form', () => {
-    const of = expression('የሃይሌ ዕድሜ');
-    const dot = expression('ሃይሌ.ዕድሜ');
+    const of = expression('የአበበ ዕድሜ');
+    const dot = expression('አበበ.ዕድሜ');
     expect(of.type).toBe(dot.type);
     if (of.type !== 'MemberAccess' || dot.type !== 'MemberAccess') return;
     expect(of.property).toBe(dot.property);

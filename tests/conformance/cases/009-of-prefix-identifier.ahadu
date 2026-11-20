@@ -1,7 +1,7 @@
 # Regression: CHANGES C23 — v1-py split የ off the front of every identifier.
-# expect: ኃይሌ
+# expect: አበበ
 # expect: 3
-የኔስም = "ኃይሌ"
+የኔስም = "አበበ"
 የቤተሰብ_ቁጥር = 3
 ጻፍ(የኔስም)
 ጻፍ(የቤተሰብ_ቁጥር)

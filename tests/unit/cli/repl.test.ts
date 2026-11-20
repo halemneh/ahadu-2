@@ -101,8 +101,8 @@ describe('blocks (§1.2)', () => {
   });
 
   it('reads a class declaration whole', () => {
-    const s = session('ክላስ ተማሪ፦', '    ጽሁፍ ስም = "ኃይሌ"', '', 'ተማሪ().ስም');
-    expect(lines(s)).toEqual(['ኃይሌ']);
+    const s = session('ክላስ ተማሪ፦', '    ጽሁፍ ስም = "አበበ"', '', 'ተማሪ().ስም');
+    expect(lines(s)).toEqual(['አበበ']);
     expect(errorCodes(s)).toEqual([]);
   });
 
@@ -219,8 +219,8 @@ describe('meta-commands (§1.2)', () => {
 
 describe('አንብብ reads from the session (§8)', () => {
   it('takes the next input line', () => {
-    const s = session('ስም = አንብብ()', 'ኃይለሚካኤል', 'ጻፍ("ሰላም " + ስም)');
-    expect(lines(s)).toEqual(['ሰላም ኃይለሚካኤል']);
+    const s = session('ስም = አንብብ()', 'ተስፋማርያም', 'ጻፍ("ሰላም " + ስም)');
+    expect(lines(s)).toEqual(['ሰላም ተስፋማርያም']);
   });
 });
 
