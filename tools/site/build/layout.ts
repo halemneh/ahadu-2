@@ -13,6 +13,7 @@
  */
 
 import { escapeHtml } from '../../playground/view.js';
+import { PLAYGROUND_URL, STORAGE, sectionUrl } from '../../shared/nav.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
 
@@ -37,11 +38,11 @@ export function page(view: PageView): string {
   const home = `/${s.code}/`;
 
   const nav = [
-    link(home, s.navHome, view.section === 'home'),
-    link(`${home}${s.pathLearn}/`, s.navLearn, view.section === 'learn'),
-    link(`${home}${s.pathReference}/`, s.navReference, view.section === 'reference'),
-    link(`${home}${s.pathExamples}/`, s.navExamples, view.section === 'examples'),
-    link('/playground/', s.navPlayground, false),
+    link(sectionUrl(s.code, 'home'), s.navHome, view.section === 'home'),
+    link(sectionUrl(s.code, 'learn'), s.navLearn, view.section === 'learn'),
+    link(sectionUrl(s.code, 'reference'), s.navReference, view.section === 'reference'),
+    link(sectionUrl(s.code, 'examples'), s.navExamples, view.section === 'examples'),
+    link(PLAYGROUND_URL, s.navPlayground, false),
   ].join('\n        ');
 
   const contents =
@@ -84,17 +85,20 @@ export function page(view: PageView): string {
     <link rel="alternate" hreflang="${s.code === 'am' ? 'en' : 'am'}" href="${view.counterpart}" />
     <link rel="stylesheet" href="/theme/site.css" />
     <script>
-      // Before first paint, so a reader who chose dark never sees a white flash.
       try {
-        var t = localStorage.getItem('ahadu.theme');
+        // Before first paint, so a reader who chose dark never sees a flash.
+        var t = localStorage.getItem('${STORAGE.theme}');
         if (t) document.documentElement.dataset.theme = t;
+        // This page's language is in its URL. Record it, so the playground —
+        // which has one URL for both — opens in the language being read.
+        localStorage.setItem('${STORAGE.language}', '${s.code}');
       } catch (e) {}
     </script>
   </head>
   <body data-section="${view.section}">
     <a class="skip" href="#main">${escapeHtml(view.title)}</a>
 
-    <header class="bar">
+    <header class="sitebar">
       <a class="brand" href="${home}">
         <strong>${escapeHtml(s.siteName)}</strong>
         <span class="version">2.0</span>

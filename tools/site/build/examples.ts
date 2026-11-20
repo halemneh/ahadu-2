@@ -12,7 +12,6 @@
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Strings } from './strings.js';
 
 /** `01-ሰላም.ahadu` → `ሰላም`. */
 export function exampleName(file: string): string {
@@ -22,7 +21,7 @@ export function exampleName(file: string): string {
     .replace(/-/g, ' ');
 }
 
-export function examplesBody(s: Strings, repoDir: string): string {
+export function examplesBody(repoDir: string): string {
   const dir = join(repoDir, 'examples');
   const files = readdirSync(dir)
     .filter((name) => name.endsWith('.ahadu'))

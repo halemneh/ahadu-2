@@ -29,6 +29,13 @@ export interface Strings {
   readonly theme: string;
   readonly languageToggle: string;
 
+  // The site header the playground shares with every other page.
+  readonly navHome: string;
+  readonly navLearn: string;
+  readonly navReference: string;
+  readonly navExamples: string;
+  readonly navPlayground: string;
+
   // Editor
   readonly editorLabel: string;
 
@@ -82,6 +89,11 @@ const amharic: Strings = {
   stop: '■ አቁም',
   theme: 'መልክ',
   languageToggle: 'English',
+  navHome: 'መነሻ',
+  navLearn: 'ተማር',
+  navReference: 'ማጣቀሻ',
+  navExamples: 'ምሳሌዎች',
+  navPlayground: 'ሜዳ',
 
   editorLabel: 'የአሃዱ ኮድ',
   inputLabel: 'ግቤት',
@@ -126,6 +138,11 @@ const english: Strings = {
   stop: '■ Stop',
   theme: 'Theme',
   languageToggle: 'አማርኛ',
+  navHome: 'Home',
+  navLearn: 'Learn',
+  navReference: 'Reference',
+  navExamples: 'Examples',
+  navPlayground: 'Playground',
 
   editorLabel: 'Ahadu code',
   inputLabel: 'Input',

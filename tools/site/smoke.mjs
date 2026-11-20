@@ -64,6 +64,29 @@ try {
   check('lands on /playground/', new URL(page.url()).pathname, '/playground/');
   check('with an editor', await page.locator('#editor').count(), 1);
 
+  console.log('the playground as a page of the site');
+  await page.goto(`${base}/en/learn/01-hello/`, { waitUntil: 'networkidle' });
+  await page.locator('.sitebar .chip').last().click(); // to dark
+  await page.waitForTimeout(200);
+  await page.locator('.nav a', { hasText: 'Playground' }).click();
+  await page.waitForTimeout(900);
+  check('wears the site header', await page.locator('.sitebar .nav').count(), 1);
+  check(
+    'keeps the theme chosen on the lesson',
+    await page.evaluate(() => document.documentElement.dataset.theme),
+    'dark',
+  );
+  check(
+    'keeps the language the lesson was read in',
+    (await page.locator('#run').innerText()).includes('Run'),
+    true,
+  );
+  check(
+    'and its header links back into that language',
+    await page.locator('.sitebar .nav a[data-section="learn"]').getAttribute('href'),
+    '/en/learn/',
+  );
+
   console.log('a snippet sent from a lesson');
   await page.goto(`${base}/en/learn/04-loops/`, { waitUntil: 'networkidle' });
   await page.locator('.snip-input').first().fill('ጻፍ("ከትምህርቱ"፣ 6 * 7)');

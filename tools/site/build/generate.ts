@@ -18,12 +18,11 @@ import { page, lessonSidebar } from './layout.js';
 import { LANGUAGES, strings } from './strings.js';
 import type { Language } from './strings.js';
 import { referenceBody } from './reference.js';
+import { SECTION_PATHS } from '../../shared/nav.js';
 import { examplesBody } from './examples.js';
 
-const SECTIONS: Record<Language, Record<Section, string>> = {
-  am: { home: '', learn: 'ተማር', reference: 'ማጣቀሻ', examples: 'ምሳሌዎች' },
-  en: { home: '', learn: 'learn', reference: 'reference', examples: 'examples' },
-};
+/** The same segments the links are built from, so content and URLs agree. */
+const SECTIONS: Record<Language, Record<Section, string>> = SECTION_PATHS;
 
 export interface GenerateOptions {
   readonly contentDir: string;
@@ -85,7 +84,7 @@ export function generate(options: GenerateOptions): GenerateResult {
       if (source.section === 'reference' && source.slug === 'index') {
         extra = referenceBody(s);
       } else if (source.section === 'examples') {
-        extra = examplesBody(s, options.repoDir);
+        extra = examplesBody(options.repoDir);
       }
 
       const rendered = render({

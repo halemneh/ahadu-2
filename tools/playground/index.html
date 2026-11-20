@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>አሃዱ — Ahadu 2.0</title>
     <link rel="stylesheet" href="./styles.css" />
+    <script>
+      // Before first paint, so arriving from a dark page is not a white flash.
+      try {
+        var t = localStorage.getItem('ahadu.theme');
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <!--
@@ -12,9 +19,34 @@
       on load and whenever the language changes, so neither language is the one
       hard-coded in the markup.
     -->
-    <header class="bar">
-      <h1>አሃዱ <span class="version">2.0</span></h1>
+    <!--
+      The site's own header, shared with every other page (shared/chrome.css).
+      The playground is a page of the site, not somewhere else: without this
+      there was no way back, and its theme and language were its own.
+      Hrefs are set from the current language by main.ts.
+    -->
+    <header class="sitebar">
+      <a class="brand" id="brand" href="/am/">
+        <strong>አሃዱ</strong>
+        <span class="version">2.0</span>
+      </a>
 
+      <nav class="nav">
+        <a data-section="home" data-i18n="navHome"></a>
+        <a data-section="learn" data-i18n="navLearn"></a>
+        <a data-section="reference" data-i18n="navReference"></a>
+        <a data-section="examples" data-i18n="navExamples"></a>
+        <a href="/playground/" aria-current="page" data-i18n="navPlayground"></a>
+      </nav>
+
+      <div class="spacer"></div>
+
+      <button id="language" class="chip" type="button" data-i18n="languageToggle"></button>
+      <button id="theme" class="chip" type="button" aria-live="off">◐</button>
+    </header>
+
+    <!-- The playground's own toolbar: the things only it has. -->
+    <header class="bar">
       <!-- The first option names the control, so no separate label is needed. -->
       <label class="examples">
         <select id="examples" data-i18n-label="examples"></select>
@@ -24,8 +56,6 @@
 
       <output id="status" class="status" aria-live="polite"></output>
 
-      <button id="language" class="icon-button" type="button" data-i18n="languageToggle"></button>
-      <button id="theme" class="icon-button" type="button" aria-live="off">◐</button>
       <button id="run" class="run" type="button" data-i18n="run"></button>
       <button id="stop" class="stop" type="button" data-i18n="stop" hidden></button>
     </header>

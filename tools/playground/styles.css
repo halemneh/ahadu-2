@@ -1,4 +1,5 @@
 @import '../shared/tokens.css';
+@import '../shared/chrome.css';
 
 /*
  * Playground styles (TOOLING.md §2.1).
@@ -28,27 +29,16 @@ body {
   font-family: var(--ui);
 }
 
-/* ---- top bar ---- */
+/* ---- the playground's own toolbar, under the site header ---- */
 
 .bar {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.6rem 1rem;
-  background: var(--surface-2);
-}
-
-.bar h1 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-family: var(--code);
-  font-weight: 600;
-}
-
-.version {
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 400;
+  padding: 0.45rem 1rem;
+  /* A step lighter than the site header above it, so the two read as
+     separate bands rather than one tall one. */
+  background: var(--surface-1);
 }
 
 .spacer {
@@ -127,11 +117,6 @@ button:focus-visible {
 
 .stop:hover {
   background: var(--bad);
-}
-
-.icon-button {
-  min-width: 2.2rem;
-  text-align: center;
 }
 
 .status {

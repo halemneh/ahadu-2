@@ -34,6 +34,8 @@ import { diagnosticAt, positionAt } from './locate.js';
 import type { EditorMetrics } from './locate.js';
 import { otherLanguage, strings } from './strings.js';
 import { decodeProgram } from '../shared/share.js';
+import { STORAGE, sectionUrl } from '../shared/nav.js';
+import type { Section } from '../shared/nav.js';
 import type { Language, Strings } from './strings.js';
 import type { RunReply, RunRequest } from './evaluate.js';
 
@@ -45,8 +47,14 @@ const MAX_STEPS = 5_000_000;
 
 const STORAGE_SOURCE = 'ahadu.playground.source';
 const STORAGE_INPUT = 'ahadu.playground.input';
-const STORAGE_LANGUAGE = 'ahadu.playground.language';
-const STORAGE_THEME = 'ahadu.playground.theme';
+/*
+ * The theme and the language are the site's, not the playground's: arriving
+ * here from a lesson should not change either. The site's pages write the
+ * language they are being read in, which is how this page — the one URL that
+ * serves both — knows which to open in.
+ */
+const STORAGE_LANGUAGE = STORAGE.language;
+const STORAGE_THEME = STORAGE.theme;
 
 type Theme = 'dark' | 'light';
 
@@ -79,6 +87,7 @@ const gutter = need<HTMLPreElement>('gutter');
 const backdrop = need<HTMLPreElement>('backdrop');
 const editorStatus = need<HTMLElement>('editor-status');
 const tip = need<HTMLElement>('tip');
+const brand = need<HTMLAnchorElement>('brand');
 const ask = need<HTMLElement>('ask');
 const askInput = need<HTMLTextAreaElement>('ask-input');
 const askRun = need<HTMLButtonElement>('ask-run');
@@ -164,6 +173,15 @@ function applyLanguage(): void {
   languageButton.setAttribute('aria-label', s.languageToggle);
   themeButton.setAttribute('aria-label', s.theme);
   themeButton.title = s.theme;
+
+  // The header's links are the site's, and the site's URLs are per language.
+  for (const link of document.querySelectorAll('[data-section]')) {
+    const section = (link as HTMLElement).dataset.section;
+    if (link instanceof HTMLAnchorElement && section !== undefined) {
+      link.href = sectionUrl(language, section as Section);
+    }
+  }
+  brand.href = sectionUrl(language, 'home');
 
   fillExamples();
   refresh();

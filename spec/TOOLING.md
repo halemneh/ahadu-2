@@ -149,6 +149,18 @@ the width in two cost the editor the dimension it needed most. The panels lose
 less by being short than the editor lost by being narrow: tokens, tree rows and
 diagnostics are all lists, and a list scrolls.
 
+The playground wears **the site's own header** (`tools/shared/chrome.css`),
+with its own toolbar underneath holding the things only it has: the example
+menu, the status line and the run button. It is a page of the site — reachable
+from the nav of every other page, and able to get back — rather than somewhere
+a reader lands with no way out.
+
+The theme and the language are therefore the **site's**, under the keys in
+`tools/shared/nav.ts`, not the playground's own. Arriving here from a lesson
+changes neither. The site's pages write the language they are being read in,
+which is how this page — the one URL that serves both — knows which to open
+in, and its header links back into that same language.
+
 The page is built from **surfaces rather than lines**: not one border. The
 major regions are told apart by the **shade** they are painted, from one scale
 of solid colours — a solid step reads as a different plane at any size, and the

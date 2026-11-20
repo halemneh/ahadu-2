@@ -30,6 +30,16 @@ stylesheet cannot be reviewed by reading it.
 | `worker.ts` | binding `evaluate` to a worker's `self`, and nothing else |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
 
+**It is a page of the site, not a standalone app.** It wears the site's header
+from `tools/shared/chrome.css`, and its theme and language live under the
+shared keys in `tools/shared/nav.ts` — so arriving from a lesson changes
+neither. Its own toolbar keeps only what is its own: the example menu, the
+status line, run and stop.
+
+Under `npm run play` the header's links point at a site that is not running,
+and will 404. That is the trade for the playground and the site being the same
+place in production; use `npm run site` to click between them.
+
 **The design language is surfaces, not lines.** There is not one border in
 `styles.css`. The page's major regions are told apart by the **shade** they
 are painted, from one scale of solid colours (`--bg` through `--surface-3`);

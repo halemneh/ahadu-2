@@ -1,0 +1,97 @@
+/*
+ * The site header, shared by the site's pages and the playground.
+ *
+ * The playground was built before the site and had a header of its own, which
+ * made it look like somewhere else entirely — no navigation back, and its own
+ * idea of the theme. It is a page of the site, so it wears the site's header.
+ *
+ * Named `.sitebar` rather than `.bar` because the playground keeps a toolbar
+ * of its own underneath this one, holding the things only it has: the example
+ * menu, the run button and the status line.
+ */
+
+.sitebar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.65rem 1.4rem;
+  background: var(--surface-2);
+  font-family: var(--ui);
+}
+
+.sitebar .brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-family: var(--code);
+}
+
+.sitebar .brand strong {
+  font-size: 1.15rem;
+}
+
+.sitebar .version {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.sitebar .nav {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+}
+
+.sitebar .nav a {
+  padding: 0.3rem 0.7rem;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.sitebar .nav a:hover {
+  background: var(--layer);
+  color: var(--ink);
+}
+
+.sitebar .nav a[aria-current='page'] {
+  background: var(--layer-strong);
+  color: var(--ink);
+}
+
+.sitebar .spacer {
+  flex: 1;
+}
+
+.sitebar .chip {
+  padding: 0.28rem 0.65rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--layer-strong);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sitebar .chip:hover {
+  background: var(--layer-hover);
+}
+
+.sitebar .chip:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+@media (max-width: 760px) {
+  .sitebar {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+}
