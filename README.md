@@ -19,6 +19,12 @@ Ahadu was originally designed and built by Hailemichael Alemneh as a CS senior
 project ([paper and presentation](https://github.com/halemneh/Ahadu)). 2.0 is a
 specification-first rebuild in TypeScript.
 
+## Hosting
+
+The site is static files; `npm run site:build` produces them.
+[DEPLOY.md](DEPLOY.md) covers hosting it free on Cloudflare Pages and
+pointing ahaducode.com at it.
+
 ## Status
 
 | | |

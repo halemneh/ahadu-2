@@ -1,0 +1,13 @@
+# Read by Cloudflare Pages and Netlify. Hosts that ignore it still work: the
+# generated /index.html carries a meta refresh to the same place.
+
+# Amharic is the default, because the language is (SITE.md §3).
+#
+# 302, not 301: a permanent redirect is cached by browsers more or less
+# forever, and the default language is a decision that could reasonably change
+# — to content negotiation, or to a chooser. A wrong 301 is very hard to take
+# back from someone who has already visited.
+/   /am/   302
+
+# v1 lived at code.ahadu.com and its links are in the wild.
+/playground/index.html   /playground/   301

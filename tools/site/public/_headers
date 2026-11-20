@@ -1,0 +1,15 @@
+# Read by Cloudflare Pages and Netlify.
+
+# Hashed filenames, so these can never go stale.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/playground/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Pages are rewritten on every deploy and are small, so always revalidate.
+# A lesson corrected today should be the lesson read tomorrow.
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
