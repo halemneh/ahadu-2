@@ -125,13 +125,47 @@ Found while implementing:
   the interpreter can be, and the program runs in a worker — a modal prompt on
   the main thread could only answer it through `SharedArrayBuffer` and
   `Atomics.wait`, which needs cross-origin isolation headers and so would stop
-  the page being static. There is an input panel instead, which is also the
-  better teaching tool: the input is visible and a program can be re-run
-  against it unchanged.
+  the page being static. The resolution came later: the page cannot ask
+  *during* a run, but it can ask *before* one, because the call to `አንብብ` is
+  in the tokens it has already lexed. A dialog opens ahead of the run for the
+  programs that need it, and no input box clutters the page for the ones that
+  do not.
 - Everything that decides what appears lives in `view.ts` and `highlight.ts`,
   with no DOM access, because this project has no browser in its test run.
   `main.ts` is glue. That split is the only reason the page is tested at all —
   the same move that made the REPL testable in M4.
+
+## M6 — the website ✅
+
+`ahaducode.com`: home, a seven-lesson track, a generated reference and the
+examples gallery, in Amharic and English, with the playground at
+`/playground`. Specified in `spec/SITE.md`, built by `tools/site/`.
+
+The commitment that shaped it: **every Ahadu snippet on the site is executed
+by the real interpreter at build time, and a snippet whose output is not what
+the page claims fails the build.** A teaching site full of code nobody ran is
+the C01 failure aimed at beginners, who cannot tell a typo in a lesson from a
+mistake of their own. 112 snippets are checked on every build.
+
+Found while implementing:
+
+- Writing the lessons against that check corrected the lessons four times: a
+  guessed error code (`AH3002`, not `AH3006`), an unclosed bracket's code
+  (`AH2002`, not `AH2001`), `ቁጥር` used as a variable name when it is the
+  reserved type name, and strings printing *with* quotes inside a collection
+  but without them alone. Each was a wrong thing I was about to teach.
+- Two of those became lessons in their own right, which is the argument for
+  the mechanism: the build does not just stop mistakes, it finds the things
+  worth explaining.
+- The reference is generated from `KEYWORDS` and `MESSAGES`, and a keyword
+  type with no gloss fails the build — otherwise a new keyword would appear
+  to a beginner as `func` or `init`.
+- Pages are paired across languages by an `id` in their front matter, not by
+  filename, because the filenames are in different scripts. A page present in
+  one language and missing in the other is a build failure.
+- Design tokens moved to `tools/shared/tokens.css`, imported by both the site
+  and the playground, so the two cannot drift into looking like different
+  projects.
 
 ## Afterwards
 

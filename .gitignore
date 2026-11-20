@@ -7,3 +7,6 @@ coverage/
 .env
 .vite/
 tools/playground/shots/
+tools/site/.generated/
+tools/site/dist/
+tools/site/shots/
