@@ -18,6 +18,7 @@ import type { Token as MdToken, TokensList } from 'marked';
 import { tokenize } from '../../../src/lexer/index.js';
 import { highlight } from '../../playground/highlight.js';
 import { escapeHtml } from '../../playground/view.js';
+import { encodeProgram } from '../../shared/share.js';
 import { parseInfo, verify } from './snippet.js';
 import type { Snippet } from './snippet.js';
 import type { Strings } from './strings.js';
@@ -214,9 +215,12 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
     `  </div>`,
     `  <div class="snip-bar">`,
     `    <button class="snip-run" type="button">${escapeHtml(s.run)}</button>`,
-    `    <a class="snip-open" href="${input.base}/../playground/" data-open-playground>${escapeHtml(
-      s.openInPlayground,
-    )}</a>`,
+    // The code is in the href from the start, so the link works before any
+    // script runs — and `/playground/` outright, rather than a `..` that only
+    // resolves because browsers normalise it.
+    `    <a class="snip-open" href="/playground/#${encodeProgram(
+      snippet.code,
+    )}" data-open-playground>${escapeHtml(s.openInPlayground)}</a>`,
     `    <span class="snip-note">${escapeHtml(
       snippet.kind === 'error' ? s.snippetFails : s.snippetVerified,
     )}</span>`,

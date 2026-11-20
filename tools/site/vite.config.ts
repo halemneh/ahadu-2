@@ -10,16 +10,31 @@
  * so the content directory stays something a person can read.
  */
 
-import { existsSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { createReadStream, existsSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
+import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vite';
+import { build as viteBuild, defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import { generate } from './build/generate.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '../..');
 const pages = resolve(here, '.generated');
+const playground = resolve(repo, 'tools/playground');
+/*
+ * Its own directory, not a folder inside `.generated`: regenerating the
+ * content empties that one, which would delete the playground from under the
+ * dev server the first time anyone edited a lesson.
+ */
+const playgroundPages = resolve(here, '.playground');
+
+/** Enough to serve the playground's own build; it emits nothing else. */
+const MEDIA: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.svg': 'image/svg+xml',
+};
 
 /** Every generated page, as Rollup inputs. */
 function htmlFiles(dir: string): string[] {
@@ -53,7 +68,52 @@ function sitePlugin(): Plugin {
   return {
     name: 'ahadu-site',
 
-    configureServer(server): void {
+    /*
+     * The playground is a separate build that used to exist only in `dist/`,
+     * so in development `/playground/` was a 404 — from the nav tab and from
+     * every "open in playground" link in a lesson. Build it into the tree the
+     * dev server already serves, so development matches production.
+     *
+     * It is built, not proxied or served from source: a page served from
+     * outside the root skips Vite's HTML transform, which leaves its own
+     * relative imports to resolve against the browser's URL and break. The
+     * cost is that it is a snapshot — `npm run play` is still the way to work
+     * on the playground itself, with hot reload, which is what that script is
+     * for.
+     */
+    async configureServer(server): Promise<void> {
+      await viteBuild({
+        configFile: resolve(playground, 'vite.config.ts'),
+        base: '/playground/',
+        logLevel: 'warn',
+        build: { outDir: playgroundPages, emptyOutDir: true },
+      });
+
+      /*
+       * The playground is served straight off disk, deliberately bypassing
+       * Vite. Letting it serve these files instead re-transforms an already
+       * built bundle: Vite sees the worker's URL inside it, treats it as
+       * source to resolve again, and rewrites it to a path that does not
+       * exist — so the page loads and every Run fails.
+       */
+      server.middlewares.use((req, res, next) => {
+        const path = (req.url ?? '/').split('?')[0] ?? '/';
+        if (path !== '/playground' && !path.startsWith('/playground/')) {
+          next();
+          return;
+        }
+
+        const rest = path.replace(/^\/playground\/?/, '');
+        const file = join(playgroundPages, rest === '' ? 'index.html' : rest);
+        if (!existsSync(file) || statSync(file).isDirectory()) {
+          next();
+          return;
+        }
+
+        res.setHeader('content-type', MEDIA[extname(file)] ?? 'application/octet-stream');
+        createReadStream(file).pipe(res);
+      });
+
       // In development the pages sit under /.generated/, which is not where
       // they will live. Rewrite so the URLs a reader sees are the real ones.
       server.middlewares.use((req, _res, next) => {

@@ -33,6 +33,7 @@ import type { Analysis, Reported } from './view.js';
 import { diagnosticAt, positionAt } from './locate.js';
 import type { EditorMetrics } from './locate.js';
 import { otherLanguage, strings } from './strings.js';
+import { decodeProgram } from '../shared/share.js';
 import type { Language, Strings } from './strings.js';
 import type { RunReply, RunRequest } from './evaluate.js';
 
@@ -619,7 +620,19 @@ applyTheme(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : null);
 const savedLanguage = recall(STORAGE_LANGUAGE);
 language = savedLanguage === 'en' ? 'en' : 'am';
 
-editor.value = recall(STORAGE_SOURCE) ?? STARTER;
+/*
+ * A program may arrive in the URL fragment, which is how a lesson's "open in
+ * playground" link hands over the snippet the reader was looking at
+ * (tools/shared/share.ts). It wins over the saved draft, because someone who
+ * followed a link meant to see that program.
+ *
+ * The fragment is left in the address bar rather than cleaned away: it makes
+ * the URL a permalink to this program, which is worth more than saving a
+ * reader from re-reading the link they just followed. Edits still go to
+ * storage, so leaving and coming back without the link keeps them.
+ */
+const shared = decodeProgram(window.location.hash);
+editor.value = shared ?? recall(STORAGE_SOURCE) ?? STARTER;
 askInput.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
 applyLanguage();

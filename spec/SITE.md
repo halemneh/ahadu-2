@@ -93,8 +93,15 @@ underneath, and the editor is the snippet itself, so the reader can change it
 in place. It runs in a worker with a step budget, by the same `evaluate.ts` the
 playground uses.
 
-Each also opens in the full playground, carrying its code, for anyone who wants
-the token and tree panels.
+Each also opens in the full playground, carrying its code in the URL fragment,
+for anyone who wants the token and tree panels. The fragment rather than a
+query string: a fragment is never sent to a server, and the playground's
+promise that nothing goes anywhere (`TOOLING.md` §2) would be worth little if
+every program a reader opened were in an access log.
+
+The playground reads that fragment on load, and it wins over the saved draft —
+someone who followed a link meant to see that program. The fragment stays in
+the address bar afterwards, which makes the URL a permalink worth sharing.
 
 The reader never has to leave a lesson to try something, and never has to set
 anything up to begin. That is the whole argument for a site over a README.

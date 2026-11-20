@@ -18,6 +18,7 @@ import { highlight } from '../../playground/highlight.js';
 import { evaluate } from '../../playground/evaluate.js';
 import { escapeHtml } from '../../playground/view.js';
 import { formatDiagnostic } from '../../../src/diagnostics.js';
+import { encodeProgram } from '../../shared/share.js';
 
 /** Smaller than the playground's: a lesson's program should be quick. */
 const MAX_STEPS = 500_000;
@@ -107,23 +108,20 @@ function setUpSnippet(snippet: HTMLElement): void {
     });
   }
 
-  // Carry the code to the full playground rather than linking to it bare.
+  /*
+   * The link already carries the original code from the build. Keep it in
+   * step as the reader edits, so what opens in the playground is what they
+   * are looking at — updated on input rather than on click, because a click
+   * handler that rewrites its own href is racing the navigation.
+   */
   const open = snippet.querySelector('[data-open-playground]');
   if (open instanceof HTMLAnchorElement) {
-    open.addEventListener('click', () => {
-      open.href = `/playground/#${encode(area.value)}`;
+    area.addEventListener('input', () => {
+      open.href = `/playground/#${encodeProgram(area.value)}`;
     });
   }
 
   grow();
-}
-
-/** Base64url of the UTF-8 bytes, so any Ge'ez program survives a URL. */
-function encode(source: string): string {
-  const bytes = new TextEncoder().encode(source);
-  let binary = '';
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 setUpTheme();

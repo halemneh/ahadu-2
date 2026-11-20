@@ -2,7 +2,18 @@ import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['**/dist/', '**/coverage/', '**/node_modules/'] },
+  {
+    // Build output, including the site's generated pages and the snapshot of
+    // the playground its dev server serves.
+    ignores: [
+      '**/dist/',
+      '**/coverage/',
+      '**/node_modules/',
+      '**/.generated/',
+      '**/.playground/',
+      '**/shots/',
+    ],
+  },
   ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
