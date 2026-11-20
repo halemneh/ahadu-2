@@ -1,4 +1,6 @@
-# Read by Cloudflare Pages and Netlify.
+# Read by Cloudflare Pages and Netlify. **GitHub Pages ignores this file** and
+# sets its own cache headers, which are short enough to be fine. Nothing here
+# is required for correctness.
 
 # Hashed filenames, so these can never go stale.
 /assets/*

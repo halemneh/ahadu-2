@@ -1,5 +1,6 @@
-# Read by Cloudflare Pages and Netlify. Hosts that ignore it still work: the
-# generated /index.html carries a meta refresh to the same place.
+# Read by Cloudflare Pages and Netlify. **GitHub Pages ignores this file** —
+# it has no redirect mechanism at all. That is why the generated /index.html
+# carries a meta refresh to the same place, and why it must stay there.
 
 # Amharic is the default, because the language is (SITE.md §3).
 #

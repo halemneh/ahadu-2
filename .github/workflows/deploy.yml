@@ -1,17 +1,15 @@
 # Deploys the site to Cloudflare Pages.
 #
-# Only needed if you would rather not give Cloudflare read access to this
-# repository. If you connect the repo in the Cloudflare dashboard instead, it
-# builds and deploys on every push with no workflow and no secrets at all —
-# see DEPLOY.md, which recommends that route.
+# **Not the live route.** GitHub Pages is (see pages.yml and DEPLOY.md); this
+# is kept as the alternative, because Cloudflare Pages serves a private
+# repository on its free plan and GitHub Pages does not.
 #
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# Manual only, so the two cannot race each other to the same domain. Needs two
+# repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
 
-name: Deploy
+name: Deploy (Cloudflare — manual)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:

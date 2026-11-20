@@ -117,6 +117,36 @@ export function generate(options: GenerateOptions): GenerateResult {
     }
   }
 
+  /*
+   * A 404 page. GitHub Pages serves `/404.html` for any path it cannot find,
+   * and so do most static hosts. Without one a reader who mistypes a lesson
+   * URL gets the host's default, which is in neither of this site's languages.
+   *
+   * It is bilingual because a 404 has no language to go on: the URL that
+   * failed is all there was, and it may not have had one.
+   */
+  const missing = strings('am');
+  writeFileSync(
+    join(options.outDir, '404.html'),
+    page({
+      strings: missing,
+      title: 'ገጹ አልተገኘም',
+      summary: 'Page not found',
+      section: 'home',
+      url: '/404.html',
+      counterpart: '/en/',
+      body: `<p>የጠየቁት ገጽ የለም። ምናልባት አድራሻው ተቀይሮ ይሆናል።</p>
+        <p class="summary">The page you asked for is not here. It may have moved.</p>
+        <p><a href="/am/">ወደ መነሻ ገጽ</a> · <a href="/en/">Home</a> ·
+           <a href="/am/ተማር/">ትምህርቶች</a> · <a href="/en/learn/">Lessons</a></p>`,
+      headings: [],
+      sidebar: '',
+      prev: null,
+      next: null,
+    }),
+    'utf8',
+  );
+
   // `/` is Amharic, because the language is (SITE.md §3). A redirect rather
   // than a copy, so the content has exactly one URL.
   writeFileSync(

@@ -1,0 +1,59 @@
+# Builds the site and publishes it to GitHub Pages.
+#
+# Needs Pages enabled once, in Settings → Pages → Source: **GitHub Actions**.
+# Nothing is committed: the built site is uploaded as an artifact and served
+# from there, so `tools/site/dist/` stays out of the repository.
+#
+# GitHub Pages serves a **private** repository only on a paid plan. On the
+# free plan the repository has to be public for this to work; see DEPLOY.md.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and never cancel one half-finished.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # This runs every code sample on the site through the interpreter and
+      # fails on one whose output is not what its page claims (SITE.md §2),
+      # so a lesson that lies cannot reach the web.
+      - run: npm run site:build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: tools/site/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
