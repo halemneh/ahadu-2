@@ -228,6 +228,33 @@ at it.
 Ge'ez rendering uses [Noto Serif Ethiopic](https://fonts.google.com/noto/specimen/Noto+Serif+Ethiopic)
 (SIL Open Font License).
 
-## License
+## Licence
 
-MIT © Hailemichael Alemneh
+Two licences, because the code and the teaching are different things.
+
+| What | Licence |
+| --- | --- |
+| Interpreter, playground, site build, specification, tests, example programs | [MIT](LICENSE) |
+| The written lessons and page prose — everything under `tools/site/content/` | [CC BY-SA 4.0](LICENSE-CONTENT) |
+
+**The code is MIT** so that anyone can build on it without asking: another
+implementation of Ahadu, an editor plugin, a fork that goes somewhere this one
+will not. A language nobody may reuse is a language nobody adopts, and the
+point of this project is that people use it.
+
+**The lessons are share-alike** for the opposite reason. They can be
+translated, adapted, printed, taught from and sold — but a derivative has to
+stay under the same licence. The lessons exist because learning to program in
+Amharic was hard to do; they should not become something a reader has to buy
+back.
+
+Neither licence requires permission. Both require attribution.
+
+### The name
+
+"Ahadu" is the name of this project. The licences above cover the code and the
+writing, not the name: please do not use it for a modified version in a way
+that suggests this project published or endorsed it. Say what your fork is
+instead — that is good for your readers and it is all that is being asked.
+
+© 2026 Hailemichael Alemneh

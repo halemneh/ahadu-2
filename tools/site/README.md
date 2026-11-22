@@ -29,6 +29,14 @@ a typo in a lesson from a mistake of their own.
 Writing the first seven lessons against that check corrected them four times.
 Two of the corrections were interesting enough to become part of the lessons.
 
+## Licence
+
+Everything in `content/` is **CC BY-SA 4.0** ([LICENSE-CONTENT](../../LICENSE-CONTENT)),
+not MIT like the rest of the repository. The boundary is this directory: prose
+is share-alike, code is permissive. If you add a file here you are licensing it
+that way, and if you move prose out of here you are changing its licence —
+which is a decision, not a refactor.
+
 ## How content is written
 
 One Markdown file per language, paired by the `id` in its front matter — not
