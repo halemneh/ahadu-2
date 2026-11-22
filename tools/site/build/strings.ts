@@ -55,6 +55,34 @@ export interface Strings {
   readonly examplesTitle: string;
   readonly openExample: string;
   readonly footer: string;
+
+  // The footer's two actions (contact.ts). The `issue*` strings are what a
+  // report arrives at GitHub already saying, so they are read by whoever
+  // triages it as much as by the reader who sent it.
+  readonly footerActions: string;
+  readonly reportProblem: string;
+  readonly issueTitle: string;
+  readonly issueFieldPage: string;
+  readonly issueFieldLanguage: string;
+  readonly issueLanguageName: string;
+  readonly issuePrompt: string;
+
+  readonly contact: string;
+  readonly contactTitle: string;
+  readonly contactLead: string;
+  readonly contactMessage: string;
+  readonly contactEmail: string;
+  readonly contactEmailOptional: string;
+  readonly contactEmailHint: string;
+  readonly contactPrivacy: string;
+  readonly contactSend: string;
+  readonly contactSending: string;
+  readonly contactCancel: string;
+  readonly contactSent: string;
+  readonly contactFailed: string;
+  readonly contactNeedMessage: string;
+  readonly contactTooLong: string;
+  readonly contactBadEmail: string;
 }
 
 const am: Strings = {
@@ -96,6 +124,31 @@ const am: Strings = {
   examplesTitle: 'ምሳሌ ፕሮግራሞች',
   openExample: 'በሜዳ ክፈት',
   footer: 'አሃዱ ነጻ እና ክፍት ምንጭ ነው።',
+
+  footerActions: 'አስተያየትና ግንኙነት',
+  reportProblem: 'ችግር አሳውቁ',
+  issueTitle: 'የገጽ ችግር',
+  issueFieldPage: 'ገጽ',
+  issueFieldLanguage: 'ቋንቋ',
+  issueLanguageName: 'አማርኛ',
+  issuePrompt: 'ምን ተሳሳተ? እባክዎ ከዚህ በታች ይጻፉ።',
+
+  contact: 'አግኙን',
+  contactTitle: 'መልእክት ይላኩ',
+  contactLead: 'ስለ ትምህርቶቹ ወይም ስለ ቋንቋው ማለት የሚፈልጉት ነገር ካለ ይጻፉ።',
+  contactMessage: 'መልእክት',
+  contactEmail: 'ኢሜይል',
+  contactEmailOptional: 'አማራጭ ነው',
+  contactEmailHint: 'መልስ ከፈለጉ ብቻ',
+  contactPrivacy: 'የሚላከው የጻፉት መልእክት ነው፤ ኢሜይሉን ከሞሉት ደግሞ ኢሜይሉ። መልስ ለመስጠት ብቻ ይጠቅማሉ። ሌላ ምንም አይሰበሰብም።',
+  contactSend: 'ላክ',
+  contactSending: 'በመላክ ላይ…',
+  contactCancel: 'ተወው',
+  contactSent: 'መልእክቱ ተልኳል። እናመሰግናለን።',
+  contactFailed: 'መልእክቱ አልተላከም። የጻፉት እንደተጠበቀ ነው፤ እንደገና መሞከር ይችላሉ ወይም በGitHub ላይ ያሳውቁ።',
+  contactNeedMessage: 'እባክዎ መጀመሪያ መልእክት ይጻፉ።',
+  contactTooLong: 'መልእክቱ በጣም ረጅም ነው። እባክዎ ያሳጥሩት።',
+  contactBadEmail: 'ኢሜይሉ ትክክል አይመስልም። ያስተካክሉት ወይም ባዶውን ይተዉት።',
 };
 
 const en: Strings = {
@@ -137,6 +190,34 @@ const en: Strings = {
   examplesTitle: 'Example programs',
   openExample: 'Open in the playground',
   footer: 'Ahadu is free and open source.',
+
+  footerActions: 'Feedback and contact',
+  reportProblem: 'Report a problem',
+  issueTitle: 'Problem on a page',
+  issueFieldPage: 'Page',
+  issueFieldLanguage: 'Language',
+  issueLanguageName: 'English',
+  issuePrompt: 'What is wrong? Please write below.',
+
+  contact: 'Contact',
+  contactTitle: 'Send a message',
+  contactLead:
+    'If there is something you want to say about the lessons or the language, write it here.',
+  contactMessage: 'Message',
+  contactEmail: 'Email',
+  contactEmailOptional: 'optional',
+  contactEmailHint: 'only if you would like a reply',
+  contactPrivacy:
+    'What is sent is the message you write, and your email address if you fill it in. They are used only to reply to you. Nothing else is collected.',
+  contactSend: 'Send',
+  contactSending: 'Sending…',
+  contactCancel: 'Cancel',
+  contactSent: 'Your message was sent. Thank you.',
+  contactFailed:
+    'The message could not be sent. What you wrote is still here — try again, or report it on GitHub instead.',
+  contactNeedMessage: 'Please write a message first.',
+  contactTooLong: 'That message is too long. Please shorten it.',
+  contactBadEmail: 'That email address does not look right. Correct it, or leave it empty.',
 };
 
 export const LANGUAGES: Record<Language, Strings> = { am, en };

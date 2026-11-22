@@ -88,6 +88,7 @@ mechanism could fail without anyone noticing.
 | `build/reference.ts` | keyword and error tables, generated from `src/` |
 | `build/examples.ts` | the gallery, from the repository's own `examples/` |
 | `build/layout.ts` | the page shell |
+| `build/contact.ts` | the footer's two actions, and where the form posts |
 | `build/generate.ts` | ties it together, writes `.generated/` |
 | `client/main.ts` | the only thing a browser is needed for |
 | `theme/site.css` | the reading layout; palette is in `tools/shared/` |
@@ -132,6 +133,17 @@ because a click handler that rewrites its own href is racing the navigation.
 highlighting and verified output are all in the HTML. The script only adds
 editing and re-running. That matters for readers on whatever device a school
 has.
+
+**Nothing is requested on page load, and the footer does not change that**
+(SITE.md §6.1). *Report a problem* is a link with the issue already written
+into its href at build time, so it needs no script and makes no request until
+it is followed. *Contact* opens a dialog that POSTs once, when Send is
+pressed, to `CONTACT_ENDPOINT` in `build/contact.ts` — the one place that URL
+appears, with the Worker behind it in `tools/contact-worker/`. The contact
+button is `hidden` in the HTML and unhidden by the client, because a reader
+with no JavaScript should not be offered a button that cannot do anything.
+Turnstile has a place kept for it in the dialog and deliberately no script
+tag: loading one would be a third-party request on every page view.
 
 **Amharic is the default and `/` redirects to `/am/`.** Serving English at the
 root would say that Amharic is the translation.

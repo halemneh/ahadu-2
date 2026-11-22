@@ -1,0 +1,43 @@
+# The contact endpoint for ahaducode.com. See README.md before deploying.
+#
+# Nothing here is secret, and nothing here is a default worth trusting: the two
+# addresses must be changed to real ones that Cloudflare has verified, or the
+# first message a reader sends is lost.
+
+name = "ahadu-contact"
+main = "index.js"
+compatibility_date = "2025-11-01"
+
+# The send_email binding. `destination_address` pins it to one address at the
+# platform level, so even a bug in index.js cannot mail a stranger: Cloudflare
+# refuses the send. The address must be a verified destination in Email
+# Routing on this account (Workers Free sends only to those).
+[[send_email]]
+name = "MAIL"
+destination_address = "hello@example.com"
+
+[vars]
+# Where the message is sent. Always this address, never one from the request.
+CONTACT_TO = "hello@example.com"
+
+# Who it is from. The domain must be on this Cloudflare account with Email
+# Routing enabled; the mailbox itself need not exist.
+CONTACT_FROM = "noreply@ahaducode.com"
+
+# Origins allowed to read the reply, comma separated. Not a security boundary
+# — curl ignores CORS — but it keeps the endpoint from being embedded in
+# someone else's page. The first one is the fallback for requests with no
+# Origin header.
+ALLOWED_ORIGINS = "https://ahaducode.com,http://localhost:5174,http://localhost:5179"
+
+# TURNSTILE_SECRET is deliberately absent. With no secret the Worker takes
+# every submission that clears the honeypot; set it as a secret
+# (`wrangler secret put TURNSTILE_SECRET`) and a token becomes compulsory.
+# The site does not load Turnstile's script on page view — see
+# tools/site/build/contact.ts.
+
+# The site posts to https://contact.ahaducode.com/ (CONTACT_ENDPOINT in
+# tools/site/build/contact.ts). Uncomment once the DNS name exists.
+# [[routes]]
+# pattern = "contact.ahaducode.com"
+# custom_domain = true

@@ -106,6 +106,91 @@ try {
     'ከትምህርቱ 42',
   );
 
+  /*
+   * The footer's two actions. The report link is static and the unit tests
+   * cover what it says; what cannot be tested anywhere else is the dialog —
+   * that it opens, that it refuses an empty message without sending anything,
+   * and above all that a submission which fails leaves the reader's words
+   * where they left them. The endpoint is never really called: both replies
+   * are served from here, so this script sends nothing to anyone.
+   */
+  console.log('the footer’s two actions');
+  await page.goto(`${base}/en/learn/02-variables/`, { waitUntil: 'networkidle' });
+  const report = decodeURIComponent(
+    (await page.locator('.foot-acts a').first().getAttribute('href')) ?? '',
+  );
+  check('the report link carries the page it was clicked from', report, (href) =>
+    href.includes('/en/learn/02-variables/'),
+  );
+  check('and the language it was read in', report, (href) => href.includes('(en)'));
+  check('the contact button appears once the script has wired it up', [
+    await page.locator('#contact-open').isVisible(),
+    await page.locator('#contact').isVisible(),
+  ], (state) => state[0] === true && state[1] === false);
+
+  await page.locator('#contact-open').click();
+  check('the dialog opens', await page.locator('#contact').isVisible(), true);
+  check(
+    'with focus in the message field',
+    await page.evaluate(() => document.activeElement?.id),
+    'contact-message',
+  );
+
+  await page.locator('#contact-send').click();
+  await page.waitForTimeout(200);
+  check(
+    'an empty message is refused here, not at the endpoint',
+    (await page.locator('#contact-status').innerText()).trim(),
+    'Please write a message first.',
+  );
+
+  const typed = 'The second example here prints the wrong number.';
+  await page.locator('#contact-message').fill(typed);
+  await page.route('https://contact.ahaducode.com/', (route) => route.abort());
+  await page.locator('#contact-send').click();
+  await page.waitForTimeout(500);
+  check(
+    'an unreachable endpoint keeps what the reader typed',
+    await page.locator('#contact-message').inputValue(),
+    typed,
+  );
+  check(
+    'and says so in their language',
+    (await page.locator('#contact-status').innerText()).includes('could not be sent'),
+    true,
+  );
+  check('and offers GitHub instead', await page.locator('#contact-fallback').isVisible(), true);
+
+  await page.unroute('https://contact.ahaducode.com/');
+  await page.route('https://contact.ahaducode.com/', (route) =>
+    route.fulfill({
+      status: route.request().method() === 'OPTIONS' ? 204 : 200,
+      headers: {
+        'access-control-allow-origin': '*',
+        'access-control-allow-methods': 'POST, OPTIONS',
+        'access-control-allow-headers': 'content-type',
+      },
+      contentType: 'application/json',
+      body: '{"ok":true}',
+    }),
+  );
+  await page.locator('#contact-send').click();
+  await page.waitForTimeout(500);
+  check(
+    'a message that gets through is acknowledged',
+    (await page.locator('#contact-status').innerText()).includes('was sent'),
+    true,
+  );
+  check('and the form is emptied', await page.locator('#contact-message').inputValue(), '');
+
+  await page.keyboard.press('Escape');
+  check('Escape closes the dialog', await page.locator('#contact').isVisible(), false);
+  check(
+    'and focus goes back to the button that opened it',
+    await page.evaluate(() => document.activeElement?.id),
+    'contact-open',
+  );
+
   check('nothing 404ed or threw', broken, (list) => list.length === 0);
 } catch (error) {
   // A page that will not load at all is a failed check, not a stack trace:

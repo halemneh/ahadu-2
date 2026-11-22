@@ -14,6 +14,7 @@
 
 import { escapeHtml } from '../../playground/view.js';
 import { PLAYGROUND_URL, STORAGE, sectionUrl } from '../../shared/nav.js';
+import { contactDialog, footerActions } from './contact.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
 
@@ -131,8 +132,10 @@ export function page(view: PageView): string {
 
     <footer class="foot">
       <span>${escapeHtml(s.footer)}</span>
-      <a href="https://github.com/halemneh/ahadu-2">GitHub</a>
+      ${footerActions({ strings: s, url: view.url })}
     </footer>
+
+    ${contactDialog({ strings: s, url: view.url })}
 
     <script type="module" src="/client/main.ts"></script>
   </body>

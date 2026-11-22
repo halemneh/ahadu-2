@@ -123,9 +123,62 @@ themselves are never retyped.
 
 - **No tracking, no analytics, no fonts fetched from anywhere.** The playground
   sends nothing anywhere (`TOOLING.md` §2), and the site keeps that promise.
-  A beginner's first program is not telemetry.
+  A beginner's first program is not telemetry. §6.1 draws the one line this
+  rule has: nothing is requested *because a page was opened*.
 - **No server.** Static files, so the site can be hosted anywhere and kept
-  alive cheaply for as long as the language is useful.
+  alive cheaply for as long as the language is useful. The one endpoint the
+  site knows about (§6.1) is not part of serving it: with that endpoint gone,
+  every page still works.
 - **No framework.** The playground established a design language and an
   interpreter-driven highlighter; a docs framework would fight both and bring a
   theme that knows nothing about Ge'ez.
+
+### 6.1 Nothing passive; a deliberate message is different
+
+The rule above used to read as absolute, and read that way it forbade a reader
+from telling us that a lesson is wrong. That is the wrong trade for a teaching
+site: the people best placed to find a mistake are beginners, and the ones most
+affected by it are the next beginners. So the rule is stated precisely rather
+than loosened.
+
+**Nothing is requested on page load.** No analytics, no beacon, no pixel, no
+third-party script, no font, no `fetch` on a timer, nothing that happens
+because a page was opened or read. A reader can open every page on this site
+and the only requests made are for the site's own HTML, stylesheet and script.
+That part is not negotiable and is not weakened by anything below. In
+particular, a CAPTCHA or bot-check widget may not be loaded by a page's HTML,
+because its script would be a third-party request on every page view — if one
+is ever needed, it is fetched at the moment a reader opens the form.
+
+**A message the reader chooses to send is allowed.** The footer has two
+actions, and both begin with the reader deciding to act:
+
+- **Report a problem** — a link to a GitHub issue, pre-filled at build time
+  with the page's path and language. It is a link, so it needs no JavaScript
+  and makes no request until it is followed; following it leaves the site, as
+  clicking any link does.
+- **Contact** — a form in a dialog, which POSTs once, when Send is pressed, to
+  a single endpoint belonging to this project (`tools/contact-worker/`). It
+  sends what the reader typed and the path and language of the page they were
+  on, and nothing else: no identifier, no history, nothing retained between
+  visits.
+
+The distinction is consent, and it is the whole of it. Telemetry is a request
+the reader did not make, about behaviour they did not report; those remain
+banned. A message is a request the reader made, containing what they chose to
+say. A site that allowed the first would be spying; a site that forbade the
+second would be unreachable.
+
+Two constraints follow, and they are requirements, not preferences:
+
+- **The email field on the contact form is optional.** Many readers are
+  schoolchildren. Telling us about a typo must never cost a child their email
+  address, so the field is there only for a reader who wants an answer, and it
+  is labelled as optional where they can see it rather than only in the markup.
+  The form states in both languages what is sent and that it is used only to
+  reply.
+- **The form fails gracefully.** The endpoint may be blocked or unreachable —
+  restricted connectivity is ordinary for part of this audience. On failure the
+  page says so in the reader's language, keeps what they typed, and offers the
+  GitHub link instead. A site is allowed to be unable to receive a message; it
+  is not allowed to lose one.

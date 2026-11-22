@@ -69,6 +69,45 @@ await shoot('07-snippet-run', '/en/learn/01-hello/', {
   },
 });
 
+/*
+ * The contact dialog, in both themes. It is the one piece of the site that
+ * floats above the page: a shadow and a translucent backdrop are all that say
+ * so, and whether that reads at all is something only a picture shows.
+ *
+ * The endpoint is never really called. The third shot aborts the request from
+ * here, and it is the state most worth looking at — the reader's words still
+ * in the box, and a way out of it underneath.
+ */
+const ENDPOINT = 'https://contact.ahaducode.com/';
+
+async function openContact(page, typed) {
+  await page.locator('#contact-open').click();
+  await page.locator('#contact-message').fill(typed);
+  await page.waitForTimeout(200);
+}
+
+await shoot('08-contact-am', '/am/', {
+  theme: 'dark',
+  prepare: (page) => openContact(page, 'በትምህርት ሁለት ላይ ያለው ውጤት የተሳሳተ ይመስለኛል።'),
+});
+
+await shoot('09-contact-en', '/en/', {
+  theme: 'light',
+  prepare: (page) => openContact(page, 'The second example in lesson two prints the wrong number.'),
+});
+
+await shoot('10-contact-failed', '/en/learn/02-variables/', {
+  theme: 'dark',
+  prepare: async (page) => {
+    await page.route(ENDPOINT, (route) => route.abort());
+    await openContact(page, 'The second example in lesson two prints the wrong number.');
+    await page.locator('#contact-send').click();
+    await page.waitForTimeout(600);
+    const said = await page.locator('#contact-status').innerText();
+    if (!said.includes('could not be sent')) throw new Error(`no failure message: ${said}`);
+  },
+});
+
 await browser.close();
 server.close();
 console.log('done');
