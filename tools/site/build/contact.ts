@@ -23,6 +23,7 @@
  */
 
 import { escapeHtml } from '../../playground/view.js';
+import { sectionUrl } from '../../shared/nav.js';
 import type { Strings } from './strings.js';
 
 /**
@@ -155,6 +156,7 @@ export function footerActions(target: ReportTarget): string {
         <button class="foot-act" type="button" id="contact-open" hidden>${escapeHtml(
           s.contact,
         )}</button>
+        <a class="foot-act" href="${sectionUrl(s.code, 'privacy')}">${escapeHtml(s.privacyLink)}</a>
         <a class="foot-act" href="${ISSUE_REPO}">GitHub</a>
       </nav>`;
 }

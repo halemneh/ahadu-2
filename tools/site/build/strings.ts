@@ -55,6 +55,7 @@ export interface Strings {
   readonly examplesTitle: string;
   readonly openExample: string;
   readonly footer: string;
+  readonly privacyLink: string;
 
   // The footer's two actions (contact.ts). The `issue*` strings are what a
   // report arrives at GitHub already saying, so they are read by whoever
@@ -124,6 +125,7 @@ const am: Strings = {
   examplesTitle: 'ምሳሌ ፕሮግራሞች',
   openExample: 'በሜዳ ክፈት',
   footer: 'አሃዱ ነጻ እና ክፍት ምንጭ ነው።',
+  privacyLink: 'ግላዊነት',
 
   footerActions: 'አስተያየትና ግንኙነት',
   reportProblem: 'ችግር አሳውቁ',
@@ -190,6 +192,7 @@ const en: Strings = {
   examplesTitle: 'Example programs',
   openExample: 'Open in the playground',
   footer: 'Ahadu is free and open source.',
+  privacyLink: 'Privacy',
 
   footerActions: 'Feedback and contact',
   reportProblem: 'Report a problem',
