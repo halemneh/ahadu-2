@@ -3,21 +3,17 @@
 # Nothing is committed: the built site is uploaded as an artifact and served
 # from there, so `tools/site/dist/` stays out of the repository.
 #
-# **Manual until Pages is turned on.** GitHub Pages serves a private
-# repository only on a paid plan, and this repository is private on the free
-# one, so `configure-pages` cannot find a Pages site and the job fails. A
-# workflow that fails on every push teaches everyone to ignore a red tick, so
-# it waits to be asked.
-#
-# To make it live: Settings → Pages → Source: **GitHub Actions** (possible
-# once the repository is public, or on Pro), then put the push trigger back —
-# uncomment the two lines below. DEPLOY.md has the whole picture.
+# The site is served at the **root of a domain**, not under a path: every URL
+# in it is absolute (`/am/`, `/playground/`, `/assets/...`). That is why
+# `tools/site/public/CNAME` ships with the output — it puts the site on
+# ahaducode.com, where those URLs resolve. Without it the site would be served
+# under `/ahadu-2/` and every link in it would miss.
 
 name: Pages
 
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
