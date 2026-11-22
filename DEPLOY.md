@@ -49,31 +49,57 @@ than building a workaround for a few weeks.
 
 ### DNS for ahaducode.com
 
-At your registrar, for the apex domain:
+The apex needs GitHub's four A records and four AAAA records, and `www` a
+CNAME. These are GitHub's current addresses, read from `api.github.com/meta`:
 
 ```
-A     ahaducode.com   185.199.108.153
-A     ahaducode.com   185.199.109.153
-A     ahaducode.com   185.199.110.153
-A     ahaducode.com   185.199.111.153
-AAAA  ahaducode.com   2606:50c0:8000::153
-AAAA  ahaducode.com   2606:50c0:8001::153
-AAAA  ahaducode.com   2606:50c0:8002::153
-AAAA  ahaducode.com   2606:50c0:8003::153
-```
-
-And for `www`:
-
-```
+A     ahaducode.com       185.199.108.153
+A     ahaducode.com       185.199.109.153
+A     ahaducode.com       185.199.110.153
+A     ahaducode.com       185.199.111.153
+AAAA  ahaducode.com       2606:50c0:8000::153
+AAAA  ahaducode.com       2606:50c0:8001::153
+AAAA  ahaducode.com       2606:50c0:8002::153
+AAAA  ahaducode.com       2606:50c0:8003::153
 CNAME www.ahaducode.com   halemneh.github.io
 ```
 
-Check GitHub's current addresses before relying on the list above; they are
-documented under "Managing a custom domain for your GitHub Pages site".
+All four A records, not one: they are GitHub's edge, and a single record gives
+up the redundancy the other three exist for.
 
-`tools/site/public/CNAME` already holds the domain, so it is republished on
-every deploy. Without that file in the output, GitHub clears the custom domain
-whenever Actions deploys.
+The domain is on **Azure DNS**, so with `az login` done:
+
+```sh
+ZONE=ahaducode.com
+RG=$(az network dns zone list --query "[?name=='$ZONE'].resourceGroup | [0]" -o tsv)
+
+az network dns record-set a create    -g "$RG" -z "$ZONE" -n "@" --ttl 3600
+for ip in 185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153; do
+  az network dns record-set a add-record -g "$RG" -z "$ZONE" -n "@" -a "$ip"
+done
+
+az network dns record-set aaaa create -g "$RG" -z "$ZONE" -n "@" --ttl 3600
+for ip in 2606:50c0:8000::153 2606:50c0:8001::153 2606:50c0:8002::153 2606:50c0:8003::153; do
+  az network dns record-set aaaa add-record -g "$RG" -z "$ZONE" -n "@" -i "$ip"
+done
+
+az network dns record-set cname create    -g "$RG" -z "$ZONE" -n www --ttl 3600
+az network dns record-set cname set-record -g "$RG" -z "$ZONE" -n www -c halemneh.github.io
+```
+
+Then check it took, and that GitHub issued the certificate:
+
+```sh
+dig +short ahaducode.com A
+gh api repos/halemneh/ahadu-2/pages --jq '.status, .https_enforced'
+```
+
+Tick **Enforce HTTPS** in Settings → Pages once the certificate is issued; it
+takes a few minutes after DNS resolves.
+
+The custom domain is already set on the Pages site, and
+`tools/site/public/CNAME` republishes it on every deploy. Without that file in
+the output, GitHub clears the domain whenever Actions deploys.
 
 ### What GitHub Pages does not do
 
