@@ -101,6 +101,60 @@ The custom domain is already set on the Pages site, and
 `tools/site/public/CNAME` republishes it on every deploy. Without that file in
 the output, GitHub clears the domain whenever Actions deploys.
 
+### Moving DNS off Azure
+
+The domain is registered with **Squarespace Domains** but its nameservers
+point at an **Azure DNS** zone, which is the only thing this project keeps in
+Azure. That zone sits on a Visual Studio Enterprise subscription, and if the
+subscription lapses the zone goes with it and the domain stops resolving —
+which is the reason to move, not the fifty cents a month.
+
+Do it **after** the TLS certificate has issued. Changing nameservers makes
+GitHub re-verify the domain, and doing that mid-issuance restarts the clock.
+
+The whole zone is nine records:
+
+```
+A      @     185.199.108.153
+A      @     185.199.109.153
+A      @     185.199.110.153
+A      @     185.199.111.153
+AAAA   @     2606:50c0:8000::153
+AAAA   @     2606:50c0:8001::153
+AAAA   @     2606:50c0:8002::153
+AAAA   @     2606:50c0:8003::153
+CNAME  www   halemneh.github.io
+```
+
+Order matters, because getting it wrong takes the site down rather than
+merely delaying it:
+
+1. **Create all nine at the new provider first**, while Azure is still
+   authoritative. Squarespace's own DNS is the fewest moving parts, since the
+   domain is already there; Cloudflare is the better tooling. Both are free.
+2. **Then** change the nameservers at Squarespace to the new provider's.
+3. Wait for `dig NS ahaducode.com` to show the new servers, then confirm the
+   records survived and the site still answers:
+
+   ```sh
+   dig +short ahaducode.com A
+   curl -sI https://ahaducode.com/ | head -1
+   gh api repos/halemneh/ahadu-2/pages --jq '.https_certificate.state'
+   ```
+
+4. **Only once all three look right**, delete the Azure zone:
+
+   ```sh
+   az network dns zone delete -g rg-ahadu-ide -n ahaducode.com --yes
+   ```
+
+Deleting the zone before the nameservers have moved takes the domain offline
+immediately, so step 4 is genuinely last.
+
+Records are identical before and after, so GitHub should keep the certificate
+through the switch. If it does re-verify, the site stays up on HTTP
+throughout.
+
 ### What GitHub Pages does not do
 
 - **No redirects.** `_redirects` is ignored; there is no equivalent. `/` still
