@@ -38,7 +38,9 @@ describe('sitemap.xml', () => {
 
   it('percent-encodes Geʼez, leaving the separators alone', () => {
     const xml = sitemap([{ path: '/am/ተማር/01-ሰላም/' }]);
-    expect(xml).toContain('<loc>https://ahaducode.com/am/%E1%89%B0%E1%88%9B%E1%88%AD/01-%E1%88%B0%E1%88%8B%E1%88%9D/</loc>');
+    expect(xml).toContain(
+      '<loc>https://ahaducode.com/am/%E1%89%B0%E1%88%9B%E1%88%AD/01-%E1%88%B0%E1%88%8B%E1%88%9D/</loc>',
+    );
     // The slashes survived: a sitemap of one escaped blob would be useless.
     expect(xml).not.toContain('%2F');
   });
@@ -121,7 +123,9 @@ describe('the sitemap against the site that was actually built', () => {
       repoDir: repo,
     });
 
-    const listed = [...readFileSync(join(out, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc>/g)]
+    const listed = [
+      ...readFileSync(join(out, 'sitemap.xml'), 'utf8').matchAll(/<loc>([^<]+)<\/loc>/g),
+    ]
       .map((m) => decodeURI((m[1] ?? '').slice(ORIGIN.length)))
       .sort();
 
