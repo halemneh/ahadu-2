@@ -12,11 +12,22 @@
 
 export type Language = 'am' | 'en';
 
-export type Section = 'home' | 'learn' | 'reference' | 'examples';
+/**
+ * `privacy` is a real section with its own page in each language, but it is
+ * not in the top navigation — it belongs in the footer, where someone goes
+ * looking for it, rather than competing with the lessons for attention.
+ */
+export type Section = 'home' | 'learn' | 'reference' | 'examples' | 'privacy';
 
 export const SECTION_PATHS: Readonly<Record<Language, Readonly<Record<Section, string>>>> = {
-  am: { home: '', learn: 'ተማር', reference: 'ማጣቀሻ', examples: 'ምሳሌዎች' },
-  en: { home: '', learn: 'learn', reference: 'reference', examples: 'examples' },
+  am: { home: '', learn: 'ተማር', reference: 'ማጣቀሻ', examples: 'ምሳሌዎች', privacy: 'ግላዊነት' },
+  en: {
+    home: '',
+    learn: 'learn',
+    reference: 'reference',
+    examples: 'examples',
+    privacy: 'privacy',
+  },
 };
 
 /** The playground has one URL: it is not written twice, so it is not translated. */

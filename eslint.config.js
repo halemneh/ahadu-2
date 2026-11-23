@@ -33,6 +33,21 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // The contact Worker: plain ESM, deployed by wrangler rather than built
+    // here, and written against Cloudflare's runtime. `cloudflare:email` is
+    // not a module this project has types for, and acquiring them would mean
+    // a dependency for a file tsc never compiles.
+    files: ['tools/contact-worker/**/*.js'],
+    ...tseslint.configs.disableTypeChecked,
+    languageOptions: {
+      parserOptions: { project: false, projectService: false },
+    },
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
+  {
     // Development scripts: plain ESM, outside the TypeScript project, and not
     // shipped. Typing Playwright's page objects here would buy nothing.
     files: ['**/*.mjs'],

@@ -204,8 +204,23 @@ long as you like.
    `index.html`.
 2. **UTF-8 paths**, for the Amharic URLs.
 3. **Nothing else.** No special headers, no Node at runtime, no cross-origin
-   isolation. The playground's worker is same-origin and the site sends
-   nothing anywhere.
+   isolation. The playground's worker is same-origin, and nothing at all is
+   requested when a page loads (SITE.md §6.1).
+
+## The contact endpoint
+
+The footer's **Contact** form posts to `https://contact.ahaducode.com/`, a
+Cloudflare Worker whose source and deployment steps are in
+`tools/contact-worker/`. It is deployed by hand with `wrangler`, separately
+from the site; no workflow in this repository touches it.
+
+It is not a dependency of the site. Until it exists — and whenever it is
+unreachable — the form says so in the reader's language, keeps what they
+typed, and offers them the GitHub issue link instead. So the site can go up
+first and the Worker whenever.
+
+The other action in that footer, **Report a problem**, is a plain link with
+the issue pre-filled at build time. It needs no host and no JavaScript.
 
 ## Before each deploy
 
@@ -214,6 +229,6 @@ not do what the pages claim — 112 of them run on every build (SITE.md §2).
 On top of that:
 
 ```sh
-npm run check        # lint, formatting, types, 1,463 tests
+npm run check        # lint, formatting, types, 1,494 tests
 npm run site:smoke   # drives the dev server in a browser
 ```

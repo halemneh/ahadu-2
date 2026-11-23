@@ -1,0 +1,49 @@
+# The contact endpoint for ahaducode.com. See README.md before deploying.
+
+name = "ahadu-contact"
+main = "index.js"
+compatibility_date = "2025-11-01"
+
+# The send_email binding. `destination_address` pins it to one address at the
+# platform level, so even a bug in index.js cannot mail a stranger: Cloudflare
+# refuses the send with E_RECIPIENT_NOT_ALLOWED.
+#
+# On the Workers Free plan the binding may only send to addresses that Email
+# Routing has verified on this account, and those sends are free and exempt
+# from the monthly quota. The pin is therefore not a cost we pay for safety —
+# it restates a restriction the plan already imposes, and keeps restating it
+# if the account is ever upgraded, when that restriction would otherwise lift.
+#
+# This address is deliberately public. It is a project mailbox, not a personal
+# one, and it already receives whatever is sent to the hello@ address printed
+# on the site. To rotate it: verify the new address in Email Routing, change
+# the routing rule, change both lines here, redeploy.
+[[send_email]]
+name = "MAIL"
+destination_address = "ahaducode@proton.me"
+
+[vars]
+# Where the message is sent. Always this address, never one from the request.
+CONTACT_TO = "ahaducode@proton.me"
+
+# Who it is from. ahaducode.com is a routing domain on this account, which is
+# what Cloudflare requires of a sender; the mailbox itself need not exist.
+CONTACT_FROM = "noreply@ahaducode.com"
+
+# Origins allowed to read the reply, comma separated. Not a security boundary
+# — curl ignores CORS — but it keeps the endpoint from being embedded in
+# someone else's page. The first one is the fallback for requests with no
+# Origin header.
+ALLOWED_ORIGINS = "https://ahaducode.com,http://localhost:5174,http://localhost:5179"
+
+# TURNSTILE_SECRET is deliberately absent. With no secret the Worker takes
+# every submission that clears the honeypot; set it as a secret
+# (`wrangler secret put TURNSTILE_SECRET`) and a token becomes compulsory.
+# The site does not load Turnstile's script on page view — see
+# tools/site/build/contact.ts.
+
+# The site posts to https://contact.ahaducode.com/ (CONTACT_ENDPOINT in
+# tools/site/build/contact.ts). Wrangler creates the DNS record itself.
+[[routes]]
+pattern = "contact.ahaducode.com"
+custom_domain = true
