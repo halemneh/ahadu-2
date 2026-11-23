@@ -252,6 +252,23 @@ export function isContactAlive(body) {
 // Asking the network.
 // ---------------------------------------------------------------------------
 
+/**
+ * The `<loc>` paths out of a sitemap.
+ *
+ * Paths, not the URLs as written: a sitemap states absolute production URLs,
+ * and `--base` exists so this script can be pointed at a dev server. Comparing
+ * what comes back against the base being checked keeps both honest.
+ */
+export function sitemapPaths(body) {
+  return [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].flatMap((m) => {
+    try {
+      return [new URL(decodeEntities(m[1] ?? '')).pathname];
+    } catch {
+      return [];
+    }
+  });
+}
+
 async function get(url, { method = 'GET' } = {}) {
   try {
     const response = await fetch(url, {
@@ -360,6 +377,40 @@ async function main(argv) {
       check(`${path} is served`, worker.status === 200, describe(worker));
     }
   }
+
+  /*
+   * The two files a search engine reads. They are the site's only route to a
+   * reader who does not already know it exists, and they fail in the quietest
+   * way there is: a sitemap that 404s costs nothing today and costs every
+   * Amharic search result three months from now. Nobody opens these by hand,
+   * so nobody would notice.
+   */
+  console.log('\nwhat a crawler is told');
+  const sitemap = await get(new URL('/sitemap.xml', base).href);
+  check('/sitemap.xml is served', sitemap.status === 200, describe(sitemap));
+  const listed = sitemap.status === 200 ? sitemapPaths(sitemap.body) : [];
+  check('and lists pages', listed.length > 0, listed.length === 0 ? 'no <loc> in it' : undefined);
+
+  if (listed.length > 0) {
+    const results = await inParallel(listed, async (path) => ({
+      path,
+      ...(await get(new URL(path, base).href)),
+    }));
+    const dead = results.filter((r) => r.status !== 200);
+    check(
+      `every one of its ${listed.length} URLs is 200`,
+      dead.length === 0,
+      dead.map((r) => `${describe(r)} ${r.path}`).join('; '),
+    );
+  }
+
+  const robotsTxt = await get(new URL('/robots.txt', base).href);
+  check('/robots.txt is served', robotsTxt.status === 200, describe(robotsTxt));
+  check(
+    'and points at the sitemap',
+    robotsTxt.status === 200 && /^Sitemap:\s*\S+/m.test(robotsTxt.body),
+    robotsTxt.status === 200 ? 'no Sitemap: line' : undefined,
+  );
 
   console.log('\nthe certificate');
   await checkCertificate(base);

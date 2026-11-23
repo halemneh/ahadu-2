@@ -27,6 +27,7 @@ import {
   metaRefreshTarget,
   moduleScripts,
   requestKey,
+  sitemapPaths,
   workerAssets,
 } from '../../../tools/site/health.mjs';
 import { CONTACT_ENDPOINT, SITE_ORIGIN } from '../../../tools/site/build/contact.js';
@@ -245,5 +246,25 @@ describe('the contact endpoint', () => {
     expect(isContactAlive('<html><body>502 Bad Gateway</body></html>')).toBe(false);
     expect(isContactAlive('')).toBe(false);
     expect(isContactAlive('{"ok":false,"error":"empty"}')).toBe(false);
+  });
+});
+
+describe('the sitemap, as the health check reads it', () => {
+  it('returns a path for each entry', () => {
+    const xml = `<urlset><url><loc>https://ahaducode.com/en/learn/</loc></url></urlset>`;
+    expect(sitemapPaths(xml)).toEqual(['/en/learn/']);
+  });
+
+  it('keeps Geʼez in the encoded form the server answers to', () => {
+    const xml = `<url><loc>https://ahaducode.com/am/%E1%89%B0%E1%88%9B%E1%88%AD/</loc></url>`;
+    expect(sitemapPaths(xml)).toEqual(['/am/%E1%89%B0%E1%88%9B%E1%88%AD/']);
+  });
+
+  it('drops an entry that is not a URL rather than throwing', () => {
+    expect(sitemapPaths('<loc>not a url</loc><loc>https://a.test/x</loc>')).toEqual(['/x']);
+  });
+
+  it('finds nothing in a page that is not a sitemap, such as a 404', () => {
+    expect(sitemapPaths('<html><body>404</body></html>')).toEqual([]);
   });
 });
