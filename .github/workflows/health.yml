@@ -1,0 +1,176 @@
+# Asks the live site, once a day, whether it is still up and still whole.
+#
+# Everything else in this repository checks the site before it ships. Nothing
+# checked it afterwards, and afterwards is where a static site actually fails:
+# the certificate lapses, the DNS zone goes with a subscription (DEPLOY.md has
+# a section on exactly that), a deploy without `CNAME` makes GitHub clear the
+# custom domain, or the playground's bundle is served while the worker chunk it
+# names is not. Each of those leaves the last commit green and the site broken,
+# and the first person to find out should not be a beginner on lesson one.
+#
+# `tools/site/health.mjs` is the whole check and takes no dependencies, so
+# there is no `npm ci` here and nothing to install. Internal breakage fails the
+# run; a link to someone else's site going down only warns, because a red tick
+# that means "GitHub is having a bad day" is a tick that stops being read.
+#
+# How anyone hears about a failure: GitHub's own Actions notifications. A
+# failed run is mailed to the account behind the schedule, which is the same
+# person who would have to fix it, so there is no notification service, no
+# webhook and no secret. Two things worth knowing about that. The docs say
+# notifications for a scheduled workflow go "to the user who initially created
+# the workflow", and, once a workflow has been disabled and turned back on,
+# "to the user who re-enabled the workflow" — so whoever last touched this is
+# whoever gets told. And the docs promise no default for the setting itself, so
+# confirm it once by looking: Settings → Notifications → Actions set to Email,
+# and "Only notify for failed workflows" if you would rather not hear about
+# the days nothing is wrong.
+#
+# A green run says nothing to anybody. That is the point.
+#
+# This is not analytics and it does not bend SITE.md §6. That rule governs what
+# a *page* requests when a reader opens it; nothing here runs in a reader's
+# browser and nothing is recorded about anybody.
+
+name: Health
+
+on:
+  schedule:
+    # Daily, and deliberately not on the hour: GitHub warns that scheduled runs
+    # "can be delayed during periods of high loads of GitHub Actions workflow
+    # runs", and the start of every hour is the worst of it. Daily, rather than
+    # hourly, because a lesson page is not a payment system — a day is a fair
+    # time to notice, and twenty-four runs to find out the same thing would
+    # only make the log harder to read.
+    - cron: '42 6 * * *'
+  workflow_dispatch:
+
+# Read-only by default. The one job that needs to write says so itself.
+permissions:
+  contents: read
+
+concurrency:
+  group: health
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # A dozen requests and a TLS handshake. Anything that takes longer than
+    # this is hung, and a hung job holds the concurrency group all day.
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      # No `npm ci`: the checker imports nothing but `node:tls`, so installing
+      # the dev dependencies would only add a few hundred packages to a run
+      # whose whole job is to make a dozen HTTP requests.
+      - run: node tools/site/health.mjs
+
+  # ---------------------------------------------------------------------------
+  # Why there is a second job here at all
+  #
+  # From GitHub's own documentation, twice, in the schedule reference and again
+  # in "Disable and enable workflows":
+  #
+  #   "In a public repository, scheduled workflows are automatically disabled
+  #    when no repository activity has occurred in 60 days."
+  #
+  # A workflow's own scheduled runs are not activity — if they were, no
+  # scheduled workflow would ever be disabled and the rule would do nothing.
+  # So a monitor left to itself monitors for sixty days and then stops, and the
+  # way anyone finds out is that the site went down and nothing said so. A
+  # check that quietly expires is worse than no check, because it is believed.
+  #
+  # What this job does: if nothing has been pushed to the default branch in 50
+  # days, it pushes one empty commit. In a repository under development it
+  # never fires. In a dormant one it fires roughly seven times a year, each
+  # time with a commit that explains itself.
+  #
+  # Three other approaches were considered:
+  #
+  # - **Re-enable itself through the REST API.** It cannot. A disabled workflow
+  #   does not run, so it is not there to call `PUT /repos/{owner}/{repo}/
+  #   actions/workflows/{id}/enable` on itself, and a second scheduled workflow
+  #   is disabled at the same moment by the same rule. Any self-healing would
+  #   have to come from a trigger that still fires, and in a dormant repository
+  #   there is no such trigger. This is the approach that sounds best and is
+  #   the one that cannot work.
+  #
+  # - **A third-party keepalive action.** Several exist, and in substance they
+  #   do what the shell below does. Running someone else's code with a write
+  #   token, on a schedule, unattended, for as long as this repository lasts is
+  #   a great deal of trust to buy a dozen lines of shell with.
+  #
+  # - **Touching a file.** A dated file in the tree that nothing reads is
+  #   litter, and churn in it would show up in every diff. An empty commit
+  #   changes nothing, so there is nothing to misread later.
+  #
+  # Honest about the gap: GitHub documents the 60-day rule but nowhere defines
+  # what "repository activity" is. A push to the default branch is the one
+  # candidate nobody disputes, which is why that is what this does rather than
+  # something tidier like an API call or an issue comment.
+  #
+  # If this ever does fall through and the workflow is found disabled, the
+  # recovery is `gh workflow enable health.yml`, or the "Enable workflow"
+  # button on the Actions tab. DEPLOY.md says so where someone will look.
+  # ---------------------------------------------------------------------------
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # Deliberately not `needs: check`. If the site is down for two months, the
+    # check fails every day — and that is exactly when the workflow must not be
+    # allowed to expire, because its failures are the only alarm there is.
+    permissions:
+      # The one write in this repository's scheduled work. The `permissions`
+      # key grants it for this job alone; if the repository's default token
+      # permission is the read-only setting, this is what still makes the push
+      # possible.
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Push an empty commit if nothing else has been pushed in 50 days
+        env:
+          # Ten days of slack before the 60-day deadline, which is several
+          # daily runs' worth. Scheduled runs can be delayed or, under enough
+          # load, dropped, so the margin has to survive missing a few.
+          QUIET_DAYS: 50
+        run: |
+          set -euo pipefail
+
+          age=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "last commit on $GITHUB_REF_NAME: $age days ago"
+
+          if [ "$age" -lt "$QUIET_DAYS" ]; then
+            echo "the repository is active; nothing to do"
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          # `[skip ci]` is belt to the braces. GitHub already guarantees that
+          # "events triggered by the GITHUB_TOKEN will not create a new
+          # workflow run", so this push cannot start the Pages deploy or CI by
+          # itself; the marker is there so that it still cannot if the token is
+          # ever swapped for a personal one.
+          #
+          # printf rather than a heredoc: a heredoc inside a YAML block would
+          # carry this file's indentation into the commit message.
+          printf '%s\n' \
+            'Keep the scheduled health check alive [skip ci]' \
+            '' \
+            'GitHub disables scheduled workflows in a public repository after' \
+            '60 days with no repository activity, and a scheduled run is not' \
+            'activity. Nothing has been pushed here in 50 days, so this commit' \
+            'is the activity. It changes no file.' \
+            '' \
+            'The reasoning, and the alternatives that do not work, are in' \
+            '.github/workflows/health.yml.' |
+            git commit --allow-empty --file=-
+
+          git push

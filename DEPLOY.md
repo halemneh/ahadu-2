@@ -232,3 +232,49 @@ On top of that:
 npm run check        # lint, formatting, types, 1,494 tests
 npm run site:smoke   # drives the dev server in a browser
 ```
+
+## After it is up
+
+Everything above checks the site before it ships. The failures that take a
+static site off the air happen afterwards and leave the last commit green: a
+certificate that did not renew, a DNS zone that went with a subscription, a
+deploy without `CNAME` that made GitHub clear the custom domain, a playground
+whose bundle is served while the worker chunk it names is not.
+
+`.github/workflows/health.yml` asks the live site about all of those once a
+day, and `tools/site/health.mjs` is the check itself:
+
+```sh
+npm run site:health                           # against ahaducode.com
+node tools/site/health.mjs --skip-external    # without other people's sites
+node tools/site/health.mjs --base http://localhost:5179
+```
+
+It needs no dependencies, no secrets and no service. Internal breakage fails
+the run; an external link that is down only warns, because a red tick that
+means someone else is having a bad day is a tick that stops being read.
+
+**How you hear about a failure.** A failed run is mailed by GitHub to the
+account that set the schedule up. Confirm once, under Settings →
+Notifications → Actions, that it is set to **Email** — the documentation does
+not promise a default, and this is the only alarm there is. A passing run says
+nothing to anyone, which is the point.
+
+### The sixty-day rule
+
+> In a public repository, scheduled workflows are automatically disabled when
+> no repository activity has occurred in 60 days.
+
+A workflow's own scheduled runs are not activity, so a monitor left to itself
+monitors for sixty days and then stops. The `keepalive` job in `health.yml`
+answers that by pushing one empty commit whenever nothing else has been pushed
+in fifty days — never, while the repository is being worked on. The workflow
+file explains the reasoning and the alternatives that do not work, including
+why the workflow cannot re-enable itself.
+
+If it ever is found disabled — the Actions tab says so plainly — re-enable it
+with:
+
+```sh
+gh workflow enable health.yml
+```
