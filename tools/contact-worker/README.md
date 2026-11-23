@@ -25,6 +25,12 @@ Two things keep that true, and both should stay:
 - `destination_address` in `wrangler.toml` pins the binding itself, so
   Cloudflare refuses any other destination even if the code is wrong.
 
+The destination is in this file in the clear, which is deliberate. It is a
+project mailbox that already receives everything sent to the `hello@` address
+printed on the site, so hiding it from this repository would protect nothing
+while making the deployed configuration unreproducible. It is not anybody's
+personal address, and it can be rotated in three edits.
+
 ## Deploying
 
 **Workers Free can send email, but only to addresses verified on the
@@ -38,8 +44,8 @@ account** — which is all this needs, because there is exactly one of them.
 2. **Enable Email Routing on the sending domain** (`ahaducode.com` here), so
    `CONTACT_FROM` is an address Cloudflare will send as. The mailbox does not
    have to exist.
-3. **Fill in `wrangler.toml`**: `destination_address`, `CONTACT_TO`,
-   `CONTACT_FROM`, and `ALLOWED_ORIGINS`.
+3. **Check `wrangler.toml`** names the right addresses. For ahaducode.com it
+   already does; a fork needs its own.
 4. **Deploy**, from this directory:
 
    ```sh
@@ -49,9 +55,12 @@ account** — which is all this needs, because there is exactly one of them.
 5. **Give it the hostname the site posts to.** The site has
    `https://contact.ahaducode.com/` as a build-time constant
    (`CONTACT_ENDPOINT` in `tools/site/build/contact.ts`) — the one place to
-   change it. Either uncomment the `routes` block in `wrangler.toml` and
-   deploy again, or add the custom domain in the dashboard under the Worker's
-   *Settings* → *Domains & Routes*.
+   change it. The `routes` block in `wrangler.toml` claims that hostname and
+   Wrangler creates the DNS record itself, so the first deploy is enough.
+
+   That record is proxied — a Worker custom domain has to be. It is the only
+   proxied name on the zone; the apex stays grey-clouded and served by GitHub
+   Pages.
 
 Nothing in this repository deploys it, and no CI job touches it. It is a
 hostname and a mailbox, not part of the site build.
