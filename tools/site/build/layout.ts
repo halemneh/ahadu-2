@@ -15,6 +15,8 @@
 import { escapeHtml } from '../../playground/view.js';
 import { PLAYGROUND_URL, STORAGE, sectionUrl } from '../../shared/nav.js';
 import { contactDialog, footerActions } from './contact.js';
+import { headLinks } from './discovery.js';
+import type { Alternates } from './discovery.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
 
@@ -27,6 +29,8 @@ export interface PageView {
   readonly url: string;
   /** The same page in the other language. */
   readonly counterpart: string;
+  /** Every language this page exists in, for hreflang and canonical. */
+  readonly alternates: Alternates;
   readonly body: string;
   readonly headings: readonly { readonly id: string; readonly text: string }[];
   readonly sidebar: string;
@@ -83,7 +87,7 @@ export function page(view: PageView): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(view.title)} — ${escapeHtml(s.siteName)}</title>
     <meta name="description" content="${escapeHtml(view.summary)}" />
-    <link rel="alternate" hreflang="${s.code === 'am' ? 'en' : 'am'}" href="${view.counterpart}" />
+    ${headLinks(view.alternates)}
     <link rel="stylesheet" href="/theme/site.css" />
     <script>
       try {

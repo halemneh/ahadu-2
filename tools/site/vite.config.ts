@@ -10,7 +10,15 @@
  * so the content directory stays something a person can read.
  */
 
-import { createReadStream, existsSync, readdirSync, renameSync, rmSync, statSync } from 'node:fs';
+import {
+  copyFileSync,
+  createReadStream,
+  existsSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  statSync,
+} from 'node:fs';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { build as viteBuild, defineConfig } from 'vite';
@@ -115,7 +123,9 @@ function sitePlugin(): Plugin {
       });
 
       // In development the pages sit under /.generated/, which is not where
-      // they will live. Rewrite so the URLs a reader sees are the real ones.
+      // they will live. Rewrite so the URLs a reader sees are the real ones —
+      // sitemap.xml and robots.txt included, so a broken one is visible here
+      // rather than only after a deploy.
       server.middlewares.use((req, _res, next) => {
         const url = req.url ?? '/';
         if (/^\/(am|en)(\/|$)/.test(url)) {
@@ -123,6 +133,8 @@ function sitePlugin(): Plugin {
           req.url = `/.generated${path}`;
         } else if (url === '/' || url === '/index.html') {
           req.url = '/.generated/index.html';
+        } else if (url === '/sitemap.xml' || url === '/robots.txt') {
+          req.url = `/.generated${url}`;
         }
         next();
       });
@@ -145,6 +157,10 @@ function sitePlugin(): Plugin {
      * Rollup names an output after its input's path from the root, so pages
      * built out of `.generated/` land under `dist/.generated/`. Lift them to
      * the top and copy the stylesheet, which needs no bundling.
+     *
+     * sitemap.xml and robots.txt are copied separately: Rollup only knows
+     * about the HTML files it was given as inputs, so anything else the
+     * generator wrote is invisible to it and would never reach `dist/`.
      */
     closeBundle(): void {
       const out = resolve(here, 'dist');
@@ -155,6 +171,11 @@ function sitePlugin(): Plugin {
           renameSync(join(nested, name), join(out, name));
         }
         rmSync(nested, { recursive: true, force: true });
+      }
+
+      for (const name of ['sitemap.xml', 'robots.txt']) {
+        const from = join(pages, name);
+        if (existsSync(from)) copyFileSync(from, join(out, name));
       }
     },
   };

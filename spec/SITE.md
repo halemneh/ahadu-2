@@ -59,6 +59,36 @@ never loses the reader's place.
 Amharic is the default because the language is. `/` serving English would say
 that Amharic is the translation.
 
+### 3.1 Being findable
+
+A reader who would want this site cannot reach it by accident. There is no
+search term in English that leads here, and almost nothing links here. The one
+person the site is for — somebody who wonders, in Amharic, whether they could
+write a program in their own language — will type that wondering into a search
+box, and the answer has to be in the index by then.
+
+So the site states its own shape where a crawler looks for it:
+
+- `sitemap.xml` lists every page, at absolute URLs, percent-encoded. This is
+  not a nicety for the Amharic tree: `/am/ተማር/` is `/am/%E1%89%B0%E1%88%9B%E1%88%AD/`
+  on the wire, and those are exactly the URLs with no inbound links to find
+  them by.
+- `robots.txt` disallows nothing and points at the sitemap.
+- Every page carries a self-referencing `canonical`, and an `hreflang` set
+  naming both languages and itself. The set must be reciprocal and complete or
+  it is ignored, which makes a half-written one worse than none: it looks
+  correct in the HTML and does nothing. `x-default` is the Amharic page, for
+  the same reason `/` is.
+
+Both files are generated from the pages the build just wrote, never from a
+list kept beside them. A hand-maintained sitemap is wrong the first time a
+section is renamed, and nothing tells you — the pages simply stop being found,
+months later. A test asserts the sitemap matches the HTML actually on disk.
+
+None of this is in tension with §6. Nothing here is fetched by a browser,
+nothing identifies a reader, and nothing happens because a page was opened:
+these are files a crawler may ask for, describing URLs that are already public.
+
 ## 4. Lessons
 
 A lesson is one Markdown file per language, paired by path. Each has:

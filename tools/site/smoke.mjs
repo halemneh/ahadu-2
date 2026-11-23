@@ -191,6 +191,27 @@ try {
     'contact-open',
   );
 
+  /*
+   * The two files a crawler asks for. They are generated, so in development
+   * they live under /.generated/ and are rewritten into place — which is a
+   * piece of config that can silently stop working, leaving them reachable in
+   * dist and 404 here, or the reverse.
+   */
+  console.log('what a crawler is told');
+  const sitemap = await page.goto(`${base}/sitemap.xml`);
+  check('sitemap.xml is served', sitemap?.status(), 200);
+  const xml = await page.evaluate(() => document.documentElement.outerHTML);
+  check('and lists the Amharic lessons', xml, (t) => t.includes('%E1%89%B0%E1%88%9B%E1%88%AD'));
+  check('and the playground', xml, (t) => t.includes('/playground/'));
+
+  const robotsTxt = await page.goto(`${base}/robots.txt`);
+  check('robots.txt is served', robotsTxt?.status(), 200);
+  check(
+    'and points at the sitemap',
+    await robotsTxt?.text(),
+    (t) => t?.includes('Sitemap: https://ahaducode.com/sitemap.xml') ?? false,
+  );
+
   check('nothing 404ed or threw', broken, (list) => list.length === 0);
 } catch (error) {
   // A page that will not load at all is a failed check, not a stack trace:

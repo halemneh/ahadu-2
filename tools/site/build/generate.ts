@@ -18,8 +18,10 @@ import { page, lessonSidebar } from './layout.js';
 import { LANGUAGES, strings } from './strings.js';
 import type { Language } from './strings.js';
 import { referenceBody } from './reference.js';
-import { SECTION_PATHS } from '../../shared/nav.js';
+import { PLAYGROUND_URL, SECTION_PATHS } from '../../shared/nav.js';
 import { examplesBody } from './examples.js';
+import { robots, sitemap } from './discovery.js';
+import type { SiteUrl } from './discovery.js';
 
 /** The same segments the links are built from, so content and URLs agree. */
 const SECTIONS: Record<Language, Record<Section, string>> = SECTION_PATHS;
@@ -33,7 +35,17 @@ export interface GenerateOptions {
 export interface GenerateResult {
   readonly pages: number;
   readonly snippets: number;
+  /** Every indexable URL, in the order they were written. */
+  readonly urls: readonly SiteUrl[];
 }
+
+/*
+ * The playground is built separately (tools/playground), so it is not one of
+ * the pages below — but it is a page of this site, and the one most likely to
+ * be what somebody wants. It is listed by hand because there is nothing else
+ * to list it from.
+ */
+const EXTRA_URLS: readonly SiteUrl[] = [{ path: PLAYGROUND_URL }];
 
 function urlOf(p: SourcePage): string {
   if (p.section === 'home') return `/${p.language}/`;
@@ -66,6 +78,7 @@ export function generate(options: GenerateOptions): GenerateResult {
 
   let snippets = 0;
   let count = 0;
+  const urls: SiteUrl[] = [];
 
   for (const language of Object.keys(LANGUAGES) as Language[]) {
     const s = strings(language);
@@ -103,6 +116,11 @@ export function generate(options: GenerateOptions): GenerateResult {
         section: source.section,
         url,
         counterpart: urlById.get(source.id)?.[other] ?? `/${other}/`,
+        alternates: {
+          self: url,
+          am: urlById.get(source.id)?.am ?? '/am/',
+          en: urlById.get(source.id)?.en ?? '/en/',
+        },
         body: rendered.html,
         headings: rendered.headings,
         sidebar: source.section === 'learn' ? lessonSidebar(s.lessonsTitle, lessons, url) : '',
@@ -113,6 +131,7 @@ export function generate(options: GenerateOptions): GenerateResult {
       const file = join(options.outDir, url.replace(/^\//, ''), 'index.html');
       mkdirSync(dirname(file), { recursive: true });
       writeFileSync(file, html, 'utf8');
+      urls.push({ path: url });
       count += 1;
     }
   }
@@ -135,6 +154,7 @@ export function generate(options: GenerateOptions): GenerateResult {
       section: 'home',
       url: '/404.html',
       counterpart: '/en/',
+      alternates: { self: '/404.html', am: '/am/', en: '/en/' },
       body: `<p>የጠየቁት ገጽ የለም። ምናልባት አድራሻው ተቀይሮ ይሆናል።</p>
         <p class="summary">The page you asked for is not here. It may have moved.</p>
         <p><a href="/am/">ወደ መነሻ ገጽ</a> · <a href="/en/">Home</a> ·
@@ -165,5 +185,15 @@ export function generate(options: GenerateOptions): GenerateResult {
     'utf8',
   );
 
-  return { pages: count, snippets };
+  /*
+   * The two files that tell a crawler the site exists. `/` is not in the
+   * sitemap: it is a redirect to `/am/`, and listing a URL that immediately
+   * sends the crawler elsewhere wastes the one request it was willing to make.
+   * Nor is `404.html`, which is not a page anyone should arrive at on purpose.
+   */
+  const indexable = [...urls, ...EXTRA_URLS];
+  writeFileSync(join(options.outDir, 'sitemap.xml'), sitemap(indexable), 'utf8');
+  writeFileSync(join(options.outDir, 'robots.txt'), robots(), 'utf8');
+
+  return { pages: count, snippets, urls: indexable };
 }
