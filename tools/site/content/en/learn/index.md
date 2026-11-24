@@ -1,7 +1,7 @@
 ---
 id: learn-index
 title: Lessons
-summary: From your first program to classes
+summary: From what a program is to reading errors
 order: 1
 ---
 
