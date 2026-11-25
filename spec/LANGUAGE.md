@@ -1035,6 +1035,88 @@ draw is within its bounds, and that the same seed repeats — rather than
 particular numbers. The numbers are this implementation's; the properties are
 the language's.
 
+### 8.5 The standard library
+
+Beyond the built-ins, an implementation MUST pre-bind a **standard library**
+in the global scope. Its functions are listed in §8.6.
+
+The library is **written in Ahadu**, not in the host language, and runs as its
+own program through the same interpreter before the program being run. That is
+not an implementation detail; it is the point. A learner who wonders what
+`ደምር` does can read it, in Amharic, and find a loop they already understand.
+A site that teaches the language can publish the library's source as a page
+and it is the same kind of text as every lesson. Documentation that is
+*running code the reader can read* cannot drift from what the library does —
+which is the failure this whole project was started to avoid (CHANGES §C01).
+
+Three consequences are normative, because each one is a promise to the learner
+that an implementation could easily break:
+
+- **The learner's line numbers are their own.** A diagnostic from their
+  program MUST carry the line it is on in *their* source, with no offset for
+  the library. Running the prelude as a separate program achieves this for
+  free; prepending it to the source does not, and MUST NOT be done.
+- **The learner's step budget is their own.** Loading the library MUST NOT
+  consume any part of a step budget the host set for the program (§9.2,
+  `AH3018`).
+- **A failure inside a library function is reported at the line that called
+  it**, with the library function named. A line number inside the library
+  belongs to a file the learner cannot open: pointing at one frames a line of
+  their program that has nothing to do with the error, or — if their program
+  is shorter than the prelude — a blank line with carets under nothing. The
+  library frame SHOULD remain in the traceback, so nothing is hidden from
+  someone who wants it.
+
+Library names are pre-bound exactly as built-ins are: user code MAY shadow
+them, and a call to a shadowed one MUST name it (§8.2). Whether a pre-bound
+name is implemented in Ahadu or in the host language is not something a
+learner can see, and not something they should have to care about.
+
+#### What stays a built-in
+
+Not everything belongs in the library. A function MUST be a host built-in
+rather than Ahadu source when:
+
+- it needs something only the host has — input, time, randomness;
+- writing it in Ahadu would **leak an artifact of binary floating point**.
+  `ሙሉ` is the example: the obvious Ahadu definition is `ቁ - (ቁ % 1)`, and
+  `7.6 % 1` is `0.5999999999999996`. A learner reading that in the library
+  would be reading a lie about arithmetic, and one who stepped through it
+  would be owed an explanation of IEEE 754 in lesson four;
+- it must **fail usefully on bad input**. Ahadu has no way to raise an error
+  of its own (§9.3 — there is no exception handling, and nothing like
+  `throw`), so an Ahadu library function given the wrong type can only fail
+  wherever its own arithmetic happens to break. A built-in can check its
+  arguments and report precisely, the way `ርዝመት` does.
+
+That last point is a real limit on how much of a standard library can honestly
+be written in Ahadu, and it is worth stating plainly rather than discovering
+later. It is also the strongest argument the language has for eventually
+growing a way to raise an error.
+
+#### There is no import
+
+Every library function is in scope in every program, with no declaration. The
+language has no module system and no `import`, and that is a deliberate
+choice, not a gap waiting to be filled: a namespace is already expressible
+(an object's attributes are reached with `.`, §7.6), so an import statement
+would only control *visibility* — a question better answered when there is a
+second library that not every program wants.
+
+### 8.6 Library functions
+
+Names are **imperative verbs**, for the reason §8.2 gives: a pre-bound global
+named with a noun invites a learner to assign to it in the very lesson that
+teaches it.
+
+| Name | Signature | Result |
+| --- | --- | --- |
+| `ደምር` | `ደምር(ስብስብ)` | `ቁጥር` — the sum of the elements; `0` for an empty list |
+| `ቁጠር` | `ቁጠር(ስብስብ፣ ዕቃ)` | `ቁጥር` — how many elements equal `ዕቃ`, by §6.3 equality |
+
+This table is checked against the library's own source: a function the library
+defines and this table omits, or the reverse, fails the test suite.
+
 ---
 
 ## 9. Errors

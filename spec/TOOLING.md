@@ -282,6 +282,27 @@ under the pointer.
   playground supplies a modal-backed reader and the CLI supplies stdin.
 - The playground is the only part of the repository allowed build-time
   dependencies.
+- `src/library/` holds the standard library's Ahadu source as a string
+  constant rather than as a `.ahadu` file, so that the CLI (Node), the
+  playground and the site (Vite) and the tests (vitest) all load it the same
+  way, with no build step and nothing to keep in sync (LANGUAGE.md §8.5).
+
+### 2.4 Every host loads the standard library
+
+`src/engine.ts` exports the `run` that loads the library, and it is what every
+host calls: `src/cli/main.ts`, `src/cli/repl.ts` (through `withLibrary`, since
+the REPL keeps one interpreter across entries), `tools/playground/evaluate.ts`
+and `tests/helpers/run-source.ts`. The bare `run` in `src/interpreter/`
+remains the library-free primitive, for tests that want nothing pre-bound
+beyond the built-ins.
+
+It is centralised for a specific reason. The four hosts do not share a code
+path, and the realistic failure is not that someone forgets once — it is that
+the **site build** forgets while the playground does not. The site's snippet
+checker runs through `tools/playground/evaluate.ts`, so if those two diverged
+the site would verify a different language from the one it teaches, silently,
+which is the exact failure SITE.md §2 exists to prevent. A test asserts that
+each of the four loads it.
 
 ## 3. Conformance suite
 

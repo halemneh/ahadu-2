@@ -50,3 +50,16 @@ implementation, so this choice is documented here rather than frozen in
 `LANGUAGE.md`. That is also why conformance cases for `አጋጣሚ` assert properties
 — a draw is within its bounds, the same seed repeats — rather than particular
 numbers: the numbers are this file's, the properties are the language's.
+- The standard library is Ahadu source, run as its own program through the
+  same interpreter before the learner's (§8.5). Three things in this directory
+  exist for it and are easy to break:
+  - `execute` rebuilds the innermost frame on every statement. It must carry
+    `fromLibrary` across, or a library error points at a line the learner
+    never wrote.
+  - `fail` reattributes an error raised inside a library function to the
+    deepest frame the learner wrote. Not to the library frame's own `line` —
+    `execute` keeps rewriting that to whichever statement is running, so by
+    the time the error happens it is a line *inside* the library.
+  - `fromLibrary` is provenance on the function value, not a name match. A
+    learner who writes their own `ተግባር ደምር` must not have errors inside it
+    reattributed as though it were library code.

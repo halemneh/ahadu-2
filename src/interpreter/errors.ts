@@ -22,6 +22,8 @@ export interface Frame {
   readonly name: string;
   /** The line the call was made from. */
   readonly line: number;
+  /** Set when the frame is a standard-library function (§8.5). */
+  readonly fromLibrary?: true;
 }
 
 export class AhaduError extends Error {
@@ -159,4 +161,18 @@ export function badRandomRange(low: string, high: string): string {
  */
 export function shadowedBuiltin(name: string, found: string): string {
   return `"${name}" የአሃዱ ተግባር ነበር፤ ዋጋ ስለሰጡት አሁን ${found} ነው — ሊጠራ አይችልም። ለተለዋጩ ሌላ ስም ይስጡት።`;
+}
+
+/**
+ * The message for a failure that happened inside a standard-library function
+ * (§8.5).
+ *
+ * Names the function, because the learner never wrote the line the error came
+ * from and the only thing they can act on is the call they did write. The
+ * original message is kept: "you cannot add a number and text" is still the
+ * fact, and "inside ደምር" is where.
+ */
+export function insideLibrary(name: string, message: string): string {
+  const what = message.length > 0 ? `${message} ` : '';
+  return `${what}(በ"${name}" ውስጥ ተከሰተ።)`;
 }

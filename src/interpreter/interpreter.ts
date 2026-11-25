@@ -215,8 +215,18 @@ export class Interpreter {
    * `አይነት`, `ዘር` — which are exactly the words someone reaches for as a
    * variable name. Without this set, `ርዝመት = 5` followed by `ርዝመት("ሀ")`
    * reports only "a number cannot be called", which is true and useless.
+   *
+   * The standard library's names join it through `notePreBound`, because a
+   * learner shadowing `ደምር` deserves the same answer as one shadowing `ርዝመት`
+   * — the fact that one is written in Ahadu and the other in TypeScript is
+   * not something they can see or should have to care about (§8.5).
    */
-  private readonly builtinNames: ReadonlySet<string>;
+  private readonly preBoundNames = new Set<string>();
+  /**
+   * Set while the standard library's prelude is running, so the functions it
+   * declares are marked as library code (§8.5).
+   */
+  private loadingLibrary = false;
 
   constructor(
     readonly host: Host,
@@ -226,14 +236,39 @@ export class Interpreter {
     this.maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY;
     this.onStatement = options.onStatement;
     this.randomState = seedState(options.seed ?? DEFAULT_SEED);
-    const builtins = createBuiltins(this);
-    this.builtinNames = new Set(builtins.keys());
-    for (const [name, value] of builtins) this.globals.define(name, value);
+    for (const [name, value] of createBuiltins(this)) {
+      this.globals.define(name, value);
+      this.preBoundNames.add(name);
+    }
   }
 
   // =========================================================================
   // Randomness (§8)
   // =========================================================================
+
+  /**
+   * Records names that arrived pre-bound rather than from the learner's own
+   * program, so `AH3013` can say so (§8.2).
+   */
+  notePreBound(names: Iterable<string>): void {
+    for (const name of names) this.preBoundNames.add(name);
+  }
+
+  /**
+   * Runs the standard library's prelude, marking what it declares.
+   *
+   * Only `loadLibrary` calls this. It is a separate method rather than a flag
+   * a caller sets and clears because leaving the flag on would silently mark
+   * the learner's own functions as library code.
+   */
+  runLibrary(program: Program): RunResult {
+    this.loadingLibrary = true;
+    try {
+      return this.tryRun(program);
+    } finally {
+      this.loadingLibrary = false;
+    }
+  }
 
   /** Restarts the generator, which is what `ዘር` does. */
   reseed(seed: number): void {
@@ -258,8 +293,31 @@ export class Interpreter {
   // Failing
   // =========================================================================
 
-  /** Raises a runtime error. Always throws; the return type lets callers `return this.fail(...)`. */
+  /**
+   * Raises a runtime error. Always throws; the return type lets callers
+   * `return this.fail(...)`.
+   *
+   * A failure inside a standard-library function is reported at the line that
+   * **called** it, not at the line inside the library (§8.5). The library's
+   * line numbers belong to a file the learner cannot open: pointing at one
+   * makes the diagnostic frame a line of their program that has nothing to do
+   * with the error, or — if their program is shorter than the prelude — a
+   * blank line with carets under nothing. The library frame stays in the
+   * traceback, so the detail is not lost, and the message says which library
+   * function was running.
+   */
   fail(code: string, at: Site, message?: string): never {
+    const innermost = this.frames.at(-1);
+    if (innermost?.fromLibrary === true) {
+      // Not the frame's own line: `execute` keeps rewriting that to whichever
+      // statement is running, so by now it is a line *inside* the library.
+      // The learner's line is the deepest frame they wrote, and the global
+      // frame is always one of those, so this search always finds something.
+      const caller = [...this.frames].reverse().find((f) => f.fromLibrary !== true);
+      const site = { line: caller?.line ?? at.line, startCol: 1, endCol: 1 };
+      const inside = err.insideLibrary(innermost.name, message ?? '');
+      throw new AhaduError(runtimeDiagnostic(code, site, inside), [...this.frames]);
+    }
     throw new AhaduError(runtimeDiagnostic(code, at, message), [...this.frames]);
   }
 
@@ -343,9 +401,15 @@ export class Interpreter {
 
   private execute(statement: Statement, scope: Scope): Value {
     this.step(statement);
+    // Rebuilt rather than mutated, so `callStack` hands out frozen copies.
+    // Everything on the frame other than the line must be carried across:
+    // dropping `fromLibrary` here is what makes a library error point at a
+    // line the learner never wrote (§8.5).
+    const current = this.frames[this.frames.length - 1];
     this.frames[this.frames.length - 1] = {
-      name: this.frames[this.frames.length - 1]?.name ?? GLOBAL_SCOPE_NAME,
+      name: current?.name ?? GLOBAL_SCOPE_NAME,
       line: statement.line,
+      ...(current?.fromLibrary === true ? { fromLibrary: true as const } : {}),
     };
 
     switch (statement.type) {
@@ -841,6 +905,7 @@ export class Interpreter {
       body: declaration.body,
       closure: scope,
       boundTo: null,
+      ...(this.loadingLibrary ? { fromLibrary: true as const } : {}),
     };
   }
 
@@ -858,7 +923,7 @@ export class Interpreter {
     if (callee.kind !== 'function') {
       // A shadowed built-in is the one case where the plain message hides the
       // cause rather than reporting it (§8).
-      const shadowed = name !== undefined && this.builtinNames.has(name);
+      const shadowed = name !== undefined && this.preBoundNames.has(name);
       this.fail(
         AH3013,
         at,
@@ -875,16 +940,20 @@ export class Interpreter {
       scope.define(param, args[i] as Value);
     });
 
-    return this.invoke(callee.name, callee.body, scope, at);
+    return this.invoke(callee.name, callee.body, scope, at, callee.fromLibrary === true);
   }
 
   /** Runs a body with a frame pushed, catching the `ተመላሽ` that leaves it. */
-  private invoke(name: string, body: Block, scope: Scope, at: Site): Value {
+  private invoke(name: string, body: Block, scope: Scope, at: Site, fromLibrary = false): Value {
     if (this.frames.length >= this.maxDepth) {
       this.fail(AH3017, at, err.callDepthExceeded(this.maxDepth));
     }
 
-    this.frames.push({ name, line: at.line });
+    this.frames.push({
+      name,
+      line: at.line,
+      ...(fromLibrary ? { fromLibrary: true as const } : {}),
+    });
     try {
       this.executeBlock(body, scope);
       // Falling off the end returns ምንም (§7.5).

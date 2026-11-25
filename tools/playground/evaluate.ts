@@ -15,7 +15,11 @@
 
 import { tokenize } from '../../src/lexer/index.js';
 import { parse } from '../../src/parser/index.js';
-import { render, run } from '../../src/interpreter/index.js';
+import { render } from '../../src/interpreter/index.js';
+// The library-loading `run`: the site's build-time snippet checker calls
+// this same function, so a lesson cannot teach a library the build does not
+// have (§8.5, SITE.md §2).
+import { run } from '../../src/engine.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 

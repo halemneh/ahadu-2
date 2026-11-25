@@ -16,7 +16,10 @@ import type { Diagnostic } from '../diagnostics.js';
 import { tokenize } from '../lexer/index.js';
 import type { Token } from '../lexer/index.js';
 import { parse, printAst } from '../parser/index.js';
-import { render, run } from '../interpreter/index.js';
+import { render } from '../interpreter/index.js';
+// The library-loading `run`, not the bare one: a program typed at the
+// terminal gets the same globals as one in the playground (§8.5).
+import { run } from '../engine.js';
 import type { Host, RunOptions } from '../interpreter/index.js';
 import { colorEnabled, palette } from './color.js';
 import type { Palette } from './color.js';
