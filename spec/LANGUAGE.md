@@ -916,7 +916,7 @@ interpreter with a Python exception (CHANGES §C13).
 | `ወደግዕዝ` | `ወደግዕዝ(ቁጥር)` | `ጽሁፍ` in Ge'ez numerals; `AH3021` when it has no spelling (§8.7) |
 | `ዛሬ` | `ዛሬ()` | `ስብስብ` — today in the Ethiopian calendar as `[ዓመት፣ ወር፣ ቀን]` (§8.8) |
 | `ከግሪጎሪ` | `ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)` | `ስብስብ` — that Gregorian date in the Ethiopian calendar (§8.8) |
-| `ወርስም` | `ወርስም(ቁጥር)` | `ጽሁፍ` — the name of month 1–13; `AH3022` otherwise |
+| `ወርመጠሪያ` | `ወርመጠሪያ(ቁጥር)` | `ጽሁፍ` — the name of month 1–13; `AH3022` otherwise |
 
 `ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
@@ -1253,11 +1253,11 @@ depending on which side of መስከረም 1 a date falls.
 **A date is a three-element `ስብስብ`**, `[ዓመት፣ ወር፣ ቀን]`, and not a new value
 type. Nothing in §4.1 changes, and indexing, `ለእያንዳንዱ` and `ጻፍ` all already
 work on it. A program reads the parts by position, which is one more reason
-`ወርስም` exists:
+`ወርመጠሪያ` exists:
 
 ```
 ቀኑ = ዛሬ()
-ጻፍ(ወርስም(ቀኑ[1]) + " " + ወደግዕዝ(ቀኑ[2]) + " ቀን " + ወደግዕዝ(ቀኑ[0]))
+ጻፍ(ወርመጠሪያ(ቀኑ[1]) + " " + ወደግዕዝ(ቀኑ[2]) + " ቀን " + ወደግዕዝ(ቀኑ[0]))
 ```
 
 `ዛሬ` reads the instant in **UTC**, not in the host's local time zone. A local

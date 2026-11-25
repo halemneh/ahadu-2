@@ -1395,9 +1395,9 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return dateList(gregorianToEthiopic({ year, month, day }));
   });
 
-  define('ወርስም', (args, at) => {
-    arity('ወርስም', args, 1, at);
-    const month = whole('ወርስም', args, 0, at);
+  define('ወርመጠሪያ', (args, at) => {
+    arity('ወርመጠሪያ', args, 1, at);
+    const month = whole('ወርመጠሪያ', args, 0, at);
     if (!Number.isInteger(month) || month < 1 || month > 13) {
       interpreter.fail(AH3022, at, err.badMonthNumber(render(num(month))));
     }

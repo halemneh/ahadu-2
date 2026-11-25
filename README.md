@@ -101,7 +101,7 @@ division) · `ፍጹም` (absolute) · `አጋጣሚ` (a random integer, seeded)
 the seed).
 
 Amharic's own numerals and calendar: `ወደግዕዝ` (321 → `፫፻፳፩`) · `ዛሬ` (today, as
-`[ዓመት፣ ወር፣ ቀን]`) · `ከግሪጎሪ` (convert a Gregorian date) · `ወርስም` (name of a
+`[ዓመት፣ ወር፣ ቀን]`) · `ከግሪጎሪ` (convert a Gregorian date) · `ወርመጠሪያ` (name of a
 month — the year has thirteen).
 
 A **standard library** is pre-bound beside them, and it is written in Ahadu

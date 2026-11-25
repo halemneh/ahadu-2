@@ -124,18 +124,18 @@ describe('the built-ins (§8.8)', () => {
     expect(out('ጻፍ(ዛሬ())')).toEqual(out('ጻፍ(ዛሬ())'));
   });
 
-  it('ወርስም names each month', () => {
-    expect(out('ጻፍ(ወርስም(1)፣ ወርስም(3)፣ ወርስም(13))')).toEqual(['መስከረም ኅዳር ጳጉሜ']);
+  it('ወርመጠሪያ names each month', () => {
+    expect(out('ጻፍ(ወርመጠሪያ(1)፣ ወርመጠሪያ(3)፣ ወርመጠሪያ(13))')).toEqual(['መስከረም ኅዳር ጳጉሜ']);
   });
 
-  it('ወርስም rejects a month that does not exist', () => {
+  it('ወርመጠሪያ rejects a month that does not exist', () => {
     for (const month of ['0', '14', '1.5']) {
-      expect(code(`ጻፍ(ወርስም(${month}))`), month).toBe('AH3022');
+      expect(code(`ጻፍ(ወርመጠሪያ(${month}))`), month).toBe('AH3022');
     }
   });
 
   it('says how many months the year has, which is the surprising part', () => {
-    expect(message('ጻፍ(ወርስም(14))')).toContain('13');
+    expect(message('ጻፍ(ወርመጠሪያ(14))')).toContain('13');
   });
 
   it('ከግሪጎሪ refuses a date that does not exist', () => {
