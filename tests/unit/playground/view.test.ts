@@ -17,6 +17,7 @@ import {
   exampleName,
   inputPrompts,
   needsInput,
+  readsRepeatedly,
   outputHtml,
   statusOf,
   tokenRowsHtml,
@@ -383,5 +384,39 @@ describe('the prompts the input dialog shows (inputPrompts)', () => {
       const tokens = tokenize(source).tokens;
       expect(inputPrompts(tokens).length > 0, source).toBe(needsInput(tokens));
     }
+  });
+});
+
+describe('a read inside a loop (readsRepeatedly)', () => {
+  const loops = (source: string): boolean => readsRepeatedly(tokenize(source).tokens);
+
+  it('is true for a guessing loop, which reads once per turn', () => {
+    // One `አንብብ` in the source, five reads at run time. Listing the prompts
+    // alone would tell the reader they need one line.
+    const source = [
+      'ቀሪ = 5',
+      'ቀሪ > 0 እስከሆነ ድረስ፦',
+      '    ግምት = አንብብ("ግምትህ፦ ")',
+      '    ቀሪ = ቀሪ - 1',
+    ].join('\n');
+    expect(loops(source)).toBe(true);
+  });
+
+  it('is true inside a ለእያንዳንዱ too', () => {
+    const source = ['[1፣ 2] ለእያንዳንዱ ቁ፦', '    ሀ = አንብብ()'].join('\n');
+    expect(loops(source)).toBe(true);
+  });
+
+  it('is false when the read is not in a loop', () => {
+    expect(loops('ስም = አንብብ("ስም፦ ")')).toBe(false);
+  });
+
+  it('is false for a loop that reads nothing', () => {
+    expect(loops(['ቁ = 0', 'ቁ < 3 እስከሆነ ድረስ፦', '    ቁ = ቁ + 1'].join('\n'))).toBe(false);
+  });
+
+  it('is false when the loop comes after the read', () => {
+    const source = ['ሀ = አንብብ()', 'ሀ != "" እስከሆነ ድረስ፦', '    ጻፍ(1)'].join('\n');
+    expect(loops(source)).toBe(false);
   });
 });

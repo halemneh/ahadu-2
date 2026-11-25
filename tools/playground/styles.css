@@ -734,3 +734,10 @@ button:focus-visible {
   font-family: var(--ui);
   font-style: italic;
 }
+
+/* A read inside a loop asks more than once; the dialog has to say so. */
+.ask-repeat {
+  margin: 0 0 0.7rem;
+  color: var(--ink);
+  font-size: 0.88rem;
+}

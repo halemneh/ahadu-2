@@ -100,13 +100,6 @@ function setUpSnippet(snippet: HTMLElement): void {
   const run = snippet.querySelector('.snip-run');
   if (!(area instanceof HTMLTextAreaElement)) return;
 
-  const grow = (): void => {
-    // The textarea is the height of its content: a snippet has no scrollbar,
-    // because a reader should see the whole program they are reading about.
-    area.style.height = 'auto';
-    area.style.height = `${area.scrollHeight}px`;
-  };
-
   /*
    * The matched bracket pair, kept in step with the caret.
    *
@@ -115,18 +108,41 @@ function setUpSnippet(snippet: HTMLElement): void {
    * bracket is beside the caret now or was a moment ago, so arrowing through
    * prose-shaped code does no work.
    */
+  /*
+   * Nothing is repainted while an input method is composing.
+   *
+   * `input` fires on every keystroke of a composition, and this code is
+   * typed in Ge'ez — so on an Amharic keyboard the overlay was being redrawn
+   * underneath a composition in progress, and characters landed away from
+   * the caret. The repaint happens once, when the composition finishes.
+   */
+  let composing = false;
   let wasOnBracket = false;
   const track = (): void => {
+    if (composing) return;
     const caret = area.selectionStart;
     const now = besideBracket(area.value, caret);
     if (now || wasOnBracket) repaint(snippet, area.value, caret);
     wasOnBracket = now;
   };
 
-  area.addEventListener('input', () => {
+  const afterEdit = (): void => {
     repaint(snippet, area.value, area.selectionStart);
     wasOnBracket = besideBracket(area.value, area.selectionStart);
-    grow();
+  };
+
+  area.addEventListener('compositionstart', () => {
+    composing = true;
+  });
+
+  area.addEventListener('compositionend', () => {
+    composing = false;
+    afterEdit();
+  });
+
+  area.addEventListener('input', () => {
+    if (composing) return;
+    afterEdit();
   });
 
   for (const event of ['click', 'keyup', 'select', 'focus'] as const) {
@@ -169,8 +185,6 @@ function setUpSnippet(snippet: HTMLElement): void {
       open.href = `/playground/#${encodeProgram(area.value)}`;
     });
   }
-
-  grow();
 }
 
 setUpTheme();

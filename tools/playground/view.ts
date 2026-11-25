@@ -340,6 +340,41 @@ export function inputPrompts(tokens: readonly Token[]): (string | null)[] {
   return prompts;
 }
 
+/**
+ * Whether a read sits inside a loop, and so will happen more than once.
+ *
+ * This matters because the dialog collects every answer before the program
+ * starts. A read in a loop has **one** call in the source and many at run
+ * time, so listing the prompts alone tells a reader they need one line when
+ * they may need five — which is exactly how a guessing game ends after the
+ * first guess, the rest of its reads having been handed the empty string.
+ *
+ * A loop keyword earlier in the file and an indented `አንብብ` after it. Not a
+ * parse: the question is only whether to warn, and the cost of warning when
+ * the loop runs once is a sentence, while the cost of staying quiet is the
+ * reader's program not working.
+ */
+export function readsRepeatedly(tokens: readonly Token[]): boolean {
+  const indented = new Set<number>();
+  for (const token of tokens) if (token.type === 'INDENT') indented.add(token.line);
+
+  let sawLoop = false;
+  for (const token of tokens) {
+    if (token.type === 'KEYWORD' && (token.value === 'WHILE' || token.value === 'FOREACH')) {
+      sawLoop = true;
+    }
+    if (
+      sawLoop &&
+      token.type === 'IDENTIFIER' &&
+      token.value === READ_LINE &&
+      indented.has(token.line)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** The example name shown in the menu, from its path. */
 export function exampleName(path: string): string {
   return (

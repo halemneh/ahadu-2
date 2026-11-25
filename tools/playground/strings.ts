@@ -60,6 +60,8 @@ export interface Strings {
   readonly inputHint: string;
   /** Shown for an `አንብብ` that prints no prompt of its own. */
   readonly inputUnlabelled: string;
+  /** Shown when a read sits inside a loop and so repeats. */
+  readonly inputRepeats: string;
 
   /** The contact dialog, shared with every other page. */
   readonly contact: string;
@@ -141,6 +143,7 @@ const amharic: Strings = {
   inputLabel: 'ግቤት',
   inputHint: 'በየመስመሩ አንድ መልስ።',
   inputUnlabelled: '(ጥያቄ የለውም)',
+  inputRepeats: 'ይህ ፕሮግራም በዑደት ውስጥ ይጠይቃል — ከአንድ ጊዜ በላይ ያነባል። ለእያንዳንዱ መልስ አንድ መስመር ይጻፉ።',
   contact: 'አግኙን',
   contactTitle: 'መልእክት ይላኩ',
   contactLead: 'ስለ ትምህርቶቹ ወይም ስለ ቋንቋው ማለት የሚፈልጉት ነገር ካለ ይጻፉ።',
@@ -213,6 +216,8 @@ const english: Strings = {
   inputLabel: 'Input',
   inputHint: 'One answer per line.',
   inputUnlabelled: '(no prompt)',
+  inputRepeats:
+    'This program asks inside a loop, so it reads more than once. Write one line for each answer.',
   contact: 'Contact',
   contactTitle: 'Send a message',
   contactLead:

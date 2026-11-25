@@ -25,6 +25,7 @@ import {
   gutterHtml,
   inputPrompts,
   needsInput,
+  readsRepeatedly,
   outputHtml,
   positionLabel,
   reported,
@@ -94,6 +95,7 @@ const brand = need<HTMLAnchorElement>('brand');
 const ask = need<HTMLElement>('ask');
 const askInput = need<HTMLTextAreaElement>('ask-input');
 const askPrompts = need<HTMLOListElement>('ask-prompts');
+const askRepeat = need<HTMLParagraphElement>('ask-repeat');
 const askRun = need<HTMLButtonElement>('ask-run');
 const askCancel = need<HTMLButtonElement>('ask-cancel');
 const runButton = need<HTMLButtonElement>('run');
@@ -545,6 +547,10 @@ function start(): void {
   }
   askPrompts.hidden = prompts.length === 0;
 
+  // A read inside a loop happens more than once, and the dialog is asking
+  // for every answer up front — so say how many lines are really wanted.
+  askRepeat.hidden = !readsRepeatedly(current.tokens);
+
   ask.hidden = false;
   askInput.focus();
   askInput.setSelectionRange(askInput.value.length, askInput.value.length);
@@ -691,7 +697,27 @@ examplesSelect.addEventListener('change', () => {
 // Editing
 // ---------------------------------------------------------------------------
 
+/*
+ * Nothing re-lexes while an input method is composing.
+ *
+ * `input` fires on every keystroke of a composition, and this editor is for
+ * Ge'ez — so on an Amharic keyboard the gutter, the readout and the painted
+ * copy were all being rebuilt underneath a composition in progress. The work
+ * happens once, when the composition finishes.
+ */
+let composing = false;
+
+editor.addEventListener('compositionstart', () => {
+  composing = true;
+});
+
+editor.addEventListener('compositionend', () => {
+  composing = false;
+  editor.dispatchEvent(new Event('input'));
+});
+
 editor.addEventListener('input', () => {
+  if (composing) return;
   remember(STORAGE_SOURCE, editor.value);
   // The program has changed, so last run's error no longer describes it.
   runtimeError = null;
