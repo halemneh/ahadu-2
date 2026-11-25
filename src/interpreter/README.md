@@ -27,13 +27,13 @@ Things the spec pins down that are easy to get wrong here:
 - `ወደቁጥር` and the lexer share one rule for what text is a number, in
   `src/numeric.ts`. They have to: a language that read `፫፻፳፩` from a file and
   refused the same digits typed at a prompt would be lying about its own
-  numerals (§8.2).
+  numerals (§8.3).
 - `አጋጣሚ` is seeded, and the **default seed is fixed, not clock-based**. The
   website runs every snippet through this interpreter at build time and fails
   the build when the output is not what the page claims (SITE.md §2), so a
   host that forgets `RunOptions.seed` must get a reproducible program rather
   than a flaky one. The CLI and the playground opt into variation explicitly
-  (§8.3).
+  (§8.4).
 
 ## The generator behind `አጋጣሚ`
 

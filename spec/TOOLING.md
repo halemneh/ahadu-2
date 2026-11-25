@@ -23,7 +23,7 @@ Global flags: `--json` (machine-readable output for any subcommand),
 report, or for a test. Without it the CLI seeds from the clock: running a
 program twice at a terminal should roll different dice. The interpreter's own
 default is a **fixed** seed instead, because its other callers want the
-opposite (LANGUAGE.md §8.3): the conformance suite and the site's snippet
+opposite (LANGUAGE.md §8.4): the conformance suite and the site's snippet
 checker both compare output against what a page claims, and a clock-seeded
 default would put a hole in that check exactly where `አጋጣሚ` appears. A
 malformed value falls back to the clock rather than failing, since the flag

@@ -26,6 +26,53 @@ describe('ጻፍ (§8)', () => {
   });
 });
 
+describe('shadowing a built-in is legal and says so (§8.2)', () => {
+  // Four of the built-ins are nouns — ርዝመት, ቅጂ, አይነት, ዘር — which are exactly
+  // the words someone reaches for as a variable name. The consequence lands
+  // at the next call, on a different line, as a complaint about a type, so
+  // "ቁጥር ሊጠራ አይችልም።" is true and tells a learner nothing.
+  const nouns = ['ርዝመት', 'ቅጂ', 'አይነት', 'ዘር'];
+
+  it('still allows the assignment itself', () => {
+    expect(out('ርዝመት = 5\nጻፍ(ርዝመት)')).toEqual(['5']);
+  });
+
+  it('names the built-in when the shadowed name is called', () => {
+    const text = message('ርዝመት = 5\nጻፍ(ርዝመት("ሰላም"))');
+    expect(text).toContain('"ርዝመት"');
+    expect(text).toContain('ተግባር ነበር');
+  });
+
+  it('reports the type the name now holds', () => {
+    expect(message('አይነት = "ሀ"\nጻፍ(አይነት(5))')).toContain('ጽሁፍ');
+    expect(message('ቅጂ = [1]\nጻፍ(ቅጂ([1]))')).toContain('ስብስብ');
+  });
+
+  it('is still AH3013', () => {
+    expect(code('ርዝመት = 5\nጻፍ(ርዝመት("ሰላም"))')).toBe('AH3013');
+  });
+
+  it('covers every built-in, not just the nouns', () => {
+    for (const name of [...nouns, 'ጻፍ', 'አዋህድ', 'ሰርዝ', 'አንብብ', 'ወደቁጥር', 'ወደጽሁፍ', 'ቁጥርነው', 'አጋጣሚ']) {
+      const text = message(`${name} = 5\n${name}()`);
+      expect(text, name).toContain(`"${name}"`);
+      expect(text, name).toContain('ተግባር ነበር');
+    }
+  });
+
+  it('leaves an ordinary non-callable with the plain message', () => {
+    // The rule is about the spelling at the call site, not about every AH3013.
+    const text = message('ሀ = 1\nሀ()');
+    expect(text).not.toContain('ተግባር ነበር');
+    expect(text).toContain('ቁጥር');
+  });
+
+  it('does not fire for a name that merely holds a non-function', () => {
+    // Shadowing is only interesting when the name was a built-in.
+    expect(message('ለእያንዳንዱም = 1\nለእያንዳንዱም()')).not.toContain('ተግባር ነበር');
+  });
+});
+
 describe('ርዝመት (§8, CHANGES C28)', () => {
   it('counts a list', () => {
     expect(shows('ርዝመት([1፣ 2፣ 3])')).toBe('3');

@@ -1,5 +1,5 @@
 /**
- * Reading a number out of text (LANGUAGE.md §8).
+ * Reading a number out of text (LANGUAGE.md §8.3).
  *
  * The lexer already decides what a number literal looks like. `ወደቁጥር` has to
  * answer the same question about text that arrives at runtime — from `አንብብ`,

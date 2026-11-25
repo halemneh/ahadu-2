@@ -148,3 +148,15 @@ export function notNumericText(text: string): string {
 export function badRandomRange(low: string, high: string): string {
   return `አጋጣሚ ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
 }
+
+/**
+ * The message for calling a name that used to be a built-in (§8, AH3013).
+ *
+ * Built-ins are ordinary shadowable bindings, and several are nouns —
+ * `ርዝመት`, `ቅጂ`, `አይነት`, `ዘር` — so assigning to one by accident is easy and
+ * the consequence appears at the *next* call, somewhere else entirely. Naming
+ * the cause is the difference between a two-second fix and a mystery.
+ */
+export function shadowedBuiltin(name: string, found: string): string {
+  return `"${name}" የአሃዱ ተግባር ነበር፤ ዋጋ ስለሰጡት አሁን ${found} ነው — ሊጠራ አይችልም። ለተለዋጩ ሌላ ስም ይስጡት።`;
+}

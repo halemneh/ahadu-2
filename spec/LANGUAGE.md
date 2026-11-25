@@ -160,7 +160,8 @@ reserved: it is the loop in §7.4.
 
 Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
 **not** keywords. They are ordinary identifiers pre-bound in the global scope
-(§8), and user code MAY shadow them.
+(§8), and user code MAY shadow them — but a call to a shadowed one MUST say
+so (§8.2).
 
 ### 3.3 The possessive prefix `የ`
 
@@ -900,11 +901,11 @@ interpreter with a Python exception (CHANGES §C13).
 | `ቅጂ` | `ቅጂ(ስብስብ)` | a new `ስብስብ` with the same elements — a shallow copy |
 | `አይነት` | `አይነት(any)` | `ጽሁፍ` naming the type (§4.1) |
 | `አንብብ` | `አንብብ()` or `አንብብ(ጽሁፍ)` | reads one line from standard input as `ጽሁፍ`; the optional argument is printed as a prompt first |
-| `ወደቁጥር` | `ወደቁጥር(ጽሁፍ \| ቁጥር)` | the number that text spells; `AH3019` when it spells none (§8.2) |
+| `ወደቁጥር` | `ወደቁጥር(ጽሁፍ \| ቁጥር)` | the number that text spells; `AH3019` when it spells none (§8.3) |
 | `ወደጽሁፍ` | `ወደጽሁፍ(any)` | `ጽሁፍ` — exactly what `ጻፍ` would have printed (§8.1) |
 | `ቁጥርነው` | `ቁጥርነው(any)` | `እውነታ` — whether `ወደቁጥር` would succeed. Never fails |
-| `አጋጣሚ` | `አጋጣሚ(ቁጥር፣ ቁጥር)` | a `ቁጥር` drawn from the two bounds **inclusive**; `AH3020` on bounds it cannot use (§8.3) |
-| `ዘር` | `ዘር(ቁጥር)` | **restarts `አጋጣሚ` from that seed**; returns `ምንም` (§8.3) |
+| `አጋጣሚ` | `አጋጣሚ(ቁጥር፣ ቁጥር)` | a `ቁጥር` drawn from the two bounds **inclusive**; `AH3020` on bounds it cannot use (§8.4) |
+| `ዘር` | `ዘር(ቁጥር)` | **restarts `አጋጣሚ` from that seed**; returns `ምንም` (§8.4) |
 
 `ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
@@ -944,7 +945,34 @@ shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
 `ወደጽሁፍ` returns exactly this rendering, so there is one answer to "how does
 this value look" rather than two that could drift apart.
 
-### 8.2 What text counts as a number
+### 8.2 Shadowing one, and being told
+
+Built-ins are ordinary bindings, so `ርዝመት = 5` is legal and `ርዝመት("ሀ")` then
+fails. When the callee was **written as a name that was pre-bound as a
+built-in**, `AH3013` MUST name it and say what happened, rather than only
+reporting that the value is not callable:
+
+```
+"ርዝመት" የአሃዱ ተግባር ነበር፤ ዋጋ ስለሰጡት አሁን ቁጥር ነው — ሊጠራ አይችልም።
+```
+
+This is required, not a nicety, because of how the mistake presents. Four of
+the built-ins are nouns — `ርዝመት`, `ቅጂ`, `አይነት`, `ዘር` — which are precisely
+the words someone reaches for as a variable name, and the consequence of
+assigning to one surfaces at the *next call*, on a different line, as a
+complaint about a type. "ቁጥር ሊጠራ አይችልም።" is true and tells a learner
+nothing.
+
+The rule is about the **spelling at the call site**, not the value: a host
+calling a function value it looked up has no name to report, and gets the
+plain message.
+
+A consequence worth stating for anyone adding a built-in: **prefer an
+imperative verb.** `ቀለም` ("colour") invites `ቀለም = "ቀይ"` in the very lesson
+that teaches it; `ቀባ` ("paint it!") does not. The four existing nouns are kept
+for compatibility, and this error is what makes them survivable.
+
+### 8.3 What text counts as a number
 
 `ወደቁጥር` accepts exactly what the language itself accepts as a number
 literal, optionally signed, with surrounding whitespace ignored:
@@ -974,7 +1002,7 @@ answer and the learner would believe it. A program that wants to check first
 calls `ቁጥርነው`, which answers `እውነት` or `ሃሰት` for **any** value and never
 raises — a guard that can itself fail is no guard.
 
-### 8.3 Randomness is seeded
+### 8.4 Randomness is seeded
 
 `አጋጣሚ(ሀ፣ ለ)` draws an integer from `ሀ` to `ለ` with **both ends included**, so
 `አጋጣሚ(1፣ 6)` is a die. An exclusive upper bound is the right default for a
@@ -1084,7 +1112,7 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3010` | wrong argument count |
 | `AH3011` | unknown parent class |
 | `AH3012` | assignment to an undeclared attribute |
-| `AH3013` | call of a non-callable value |
+| `AH3013` | call of a non-callable value — names a shadowed built-in (§8.2) |
 | `AH3014` | member access on a non-object |
 | `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
 | `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` |

@@ -207,6 +207,16 @@ export class Interpreter {
   private readonly onStatement: RunOptions['onStatement'];
   /** The generator's 32-bit state, which `ዘር` resets and `አጋጣሚ` advances. */
   private randomState: number;
+  /**
+   * The names that were pre-bound as built-ins (§8).
+   *
+   * Kept so `AH3013` can tell a learner what actually happened. Built-ins are
+   * shadowable by design, and several of them are nouns — `ርዝመት`, `ቅጂ`,
+   * `አይነት`, `ዘር` — which are exactly the words someone reaches for as a
+   * variable name. Without this set, `ርዝመት = 5` followed by `ርዝመት("ሀ")`
+   * reports only "a number cannot be called", which is true and useless.
+   */
+  private readonly builtinNames: ReadonlySet<string>;
 
   constructor(
     readonly host: Host,
@@ -216,7 +226,9 @@ export class Interpreter {
     this.maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY;
     this.onStatement = options.onStatement;
     this.randomState = seedState(options.seed ?? DEFAULT_SEED);
-    for (const [name, value] of createBuiltins(this)) this.globals.define(name, value);
+    const builtins = createBuiltins(this);
+    this.builtinNames = new Set(builtins.keys());
+    for (const [name, value] of builtins) this.globals.define(name, value);
   }
 
   // =========================================================================
@@ -592,7 +604,9 @@ export class Interpreter {
       case 'CallExpression': {
         const callee = this.evaluate(expression.callee, scope);
         const args = expression.args.map((argument) => this.evaluate(argument, scope));
-        return this.call(callee, args, expression);
+        const written =
+          expression.callee.type === 'Identifier' ? expression.callee.name : undefined;
+        return this.call(callee, args, expression, written);
       }
 
       case 'UnaryExpression':
@@ -830,13 +844,26 @@ export class Interpreter {
     };
   }
 
-  /** Calls a function, a built-in, or a class (which constructs). */
-  call(callee: Value, args: readonly Value[], at: Site): Value {
+  /**
+   * Calls a function, a built-in, or a class (which constructs).
+   *
+   * `name` is the source spelling the callee was written as, when there was
+   * one. It is only used to improve `AH3013`, so a host calling a function
+   * value it looked up may leave it out.
+   */
+  call(callee: Value, args: readonly Value[], at: Site, name?: string): Value {
     if (callee.kind === 'builtin') return callee.call(args, at);
     if (callee.kind === 'class') return this.construct(callee, args, at);
 
     if (callee.kind !== 'function') {
-      this.fail(AH3013, at, err.notCallable(typeName(callee)));
+      // A shadowed built-in is the one case where the plain message hides the
+      // cause rather than reporting it (§8).
+      const shadowed = name !== undefined && this.builtinNames.has(name);
+      this.fail(
+        AH3013,
+        at,
+        shadowed ? err.shadowedBuiltin(name, typeName(callee)) : err.notCallable(typeName(callee)),
+      );
     }
 
     if (args.length !== callee.params.length) {
