@@ -60,30 +60,29 @@
 :root[data-theme='dark'] {
   /* One scale of solid shades: the page's regions are told apart by these. */
   /*
-   * A deep Charcoal Brown. Warm rather than neutral, to sit under the
-   * palette's own warm greys — but still dark enough that the page is a
-   * background and not a colour in its own right.
+   * A near-neutral dark, chosen to sit under Tomato and Sky Aqua rather than
+   * to come from the palette. A warm page made both accents muddy.
    */
-  --bg: #22231d;
-  --surface-1: #2a2c24;
-  --surface-2: #32342b;
-  --surface-3: #3c3e33;
+  --bg: #15161a;
+  --surface-1: #1c1d22;
+  --surface-2: #23252b;
+  --surface-3: #2b2d34;
 
-  --ink: #ede6e3;
-  --muted: #b4b5a7;
+  --ink: #ece9e6;
+  --muted: #a7a9af;
 
   /*
-   * Charcoal Brown, and it is the same in both themes.
+   * The chrome: the header, the footer and the phone drawer.
    *
-   * The header and the footer are the two bands that frame every page and
-   * never belong to the reader's content, so they are where the brand can
-   * live without colouring anything the reader wrote. Keeping them identical
-   * in light and dark makes the chrome a constant: the page inverts, the
-   * frame does not.
+   * A shade of the page's own scale, not a brand colour — a coloured band
+   * across the top of every page turned out to be more brand than a frame
+   * needs. It stays a token of its own because those three regions have to
+   * agree with each other, and because the drawer is the header moved: nav
+   * links coloured for the bar were once near-white on the page background.
    */
-  --bar: #36382e;
-  --bar-ink: #ede6e3;
-  --bar-muted: #b7b9aa;
+  --bar: #23252b;
+  --bar-ink: #ece9e6;
+  --bar-muted: #a7a9af;
 
   /* Translucent, for things that sit on top of whatever shade they land on. */
   --layer: rgb(255 255 255 / 5%);
@@ -201,17 +200,17 @@
 :root[data-theme='light'] {
   /* Parchment. */
   --bg: #ede6e3;
-  --surface-1: #e4dedb;
+  --surface-1: #e5dedb;
   --surface-2: #dadad9;
-  --surface-3: #cfcfcd;
+  --surface-3: #cfcfce;
 
-  --ink: #26271f;
-  --muted: #4b4d42;
+  --ink: #1e1f22;
+  --muted: #4a4c51;
 
-  /* The same Charcoal Brown band as the dark theme — see above. */
-  --bar: #36382e;
-  --bar-ink: #ede6e3;
-  --bar-muted: #b7b9aa;
+  /* The chrome, a step off the page — see above. */
+  --bar: #dadad9;
+  --bar-ink: #1e1f22;
+  --bar-muted: #4a4c51;
 
   --layer: rgb(13 26 26 / 5%);
   --layer-strong: rgb(13 26 26 / 8%);
