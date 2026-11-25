@@ -13,7 +13,8 @@ grammar, Ahadu follows **Amharic word order**:
 ```
 
 The condition comes first, then `ከሆነ` ("if it is") — the way the clause is
-ordered in Amharic. Same for loops: `ቆጣሪ < 5 እስከሆነ ድረስ፦`.
+ordered in Amharic. Same for loops: `ቆጣሪ < 5 እስከሆነ ድረስ፦`, and the same again
+for walking a collection: `ቤተሰብ ለእያንዳንዱ ስም፦`.
 
 Ahadu began as a senior project: a Python interpreter, a Flask playground, and
 a paper describing the language. 2.0 is a specification-first rebuild in
@@ -90,8 +91,23 @@ their resolutions in [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md).
 Types: `ቁጥር` (number) · `ጽሁፍ` (text) · `እውነታ` (boolean) · `ስብስብ` (list) ·
 `ተግባር` (function) · `ክላስ` / object · `ምንም` (nothing).
 
-Built-ins: `ጻፍ` (print) · `ርዝመት` (length) · `አዋህድ` (append) · `ሰርዝ` (remove) ·
-`ቅጂ` (copy) · `አይነት` (type of) · `አንብብ` (read a line).
+Built-ins — values and text: `ጻፍ` (print) · `ርዝመት` (length) · `አዋህድ` (append) ·
+`ሰርዝ` (remove) · `ቅጂ` (copy) · `አይነት` (type of) · `አንብብ` (read a line) ·
+`ወደቁጥር` / `ወደጽሁፍ` (convert) · `ቁጥርነው` (is it a number) · `ከፋፍል` (split) ·
+`አገናኝ` (join) · `ከርክም` (trim).
+
+Numbers: `ወደታች` / `ወደላይ` / `አቅርብ` (floor, ceil, round — there is no integer
+division) · `ፍጹም` (absolute) · `አጋጣሚ` (a random integer, seeded) · `ዘር` (set
+the seed).
+
+Amharic's own numerals and calendar: `ወደግዕዝ` (321 → `፫፻፳፩`) · `ዛሬ` (today, as
+`[ዓመት፣ ወር፣ ቀን]`) · `ከግሪጎሪ` (convert a Gregorian date) · `ወርስም` (name of a
+month — the year has thirteen).
+
+A **standard library** is pre-bound beside them, and it is written in Ahadu
+itself so a learner can read it: `ደምር` (sum) · `ቁጠር` (count) · `ፈልግ` (find) ·
+`ከፍተኛው` / `ዝቅተኛው` (largest, smallest) · `ደርድር` (sort) · `ገልብጥ` (reverse) ·
+`ካርታ` (a key–value map). See LANGUAGE.md §8.5.
 
 Lists are mutable and held by reference — `ዝ[0] = 9` works, `አዋህድ` appends in
 place, and `ለ = ሀ` gives one list two names. Strings are immutable: build a new

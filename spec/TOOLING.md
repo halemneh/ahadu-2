@@ -139,7 +139,9 @@ brackets.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ አሃዱ 2.0   examples ▾         0 errors  En ◐  ▸ አሂድ      │
+│ አሃዱ   መነሻ ተማር ማጣቀሻ ምሳሌዎች ሜዳ          En ◐           │
+├─────────────────────────────────────────────────────────┤
+│ examples ▾                   0 errors        ▸ አሂድ      │
 ├─────────────────────────────────────────────────────────┤
 │  1 │                                                    │
 │  2 │  editor                                            │
@@ -150,6 +152,8 @@ brackets.
 │  ውጤት │ ቶከኖች │ ዛፍ │ ስተቶች ③                               │
 │                                                         │
 │   active panel                                          │
+├─────────────────────────────────────────────────────────┤
+│ አሃዱ ነጻ እና ክፍት ምንጭ ነው።      ችግር አሳውቁ  ግላዊነት  GitHub   │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -159,11 +163,18 @@ the width in two cost the editor the dimension it needed most. The panels lose
 less by being short than the editor lost by being narrow: tokens, tree rows and
 diagnostics are all lists, and a list scrolls.
 
-The playground wears **the site's own header** (`tools/shared/chrome.css`),
-with its own toolbar underneath holding the things only it has: the example
-menu, the status line and the run button. It is a page of the site — reachable
-from the nav of every other page, and able to get back — rather than somewhere
-a reader lands with no way out.
+The playground wears **the site's own header and footer**
+(`tools/shared/chrome.css`), with its own toolbar between them holding the
+things only it has: the example menu, the status line and the run button. It
+is a page of the site — reachable from the nav of every other page, and able
+to get back — rather than somewhere a reader lands with no way out.
+
+Everything the two share lives in that one stylesheet, **including the base
+type**. The playground does not load the site's own stylesheet, so a shared
+component whose rules sit there renders differently on the two: when
+`font-size` and `line-height` lived in `site.css` the shared header's brand
+measured 31.3px on a lesson page and 25.6px here, and the footer did not
+exist at all because its rules were in the file this page never loads.
 
 The theme and the language are therefore the **site's**, under the keys in
 `tools/shared/nav.ts`, not the playground's own. Arriving here from a lesson

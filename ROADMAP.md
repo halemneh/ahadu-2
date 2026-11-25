@@ -167,10 +167,39 @@ Found while implementing:
   and the playground, so the two cannot drift into looking like different
   projects.
 
+## M7 — enough language to write a program ✅
+
+M6 shipped a site that taught a language in which a calculator could not be
+written: `አንብብ` returns `ጽሁፍ`, `+` refuses to mix a `ጽሁፍ` with a `ቁጥር`, and
+nothing converted between them. M7 is what closed that.
+
+- **Conversion and chance** — `ወደቁጥር`, `ወደጽሁፍ`, `ቁጥርነው`, `አጋጣሚ`, `ዘር`.
+  Randomness is seeded and its default seed is fixed, so the site can keep
+  running every snippet at build time (LANGUAGE.md §8.4).
+- **`ለእያንዳንዱ`** (§7.4), which left the reserved list below. The iteration is
+  a snapshot of the collection, so `አዋህድ` in the body cannot loop forever and
+  `ሰርዝ` cannot skip an element.
+- **A standard library**, written in Ahadu and run as its own program before
+  the learner's, so their line numbers and step budget stay their own
+  (§8.5–8.6).
+- **Whole numbers, text splitting, Ge'ez numerals out and the Ethiopian
+  calendar** (§8.7–8.8).
+- **`AH3013` names a shadowed built-in** (§8.2), which is what makes a
+  pre-bound global named with a noun survivable.
+- Four lessons for all of it, and the site's visual refresh: the syntax
+  colours the pages had never actually been given, a phone drawer, and an
+  accessibility audit that runs in a browser (`npm run site:audit`).
+
 ## Afterwards
 
 - `ahadu fmt` (TOOLING.md §1.6).
-- Reserved words that have no syntax yet: `አዲስ`, `ለእያንዳንዱ` (for each),
-  `አቁም` (break), `ቀጥል` (continue). Each needs a spec change before an
+- Reserved words that have no syntax yet: `አዲስ`, `አቁም` (break), `ቀጥል`
+  (continue), `ፊደል` (char). Each needs a spec change before an
   implementation.
+- A way for a program to raise an error of its own. §8.5 records why this
+  matters: without it, a library function written in Ahadu can only fail
+  wherever its own arithmetic happens to break, which bounds how much of a
+  standard library can honestly be written in the language.
+- Drawing and a host-driven frame loop, so a program can make something to
+  look at and something to play.
 - Language-server protocol support, reusing the parser's error recovery.
