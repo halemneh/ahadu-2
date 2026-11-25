@@ -102,14 +102,14 @@ you build a new piece of text instead.
 
 ## Walking through one
 
+`ለእያንዳንዱ` is the easy way, as lesson four showed:
+
 ```ahadu
 ዋጋዎች = [12፣ 7፣ 30፣ 5]
-ቦታ = 0
 ድምር = 0
 
-ቦታ < ርዝመት(ዋጋዎች) እስከሆነ ድረስ፦
-    ድምር = ድምር + ዋጋዎች[ቦታ]
-    ቦታ = ቦታ + 1
+ዋጋዎች ለእያንዳንዱ ዋጋ፦
+    ድምር = ድምር + ዋጋ
 
 ጻፍ("ድምር፦"፣ ድምር)
 ጻፍ("አማካይ፦"፣ ድምር / ርዝመት(ዋጋዎች))
@@ -120,8 +120,29 @@ you build a new piece of text instead.
 አማካይ፦ 13.5
 ```
 
-Counting a position from zero up to the length is a shape you will write
-many times.
+### When you need the position itself
+
+`ለእያንዳንዱ` hands you the element, not where it was. When you want the
+position, count it with a loop:
+
+```ahadu
+ስሞች = ["አበበ"፣ "ከበደ"፣ "አስቴር"]
+ቦታ = 0
+
+ቦታ < ርዝመት(ስሞች) እስከሆነ ድረስ፦
+    ጻፍ(ቦታ + 1፣ ስሞች[ቦታ])
+    ቦታ = ቦታ + 1
+```
+
+```ውጤት
+1 አበበ
+2 ከበደ
+3 አስቴር
+```
+
+Counting a position from zero up to the length used to be the **only** way to
+read a collection, before `ለእያንዳንዱ` existed. It is still what you want when
+the position matters.
 
 ## Exercise
 
@@ -133,12 +154,10 @@ Find the largest number in a collection.
 ```ahadu
 ቁጥሮች = [12፣ 45፣ 7፣ 30]
 ትልቁ = ቁጥሮች[0]
-ቦታ = 1
 
-ቦታ < ርዝመት(ቁጥሮች) እስከሆነ ድረስ፦
-    ቁጥሮች[ቦታ] > ትልቁ ከሆነ፦
-        ትልቁ = ቁጥሮች[ቦታ]
-    ቦታ = ቦታ + 1
+ቁጥሮች ለእያንዳንዱ ቁ፦
+    ቁ > ትልቁ ከሆነ፦
+        ትልቁ = ቁ
 
 ጻፍ("ትልቁ፦"፣ ትልቁ)
 ```
