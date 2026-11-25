@@ -22,7 +22,9 @@ import type { Section } from './content.js';
 
 /**
  * The home page's background: the fidel, laid out as the chart a learner
- * first meets it in — a consonant per row, its seven vowel forms across.
+ * first meets it in — two consonants per row, each with its seven vowel
+ * forms, in the order the alphabet is recited. Twenty-four families and then
+ * the numerals: enough rows to carry the first screenful.
  *
  * Text and not an image, so it costs no request and honours §6.1's rule that
  * the site fetches nothing from anywhere. It ends on the Ge'ez numerals,
@@ -33,7 +35,7 @@ import type { Section } from './content.js';
  * than running off one side: the rows are different widths in the font, and
  * a block of text could only ever be flush on one margin.
  *
- * `aria-hidden`: a screen reader announcing ninety-eight syllables before the
+ * `aria-hidden`: a screen reader announcing a hundred and eighty-two syllables before the
  * heading would be worse than no texture at all.
  */
 const FIDEL_GRID = `<div class="fidel" aria-hidden="true">
@@ -43,6 +45,12 @@ const FIDEL_GRID = `<div class="fidel" aria-hidden="true">
       <span><i>ሰ</i><i>ሱ</i><i>ሲ</i><i>ሳ</i><i>ሴ</i><i>ስ</i><i>ሶ</i><i>ሸ</i><i>ሹ</i><i>ሺ</i><i>ሻ</i><i>ሼ</i><i>ሽ</i><i>ሾ</i></span>
       <span><i>ቀ</i><i>ቁ</i><i>ቂ</i><i>ቃ</i><i>ቄ</i><i>ቅ</i><i>ቆ</i><i>በ</i><i>ቡ</i><i>ቢ</i><i>ባ</i><i>ቤ</i><i>ብ</i><i>ቦ</i></span>
       <span><i>ተ</i><i>ቱ</i><i>ቲ</i><i>ታ</i><i>ቴ</i><i>ት</i><i>ቶ</i><i>ቸ</i><i>ቹ</i><i>ቺ</i><i>ቻ</i><i>ቼ</i><i>ች</i><i>ቾ</i></span>
+      <span><i>ኀ</i><i>ኁ</i><i>ኂ</i><i>ኃ</i><i>ኄ</i><i>ኅ</i><i>ኆ</i><i>ነ</i><i>ኑ</i><i>ኒ</i><i>ና</i><i>ኔ</i><i>ን</i><i>ኖ</i></span>
+      <span><i>ኘ</i><i>ኙ</i><i>ኚ</i><i>ኛ</i><i>ኜ</i><i>ኝ</i><i>ኞ</i><i>አ</i><i>ኡ</i><i>ኢ</i><i>ኣ</i><i>ኤ</i><i>እ</i><i>ኦ</i></span>
+      <span><i>ከ</i><i>ኩ</i><i>ኪ</i><i>ካ</i><i>ኬ</i><i>ክ</i><i>ኮ</i><i>ኸ</i><i>ኹ</i><i>ኺ</i><i>ኻ</i><i>ኼ</i><i>ኽ</i><i>ኾ</i></span>
+      <span><i>ወ</i><i>ዉ</i><i>ዊ</i><i>ዋ</i><i>ዌ</i><i>ው</i><i>ዎ</i><i>ዐ</i><i>ዑ</i><i>ዒ</i><i>ዓ</i><i>ዔ</i><i>ዕ</i><i>ዖ</i></span>
+      <span><i>ዘ</i><i>ዙ</i><i>ዚ</i><i>ዛ</i><i>ዜ</i><i>ዝ</i><i>ዞ</i><i>ዠ</i><i>ዡ</i><i>ዢ</i><i>ዣ</i><i>ዤ</i><i>ዥ</i><i>ዦ</i></span>
+      <span><i>የ</i><i>ዩ</i><i>ዪ</i><i>ያ</i><i>ዬ</i><i>ይ</i><i>ዮ</i><i>ደ</i><i>ዱ</i><i>ዲ</i><i>ዳ</i><i>ዴ</i><i>ድ</i><i>ዶ</i></span>
       <span><i>፩</i><i>፪</i><i>፫</i><i>፬</i><i>፭</i><i>፮</i><i>፯</i><i>፰</i><i>፱</i><i>፲</i><i>፳</i><i>፴</i><i>፻</i><i>፼</i></span>
     </div>`;
 

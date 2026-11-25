@@ -958,19 +958,27 @@ details.answer[open] summary {
   left: 0;
   width: 100%;
   /*
-   * Tall enough to carry the hero and no taller, then faded out. A texture
-   * that runs the length of the page stops being texture and becomes a
-   * pattern the reader has to look past to read the prose below it.
+   * The first screenful, and no further. A texture that runs the length of
+   * the page stops being texture and becomes a pattern the reader has to
+   * look past to read the prose below it — so it covers what someone sees on
+   * arrival and is gone by the time they have scrolled.
    */
-  height: 40rem;
+  height: calc(100vh - 3.5rem);
+  min-height: 34rem;
+  max-height: 54rem;
   z-index: 0;
   overflow: hidden;
-  mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  align-content: start;
-  gap: 1.3rem;
-  padding: 2rem 1.4rem 0;
+  /*
+   * The rows are distributed over the height rather than stacked at a fixed
+   * gap, so the vertical rhythm matches the horizontal one: each row is
+   * already spread across the width, and a fixed gap left the two spacings
+   * visibly unrelated.
+   */
+  align-content: space-between;
+  padding: 2rem 1.4rem 2.5rem;
   color: var(--ink);
   opacity: 0.055;
   font-size: 2.4rem;
