@@ -59,7 +59,10 @@ export function parseCase(name: string, path: string, source: string): Conforman
       continue;
     }
 
-    const given = INPUT.exec(trimmed);
+    // Matched against the line with only its *leading* indentation removed:
+    // trailing spaces are part of the input a case is supplying, and a case
+    // that wanted to test trimming could not express one otherwise.
+    const given = INPUT.exec(line.replace(/^\s+/, ''));
     if (given) {
       input.push(given[1] ?? '');
       continue;

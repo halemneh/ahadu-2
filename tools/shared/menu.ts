@@ -123,17 +123,23 @@ export function setUpMenu(): void {
     const last = order[order.length - 1];
     if (first === undefined || last === undefined) return;
 
-    const here = order.find((stop) => stop === document.activeElement) ?? null;
-    if (here === null) {
-      event.preventDefault();
+    // Every Tab is handled, not only the two at the ends.
+    //
+    // The language and theme chips sit between the last nav link and the
+    // menu button in both headers, so leaving the middle of the cycle to
+    // native Tab walked straight out of the drawer into them — and forward
+    // tabbing never reached the button that closes it.
+    event.preventDefault();
+
+    const at = order.indexOf(document.activeElement as HTMLElement);
+    if (at === -1) {
       (event.shiftKey ? last : first).focus();
-    } else if (event.shiftKey && here === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && here === last) {
-      event.preventDefault();
-      first.focus();
+      return;
     }
+    const next = event.shiftKey
+      ? order[(at - 1 + order.length) % order.length]
+      : order[(at + 1) % order.length];
+    (next ?? first).focus();
   });
 
   // Rotating a phone, or dragging a desktop window wider, leaves the drawer

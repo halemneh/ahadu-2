@@ -1006,10 +1006,18 @@ details.answer[open] summary {
  * on the home page alone. The grid positions against the initial containing
  * block instead, which is where the top of the document is anyway.
  */
+/*
+ * Above the texture, below the drawer's scrim.
+ *
+ * These were `z-index: 1`, the same as `.scrim`, and they come later in the
+ * document — so on the home page they painted over the scrim and swallowed
+ * the taps meant to close the drawer. The texture is at 0, so 1 was only
+ * ever needed to clear *that*.
+ */
 body:has(.fidel) .shell,
 body:has(.fidel) .foot {
   position: relative;
-  z-index: 1;
+  z-index: 0;
 }
 
 /*

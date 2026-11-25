@@ -29,7 +29,7 @@
 
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 
@@ -42,9 +42,22 @@ const TYPES = {
   '.js': 'text/javascript; charset=utf-8',
 };
 
+/*
+ * Confined to the built site, and reachable only from this machine.
+ *
+ * `join(root, url)` is not a confinement: an encoded parent segment such as
+ * `/%2e%2e%2f` resolves outside `root`, and the server would then stream
+ * whatever it found. Harmless-looking in a screenshot script, except that it
+ * listened on every interface, so anyone who could reach the port while a
+ * shot was being taken could read files from the machine.
+ */
 const server = createServer((req, res) => {
-  let path = join(root, decodeURIComponent((req.url ?? '/').split('?')[0]));
-  if (existsSync(path) && statSync(path).isDirectory()) path = join(path, 'index.html');
+  const asked = resolve(root, `.${decodeURIComponent((req.url ?? '/').split('?')[0])}`);
+  if (asked !== root && !asked.startsWith(root + sep)) {
+    res.writeHead(403).end('outside the site');
+    return;
+  }
+  const path = existsSync(asked) && statSync(asked).isDirectory() ? join(asked, 'index.html') : asked;
   if (!existsSync(path)) {
     res.writeHead(404).end('not found');
     return;
@@ -52,7 +65,7 @@ const server = createServer((req, res) => {
   res.writeHead(200, { 'content-type': TYPES[extname(path)] ?? 'application/octet-stream' });
   createReadStream(path).pipe(res);
 });
-await new Promise((done) => server.listen(5182, done));
+await new Promise((done) => server.listen(5182, '127.0.0.1', done));
 const base = 'http://localhost:5182';
 const browser = await chromium.launch({ channel: 'chrome' });
 

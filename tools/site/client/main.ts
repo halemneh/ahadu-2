@@ -71,7 +71,17 @@ function runSnippet(snippet: HTMLElement, source: string): void {
   if (!(out instanceof HTMLElement)) return;
 
   const input = (snippet.dataset.input ?? '').split('\n').filter((line) => line !== '');
-  const reply = evaluate({ source, input, maxSteps: MAX_STEPS });
+  // The clock, as the playground does. `evaluate` defaults both to fixed
+  // values so the build can verify a snippet's output (SITE.md §2) — but a
+  // reader pressing Run on the chance lesson should get different dice, and
+  // on the calendar lesson today's date rather than 1962.
+  const reply = evaluate({
+    source,
+    input,
+    maxSteps: MAX_STEPS,
+    seed: Date.now(),
+    now: Date.now(),
+  });
 
   const failed = reply.stoppedAt !== null;
   const text = failed ? reply.diagnostics.map((d) => formatDiagnostic(d)).join('\n') : reply.output;

@@ -89,6 +89,12 @@ const TYPE_KEYWORDS = new Set(['TYPE_NUM', 'TYPE_BOOL', 'TYPE_STRING', 'TYPE_LIS
 const OPENERS = new Set<TokenType>(['LPAREN', 'LBRACKET']);
 const CLOSERS = new Set<TokenType>(['RPAREN', 'RBRACKET']);
 
+/** Which opener each closer answers, so a pair is only ever of one kind. */
+const PARTNER: Partial<Record<TokenType, TokenType>> = {
+  RPAREN: 'LPAREN',
+  RBRACKET: 'LBRACKET',
+};
+
 /** How many depths the bracket colours run through before repeating. */
 const BRACKET_DEPTHS = 3;
 
@@ -159,7 +165,13 @@ function markBrackets(grid: Cell[][], tokens: readonly Token[], caret: Caret | n
     } else if (CLOSERS.has(token.type)) {
       const opener = open.pop();
       paint(token, `tk-br${(opener === undefined ? 0 : open.length) % BRACKET_DEPTHS}`);
-      if (opener !== undefined) pairs.push([opener, token]);
+      // Only when the kinds answer each other. `ጻፍ(1]` is a syntax error, and
+      // highlighting `(` and `]` as a pair tells the reader it is not — which
+      // is worse than saying nothing, because the one thing they need to see
+      // is that those two do not go together.
+      if (opener !== undefined && PARTNER[token.type] === opener.type) {
+        pairs.push([opener, token]);
+      }
     }
   }
 

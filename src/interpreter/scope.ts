@@ -157,6 +157,7 @@ export function findMethod(object: ObjectValue, name: string): Value | null {
         body: declaration.body,
         closure: cls.scope,
         boundTo: object,
+        ...(cls.fromLibrary === true ? { fromLibrary: true as const } : {}),
       };
     }
   }

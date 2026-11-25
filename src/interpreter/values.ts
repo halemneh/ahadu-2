@@ -74,6 +74,15 @@ export interface ClassValue {
   readonly methods: ReadonlyMap<string, FunctionDeclaration>;
   /** Where the class was declared: attribute defaults evaluate here (§7.6). */
   readonly scope: Scope;
+  /**
+   * Set when the class was declared by the standard library's prelude (§8.5).
+   *
+   * Methods are built from the declaration on demand by `findMethod`, which
+   * never goes through `makeFunction` — so without this the provenance that
+   * reattributes a library error would reach every library *function* and no
+   * library *method*.
+   */
+  readonly fromLibrary?: true;
 }
 
 export interface ObjectValue {

@@ -258,7 +258,11 @@ function cmdRepl(flags: Flags): number {
         return readLineSync();
       },
     },
-    { colors: flags.colors },
+    // The seed and the clock too, not just the palette: without them an
+    // ordinary `ahadu` session repeats one random sequence and reports the
+    // Unix epoch for `ዛሬ()`, while running the same program from a file does
+    // the right thing.
+    { colors: flags.colors, seed: flags.seed, now: flags.now },
   );
 }
 

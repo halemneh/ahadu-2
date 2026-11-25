@@ -230,8 +230,14 @@ export class Interpreter {
   }
   private steps = 0;
   private readonly maxDepth: number;
-  private readonly maxSteps: number;
-  private readonly onStatement: RunOptions['onStatement'];
+  /*
+   * Not `readonly`: `runLibrary` lifts it while the prelude loads. §8.5 says
+   * the learner's step budget is theirs, and a budget the library has already
+   * spent part of is not.
+   */
+  private maxSteps: number;
+  /* Not `readonly`: `runLibrary` silences it. See there. */
+  private onStatement: RunOptions['onStatement'];
   /** The generator's 32-bit state, which `ዘር` resets and `ዘፈቀደ_ቁጥር` advances. */
   private randomState: number;
   /**
@@ -293,10 +299,24 @@ export class Interpreter {
    */
   runLibrary(program: Program): RunResult {
     this.loadingLibrary = true;
+    // The budget is lifted, not merely reset. `tryRun` zeroes the counter,
+    // but the prelude's own statements would still be charged against the
+    // learner's limit — and with a small one they exhaust it before the
+    // learner's first line runs. Verified: `ጻፍ(1)` under `maxSteps: 7` failed
+    // with "the standard library failed to run".
+    const budget = this.maxSteps;
+    const trace = this.onStatement;
+    this.maxSteps = Number.POSITIVE_INFINITY;
+    // And no tracing. `ahadu trace` renders each reported line by looking it
+    // up in the *learner's* source, so the prelude's lines came out as blank
+    // or unrelated statements before their program had run a step.
+    this.onStatement = undefined;
     try {
       return this.tryRun(program);
     } finally {
       this.loadingLibrary = false;
+      this.maxSteps = budget;
+      this.onStatement = trace;
     }
   }
 
@@ -1020,6 +1040,9 @@ export class Interpreter {
 
     return {
       kind: 'class',
+      // Methods are built from the declaration on demand by `findMethod`,
+      // which never goes through `makeFunction`, so the class carries it.
+      ...(this.loadingLibrary ? { fromLibrary: true as const } : {}),
       name: declaration.name,
       parent,
       attributes: declaration.attributes,
@@ -1081,7 +1104,7 @@ export class Interpreter {
       scope.define(param, args[i] as Value);
     });
 
-    this.invoke(`${cls.name}.ፍጠር`, declaration.body, scope, at);
+    this.invoke(`${cls.name}.ፍጠር`, declaration.body, scope, at, cls.fromLibrary === true);
     return object;
   }
 }

@@ -146,6 +146,24 @@ describe('the learner keeps their own step budget', () => {
     expect(code('ጻፍ(1)', { maxSteps: 12 })).toBe(null);
   });
 
+  it('loads under a budget far too small to load it', () => {
+    // Not merely reset — lifted. `tryRun` zeroes the counter, but the
+    // prelude's own statements were still charged against the learner's
+    // limit, and `ጻፍ(1)` under `maxSteps: 7` died with "the standard library
+    // failed to run" before the program began.
+    expect(code('ጻፍ(1)', { maxSteps: 7 })).toBe(null);
+    expect(out('ጻፍ(ደምር([1፣ 2]))', { maxSteps: 400 })).toEqual(['3']);
+  });
+
+  it('never reports a library line to the trace hook', () => {
+    // `ahadu trace` renders a reported line by looking it up in the
+    // learner's source, so a prelude line comes out blank or as an unrelated
+    // statement.
+    const seen: number[] = [];
+    runSource('ጻፍ(1)', { onStatement: (line) => seen.push(line) });
+    expect(seen).toEqual([1]);
+  });
+
   it('still enforces the budget on the learner is own work', () => {
     expect(code('እውነት እስከሆነ ድረስ፦\n    ሀ = 1', { maxSteps: 500 })).toBe('AH3018');
   });
@@ -191,6 +209,16 @@ describe('an error inside a library function points at the call (§8.5)', () => 
   it('keeps the library frame in the traceback, so the detail is not lost', () => {
     const result = runSource('ጻፍ(ደምር([1፣ "ሀ"]))');
     expect(result.frames.map((f) => f.name)).toEqual(['ዋና ፕሮግራም', 'ደምር']);
+  });
+
+  it('reattributes a method of a library class too', () => {
+    // `findMethod` builds a method value straight from the declaration and
+    // never goes through `makeFunction`, so provenance has to live on the
+    // class. Without it this pointed at prelude line 127.
+    const source = lines('ርዝመት = 5', 'መ = መዝገብ()', 'ጻፍ(መ.ብዛት())');
+    const result = runSource(source);
+    expect(result.errors[0]?.line).toBe(3);
+    expect(result.errors[0]?.message).toContain('ብዛት');
   });
 
   it('does NOT reattribute a function the learner wrote with the same name', () => {

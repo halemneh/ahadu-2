@@ -1086,14 +1086,22 @@ that an implementation could easily break:
   free; prepending it to the source does not, and MUST NOT be done.
 - **The learner's step budget is their own.** Loading the library MUST NOT
   consume any part of a step budget the host set for the program (§9.2,
-  `AH3018`).
+  `AH3018`). Resetting the counter is not enough — the prelude's own
+  statements must not be charged against the limit at all, or a small budget
+  is exhausted before the program runs a line.
+- **Loading the library MUST NOT reach the statement hook** that `ahadu trace`
+  uses (TOOLING.md §1.1). The hook reports a line number, and the renderer
+  looks that number up in the *learner's* source.
 - **A failure inside a library function is reported at the line that called
   it**, with the library function named. A line number inside the library
   belongs to a file the learner cannot open: pointing at one frames a line of
   their program that has nothing to do with the error, or — if their program
   is shorter than the prelude — a blank line with carets under nothing. The
   library frame SHOULD remain in the traceback, so nothing is hidden from
-  someone who wants it.
+  someone who wants it. This applies to a library **class's methods** as much
+  as to its functions: an implementation that builds a method value from its
+  declaration on demand must carry the provenance on the class, or half the
+  library is exempt from the rule.
 
 Library names are pre-bound exactly as built-ins are: user code MAY shadow
 them, and a call to a shadowed one MUST name it (§8.2). Whether a pre-bound

@@ -26,9 +26,17 @@ function declarations(source: string): Record<string, string> {
   return out;
 }
 
-/** The text between a selector and the brace that closes it. */
+/**
+ * The text between a selector and the brace that closes it.
+ *
+ * The selector is matched where it is followed by `{`, because the file also
+ * *mentions* `:root[data-theme='light']` in a comment above the fallback
+ * rule — and a plain `indexOf` found that first, pulled the fallback block
+ * out for both themes, and made every assertion below compare a thing with
+ * itself. The test passed and checked nothing.
+ */
 function block(selector: string): string {
-  const at = css.indexOf(selector);
+  const at = css.search(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{'));
   expect(at, selector).toBeGreaterThan(-1);
   const from = css.indexOf('{', at) + 1;
   let depth = 1;
