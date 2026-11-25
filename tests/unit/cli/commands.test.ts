@@ -227,11 +227,17 @@ describe.skipIf(!built)('ahadu trace', () => {
   it('prints each statement with the value worth showing', () => {
     const { stderr, stdout, status } = run('trace', 'examples/02-ዑደት.ahadu');
     expect(status).toBe(0);
-    // Program output still goes to stdout; the trace goes to stderr.
-    expect(stdout.trim().split('\n')).toEqual(['1', '2', '3', '4', '5']);
+    // Program output still goes to stdout; the trace goes to stderr. Asserted
+    // as properties rather than the example's exact output, so improving a
+    // teaching example does not fail a test about the trace.
+    expect(stdout).toContain('1\n2\n3\n4\n5');
+    expect(stderr).not.toContain('1\n2\n3\n4\n5');
     // An assignment shows the value assigned, not the ምንም it evaluates to.
     expect(stderr).toContain('ቆጣሪ = ቆጣሪ + 1 → 1');
     expect(stderr).toContain('ቆጣሪ = ቆጣሪ + 1 → 5');
+    // The for-each variable is an assignment the learner never wrote, so the
+    // trace should show the body's work and not invent a line for the header.
+    expect(stderr).not.toContain('ለእያንዳንዱ ቁ');
   });
 
   it('shows a return, the most interesting line in a function', () => {

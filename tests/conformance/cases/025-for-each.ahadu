@@ -1,0 +1,21 @@
+# ለእያንዳንዱ walks a list, collection first — Ahadu's order, as ከሆነ and
+# እስከሆነ ድረስ are (§7.4). Before it, every list walk needed a hand-rolled
+# counter, which is why every v1 example hardcoded its length.
+# expect: አበበ
+# expect: ከበደ
+# expect: አስቴር
+# expect: 10
+# expect: አስቴር
+ቤተሰብ = ["አበበ"፣ "ከበደ"፣ "አስቴር"]
+ቤተሰብ ለእያንዳንዱ ስም፦
+    ጻፍ(ስም)
+
+ድምር = 0
+[1፣ 2፣ 3፣ 4] ለእያንዳንዱ ቁ፦
+    ድምር = ድምር + ቁ
+ጻፍ(ድምር)
+
+# The loop variable is defined in the enclosing scope, not one of its own: a
+# block introduces no scope anywhere in Ahadu (§5.3), so it survives the loop
+# holding the last element visited — exactly as a እስከሆነ ድረስ counter does.
+ጻፍ(ስም)

@@ -41,6 +41,8 @@ function heading(node: Node): string {
       return `FunctionDeclaration ${node.name}(${node.params.join('፣ ')})`;
     case 'ClassDeclaration':
       return `ClassDeclaration ${node.name}${node.parent === null ? '' : `(${node.parent})`}`;
+    case 'ForEachStatement':
+      return `ForEachStatement ${node.name}`;
     default:
       return node.type;
   }
@@ -81,6 +83,11 @@ function children(node: Node): Child[] {
     case 'WhileStatement':
       return [
         ['condition', node.condition],
+        ['body', node.body],
+      ];
+    case 'ForEachStatement':
+      return [
+        ['collection', node.collection],
         ['body', node.body],
       ];
     case 'FunctionDeclaration':

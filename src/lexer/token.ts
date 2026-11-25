@@ -53,6 +53,7 @@ export type KeywordType =
   | 'ELIF'
   | 'ELSE'
   | 'WHILE'
+  | 'FOREACH'
   | 'RETURN'
   | 'FUNC'
   | 'CLASS'
@@ -68,7 +69,6 @@ export type KeywordType =
   | 'TYPE_STRING'
   | 'TYPE_LIST'
   | 'RESERVED_NEW'
-  | 'RESERVED_FOR'
   | 'RESERVED_BREAK'
   | 'RESERVED_CONTINUE'
   | 'RESERVED_CHAR';
@@ -92,7 +92,6 @@ export interface Token {
 /** The canonical Amharic spelling of each reserved word, for error messages. */
 export const RESERVED_SPELLINGS: Readonly<Record<string, string>> = {
   RESERVED_NEW: 'አዲስ',
-  RESERVED_FOR: 'ለእያንዳንዱ',
   RESERVED_BREAK: 'አቁም',
   RESERVED_CONTINUE: 'ቀጥል',
   RESERVED_CHAR: 'ፊደል',

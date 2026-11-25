@@ -81,9 +81,10 @@ export const KEYWORDS: Readonly<Record<string, KeywordType>> = {
   ፅሁፍ: 'TYPE_STRING',
   ስብስብ: 'TYPE_LIST',
 
+  ለእያንዳንዱ: 'FOREACH',
+
   // reserved — recognized, but no syntax in 2.0 (parser reports AH2010)
   አዲስ: 'RESERVED_NEW',
-  ለእያንዳንዱ: 'RESERVED_FOR',
   አቁም: 'RESERVED_BREAK',
   ቀጥል: 'RESERVED_CONTINUE',
   ፊደል: 'RESERVED_CHAR',

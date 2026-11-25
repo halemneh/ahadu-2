@@ -142,19 +142,21 @@ predictable.
 | type: boolean | `እውነታ` | `TYPE_BOOL` |
 | type: string | `ጽሁፍ` `ፅሁፍ` | `TYPE_STRING` |
 | type: list | `ስብስብ` | `TYPE_LIST` |
+| for each | `ለእያንዳንዱ` | `FOREACH` |
 
 Keyword matching is **whole-word**: `ከሆነነገር` is one identifier, not `ከሆነ`
 followed by `ነገር`. A keyword is recognized only when the maximal run of word
 characters equals a listed spelling exactly.
 
 Reserved for future use (recognized as keywords, no syntax in 2.0; using one is
-error `AH2010`): `አዲስ`, `ለእያንዳንዱ`, `አቁም`, `ቀጥል`, `ፊደል`.
+error `AH2010`): `አዲስ`, `አቁም`, `ቀጥል`, `ፊደል`.
 
 A reserved word has to be long enough to be worth the naming space it takes.
-`ለ` was the obvious candidate for a future `for`, and is wrong for exactly
-that reason: one of the commonest syllables in Amharic and the most natural
-short variable name there is. `ለእያንዳንዱ` ("for each one") reads better in
-Ahadu's condition-first order anyway — `ቤተሰብ ለእያንዳንዱ ስም፦`.
+`ለ` was the obvious candidate for `for`, and is wrong for exactly that reason:
+one of the commonest syllables in Amharic and the most natural short variable
+name there is. `ለእያንዳንዱ` ("for each one") reads better in Ahadu's
+collection-first order anyway — `ቤተሰብ ለእያንዳንዱ ስም፦` — and it is no longer
+reserved: it is the loop in §7.4.
 
 Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
 **not** keywords. They are ordinary identifiers pre-bound in the global scope
@@ -730,7 +732,12 @@ branches may follow, then at most one `አለበለዚያ፦`.
 > `ከሆነ <condition>፦` — English order, keyword first. Every program in the
 > original repository fails to parse under it. See CHANGES §C01.
 
-### 7.4 Loop
+### 7.4 Loops
+
+There are two, and both put the thing being looped over **first**, as §7.3
+does with a condition.
+
+#### While — `<condition> እስከሆነ ድረስ፦`
 
 ```ahadu
 ቆጣሪ = 0
@@ -739,11 +746,43 @@ branches may follow, then at most one `አለበለዚያ፦`.
     ቆጣሪ = ቆጣሪ + 1
 ```
 
-Shape: `<condition> እስከሆነ ድረስ፦` — condition first again. The condition is
-re-evaluated before each iteration and MUST be `እውነታ`.
+The condition is re-evaluated before each iteration and MUST be `እውነታ`.
 
-There is no `for` loop, no `አቁም` (break), and no `ቀጥል` (continue) in 2.0; all
-three names are reserved.
+#### For each — `<collection> ለእያንዳንዱ <name>፦`
+
+```ahadu
+ቤተሰብ = ["አበበ"፣ "ከበደ"፣ "አስቴር"]
+ቤተሰብ ለእያንዳንዱ ስም፦
+    ጻፍ(ስም)
+```
+
+`<collection>` MUST be a `ስብስብ` or a `ጽሁፍ`; anything else is `AH3002`. A
+`ጽሁፍ` yields its code points as one-character strings, which is the same
+breadth `ርዝመት` and `x[i]` already have (§4.3, §8) — a language where you can
+index a string but not walk it would be arbitrary.
+
+`<name>` MUST be an identifier, and it is **defined in the enclosing scope**,
+not in a scope of its own. A block does not introduce a scope anywhere in
+Ahadu (§5.3), so the loop variable survives the loop and holds the last
+element visited, exactly as a `እስከሆነ ድረስ` counter does. Making this one name
+behave differently would be a special case a learner has to be told about.
+
+An empty collection runs the body zero times and leaves `<name>` untouched —
+undefined, if it did not already exist. Reading it afterwards is then the
+ordinary `AH3001`.
+
+**The loop visits the elements the collection had when the loop began.**
+Adding to or removing from the list inside the body does not change what the
+loop visits. This is a deliberate divergence from the obvious
+iterate-by-live-index implementation, and the reason is that the obvious one
+has two failure modes a beginner cannot debug: `አዋህድ` in the body never
+terminates, and `ሰርዝ` in the body silently skips the next element. Neither is
+a lesson worth teaching, and both are easy to write by accident while
+filtering a list. The list itself is still mutable and still shared (§4.5) —
+it is only the iteration that is fixed.
+
+There is no `አቁም` (break) and no `ቀጥል` (continue) in 2.0; both names are
+reserved.
 
 ### 7.5 Function declaration
 

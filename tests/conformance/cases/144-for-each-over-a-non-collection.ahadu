@@ -1,0 +1,6 @@
+# Only a ስብስብ or a ጽሁፍ can be walked (§7.4).
+# expect-error: AH3002 at 5:1
+ቁ = 5
+
+ቁ ለእያንዳንዱ ዕቃ፦
+    ጻፍ(ዕቃ)

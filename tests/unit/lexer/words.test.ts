@@ -101,13 +101,16 @@ describe('keywords', () => {
   });
 
   it('lexes reserved words as keywords for the parser to reject (§3.2)', () => {
-    expect(values('አዲስ ለእያንዳንዱ አቁም ቀጥል ፊደል')).toEqual([
+    expect(values('አዲስ አቁም ቀጥል ፊደል')).toEqual([
       'RESERVED_NEW',
-      'RESERVED_FOR',
       'RESERVED_BREAK',
       'RESERVED_CONTINUE',
       'RESERVED_CHAR',
     ]);
+  });
+
+  it('lexes ለእያንዳንዱ as a real keyword now that §7.4 gives it syntax', () => {
+    expect(values('ለእያንዳንዱ')).toEqual(['FOREACH']);
   });
 
   it('leaves ለ free as an identifier', () => {

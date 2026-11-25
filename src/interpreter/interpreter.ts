@@ -385,6 +385,18 @@ export class Interpreter {
         return NOTHING;
       }
 
+      case 'ForEachStatement': {
+        const items = this.iterable(statement.collection, scope);
+        for (const item of items) {
+          // The enclosing scope, not a child: a block introduces no scope
+          // anywhere in Ahadu (§5.3), and making this one name the exception
+          // would be a special case a learner has to be told about.
+          scope.define(statement.name, item);
+          this.executeBlock(statement.body, scope);
+        }
+        return NOTHING;
+      }
+
       case 'FunctionDeclaration':
         scope.define(statement.name, this.makeFunction(statement, scope));
         this.trace(statement.line, NOTHING);
@@ -395,6 +407,27 @@ export class Interpreter {
         this.trace(statement.line, NOTHING);
         return NOTHING;
     }
+  }
+
+  /**
+   * Evaluates what `ለእያንዳንዱ` walks, as a fixed sequence of values (§7.4).
+   *
+   * Fixed — a copy, not the live list — on purpose. Walking by live index is
+   * the obvious implementation and it has two failure modes a beginner cannot
+   * debug: `አዋህድ` in the body never terminates, and `ሰርዝ` in the body
+   * silently skips the next element. Both are easy to write by accident while
+   * filtering a list, and neither is a lesson worth teaching. The list stays
+   * mutable and shared (§4.5); only the iteration is fixed.
+   *
+   * A `ጽሁፍ` walks its code points, which is the breadth `ርዝመት` and `x[i]`
+   * already have: indexing a string but not being able to walk it would be
+   * arbitrary.
+   */
+  private iterable(expression: Expression, scope: Scope): readonly Value[] {
+    const value = this.evaluate(expression, scope);
+    if (value.kind === 'list') return [...value.items];
+    if (value.kind === 'string') return codePoints(value.value).map((ch) => str(ch));
+    return this.fail(AH3002, expression, err.illegalUnary('"ለእያንዳንዱ"', typeName(value)));
   }
 
   /** Evaluates a condition, which must be `እውነታ` — there is no truthiness (§4.4). */
