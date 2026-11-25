@@ -118,8 +118,7 @@ export function page(view: PageView): string {
 
     <header class="sitebar">
       <a class="brand" href="${home}">
-        <strong>${escapeHtml(s.siteName)}</strong>
-        <span class="version">2.0</span>
+        <strong>አሃዱ</strong>
       </a>
 
       <!--

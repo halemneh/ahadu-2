@@ -103,30 +103,40 @@
    * needs two values; this is the one that has to be readable.
    */
   --accent-text: #f4886f;
+  /* Links and quiet secondary text. Tomato fills; aqua points. */
+  --link: #74cdf0;
   /*
    * Solid, not translucent. A focus ring has to clear 3:1 against whatever it
    * lands on (WCAG 2.2 §1.4.11), and a translucent one cannot promise that:
    * it takes the colour of the surface beneath it.
    */
-  --ring: #f06449;
+  /*
+   * Focus is Sky Aqua, not the Tomato accent.
+   *
+   * A ring is drawn around whatever the keyboard is on, including the code
+   * editor — and an orange-red frame around a box of code reads as "this is
+   * wrong" before it reads as "this is where you are". Red is kept for `--bad`,
+   * which is what actually marks an error.
+   */
+  --ring: #5bc3eb;
   --bad: #ff7578;
   --good: #5cc26e;
 
   /* Syntax, on the ladder described above. */
-  --id: #c7cabb;
-  --kw: #f4917a;
+  --id: #dcc79b;
+  --kw: #ff7f61;
   --type: #5bc3eb;
-  --lit: #eca0d4;
-  --num: #edc77f;
-  --str: #aed083;
-  --op: #8fd6ea;
-  --punct: #9ea093;
-  --comment: #a0a296;
+  --lit: #e695ff;
+  --num: #ffd073;
+  --str: #8fdc7a;
+  --op: #86bcff;
+  --punct: #9aa4ae;
+  --comment: #80ab93;
 
   /* Bracket nesting depth, cycling every three levels. */
-  --br0: #edc77f;
-  --br1: #dda2e6;
-  --br2: #6fb9d0;
+  --br0: #ffd073;
+  --br1: #e695ff;
+  --br2: #5bc3eb;
 
   --bad-wash: rgb(255 117 120 / 16%);
   --hot: rgb(3 209 190 / 22%);
@@ -222,23 +232,24 @@
 
   --accent: #b33d22;
   --accent-text: #9e3317;
-  --ring: #b33d22;
+  --link: #11627f;
+  --ring: #1d7fa6;
   --bad: #b8012f;
   --good: #006f29;
 
-  --id: #434537;
-  --kw: #9c3317;
-  --type: #15607c;
-  --lit: #7c2057;
-  --num: #754f00;
-  --str: #3b5a1c;
-  --op: #13556a;
-  --punct: #55574b;
-  --comment: #55574b;
+  --id: #6a4f1c;
+  --kw: #9c2a0c;
+  --type: #0a5a76;
+  --lit: #8a27b4;
+  --num: #6f4600;
+  --str: #135a25;
+  --op: #234e8d;
+  --punct: #565c63;
+  --comment: #345840;
 
-  --br0: #674b00;
-  --br1: #6f256a;
-  --br2: #18566a;
+  --br0: #6f4600;
+  --br1: #8a27b4;
+  --br2: #0a5a76;
 
   --bad-wash: rgb(184 1 47 / 10%);
   --hot: rgb(0 105 95 / 16%);

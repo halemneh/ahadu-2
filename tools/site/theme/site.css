@@ -67,7 +67,7 @@ body {
 }
 
 a {
-  color: var(--accent);
+  color: var(--link);
 }
 
 /*
@@ -186,7 +186,7 @@ a {
 }
 
 .lessons a[aria-current='page'] {
-  color: var(--accent);
+  color: var(--link);
   font-weight: 600;
 }
 
@@ -427,7 +427,7 @@ a {
 }
 
 .snip-open:hover {
-  color: var(--accent);
+  color: var(--link);
   text-decoration: underline;
 }
 
@@ -583,7 +583,7 @@ details.answer summary {
   align-items: center;
   min-height: 2.25rem;
   cursor: pointer;
-  color: var(--accent-text);
+  color: var(--link);
   font-size: 0.95rem;
 }
 
