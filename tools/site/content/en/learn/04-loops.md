@@ -97,6 +97,54 @@ The two work together.
 Notice that `ጻፍ` is indented twice — once for the loop, once for the
 condition inside it.
 
+## For each
+
+Walking through a collection or a piece of text needs no counter. That is
+what `ለእያንዳንዱ` is for.
+
+```ahadu
+"አሃዱ" ለእያንዳንዱ ፊደሉ፦
+    ጻፍ(ፊደሉ)
+```
+
+```ውጤት
+አ
+ሃ
+ዱ
+```
+
+As everywhere else, the thing being looped over comes first: "አሃዱ
+**ለእያንዳንዱ** ፊደሉ" — for each letter of አሃዱ.
+
+The three parts above — a start, a condition, a change — are not needed
+here; Ahadu keeps track of them. So the mistake of forgetting the third one
+cannot happen in this kind of loop at all.
+
+A collection works the same way:
+
+```ahadu
+ዋጋዎች = [12፣ 7፣ 30]
+ድምር = 0
+
+ዋጋዎች ለእያንዳንዱ ዋጋ፦
+    ድምር = ድምር + ዋጋ
+
+ጻፍ("ድምር፦"፣ ድምር)
+```
+
+```ውጤት
+ድምር፦ 49
+```
+
+Collections get a lesson of their own next.
+
+### Which one should I use?
+
+- **ለእያንዳንዱ** — when you are walking a collection or some text. This is
+  most of the time.
+- **እስከሆነ ድረስ** — when the condition is about something other than a
+  collection, or when you need the position itself.
+
 ## Exercise
 
 Print the squares of the numbers from 1 to 5.
