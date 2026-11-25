@@ -20,6 +20,28 @@ import type { Alternates } from './discovery.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
 
+/**
+ * The home page's background: the fidel, laid out as the chart a learner
+ * first meets it in — a consonant per row, its seven vowel forms across.
+ *
+ * Text and not an image, so it costs no request and honours §6.1's rule that
+ * the site fetches nothing from anywhere. It ends on the Ge'ez numerals,
+ * because those are the part of the script a programmer is least likely to
+ * have seen and the part Ahadu actually computes with.
+ *
+ * `aria-hidden`: a screen reader announcing eighty-four syllables before the
+ * heading would be worse than no texture at all.
+ */
+const FIDEL_GRID = `<div class="fidel" aria-hidden="true">
+      <span>ሀ ሁ ሂ ሃ ሄ ህ ሆ ለ ሉ ሊ ላ ሌ ል ሎ</span>
+      <span>ሐ ሑ ሒ ሓ ሔ ሕ ሖ መ ሙ ሚ ማ ሜ ም ሞ</span>
+      <span>ሠ ሡ ሢ ሣ ሤ ሥ ሦ ረ ሩ ሪ ራ ሬ ር ሮ</span>
+      <span>ሰ ሱ ሲ ሳ ሴ ስ ሶ ሸ ሹ ሺ ሻ ሼ ሽ ሾ</span>
+      <span>ቀ ቁ ቂ ቃ ቄ ቅ ቆ በ ቡ ቢ ባ ቤ ብ ቦ</span>
+      <span>ተ ቱ ቲ ታ ቴ ት ቶ ቸ ቹ ቺ ቻ ቼ ች ቾ</span>
+      <span>፩ ፪ ፫ ፬ ፭ ፮ ፯ ፰ ፱ ፲ ፳ ፴ ፻ ፼</span>
+    </div>`;
+
 export interface PageView {
   readonly strings: Strings;
   readonly title: string;
@@ -156,7 +178,9 @@ export function page(view: PageView): string {
       source order *is* reading order — a reader met eight lesson links
       before the lesson they had opened.
     -->
-    <div class="shell${view.sidebar === '' ? ' shell-plain' : ''}">
+    ${view.section === 'home' ? FIDEL_GRID : ''}
+
+    <div class="shell${view.section === 'home' ? ' shell-home' : view.sidebar === '' ? ' shell-plain' : ''}">
       <main id="main" class="doc">
         <article>
           <h1>${escapeHtml(view.title)}</h1>
