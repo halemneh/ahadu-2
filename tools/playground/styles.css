@@ -255,6 +255,18 @@ button:focus-visible {
 }
 
 /*
+ * The editor had `outline: none` and nothing in its place, so tabbing to the
+ * one control that matters most on this page showed nothing at all. The ring
+ * is drawn inside its own box rather than around it: the editor fills the
+ * region edge to edge, and an outline outside would be clipped away by
+ * `.editor-wrap`.
+ */
+.editor:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+/*
  * Token colours are in `shared/syntax.css`. They were here, which meant the
  * site — which does not import this file — shipped highlighted markup with
  * nothing to colour it.

@@ -63,6 +63,14 @@
       <div class="scrim" id="nav-scrim" hidden></div>
     </header>
 
+    <!--
+      The page's heading. Not drawn — the header already says where you are
+      to anyone who can see it — but a page with no h1 gives a screen reader
+      nothing to announce and nothing to jump to, and this is the one page of
+      the site whose heading is not in its own prose.
+    -->
+    <h1 class="sr-only" data-i18n="pageTitle"></h1>
+
     <!-- The playground's own toolbar: the things only it has. -->
     <header class="bar">
       <!-- The first option names the control, so no separate label is needed. -->
