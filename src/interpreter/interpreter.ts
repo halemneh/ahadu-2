@@ -94,7 +94,7 @@ export interface RunOptions {
   /** Evaluation-step budget before `AH3018`. Unlimited by default. */
   readonly maxSteps?: number;
   /**
-   * Starting seed for `አጋጣሚ` (§8).
+   * Starting seed for `ዘፈቀደ_ቁጥር` (§8).
    *
    * Fixed by default, so a program that draws random numbers prints the same
    * thing every time unless a host asks for otherwise. That direction is
@@ -156,7 +156,7 @@ export const GLOBAL_SCOPE_NAME = 'ዋና ፕሮግራም';
 const DEFAULT_MAX_DEPTH = 200;
 
 /**
- * The seed `አጋጣሚ` starts from when no host supplies one.
+ * The seed `ዘፈቀደ_ቁጥር` starts from when no host supplies one.
  *
  * Any constant would do; 1 is the one the spec names so a second
  * implementation can match it.
@@ -173,7 +173,7 @@ const DEFAULT_SEED = 1;
 const DEFAULT_NOW = 0;
 
 /**
- * One step of the generator behind `አጋጣሚ` — mulberry32.
+ * One step of the generator behind `ዘፈቀደ_ቁጥር` — mulberry32.
  *
  * Chosen because it is nine lines, has no dependencies, and is fully
  * determined by a 32-bit state, so "the same seed gives the same sequence" is
@@ -232,13 +232,13 @@ export class Interpreter {
   private readonly maxDepth: number;
   private readonly maxSteps: number;
   private readonly onStatement: RunOptions['onStatement'];
-  /** The generator's 32-bit state, which `ዘር` resets and `አጋጣሚ` advances. */
+  /** The generator's 32-bit state, which `ዘር` resets and `ዘፈቀደ_ቁጥር` advances. */
   private randomState: number;
   /**
    * The names that were pre-bound as built-ins (§8).
    *
    * Kept so `AH3013` can tell a learner what actually happened. Built-ins are
-   * shadowable by design, and several of them are nouns — `ርዝመት`, `ቅጂ`,
+   * shadowable by design, and several of them are nouns — `ርዝመት`, `ቅጂ_አድርግ`,
    * `አይነት`, `ዘር` — which are exactly the words someone reaches for as a
    * variable name. Without this set, `ርዝመት = 5` followed by `ርዝመት("ሀ")`
    * reports only "a number cannot be called", which is true and useless.
@@ -308,9 +308,9 @@ export class Interpreter {
   /**
    * Draws an integer in `[low, high]`, both ends included.
    *
-   * Inclusive because `አጋጣሚ(1፣ 6)` has to be a die. A half-open range is the
+   * Inclusive because `ዘፈቀደ_ቁጥር(1፣ 6)` has to be a die. A half-open range is the
    * right default for a library and the wrong one for a first program: every
-   * learner who writes `አጋጣሚ(1፣ 6)` means six faces, and an exclusive upper
+   * learner who writes `ዘፈቀደ_ቁጥር(1፣ 6)` means six faces, and an exclusive upper
    * bound would hand them five and no error.
    */
   nextInt(low: number, high: number): number {
@@ -525,7 +525,7 @@ export class Interpreter {
    *
    * Fixed — a copy, not the live list — on purpose. Walking by live index is
    * the obvious implementation and it has two failure modes a beginner cannot
-   * debug: `አዋህድ` in the body never terminates, and `ሰርዝ` in the body
+   * debug: `ጨምር` in the body never terminates, and `ሰርዝ` in the body
    * silently skips the next element. Both are easy to write by accident while
    * filtering a list, and neither is a lesson worth teaching. The list stays
    * mutable and shared (§4.5); only the iteration is fixed.
@@ -1094,11 +1094,11 @@ export class Interpreter {
  * The twelve globals.
  *
  * They are ordinary bindings, not keywords, so user code may shadow them.
- * v1-py made `ጻፍ`, `አዋህድ` and `ሰርዝ` keywords and then implemented only the
+ * v1-py made `ጻፍ`, `ጨምር` and `ሰርዝ` keywords and then implemented only the
  * first, so calling either other one crashed the interpreter (CHANGES C13).
  *
- * `አዋህድ`, `ሰርዝ` and `ዘር` are imperatives in Amharic, so they change
- * something and return `ምንም`: `ዝ = አዋህድ(ዝ፣ 4)` then leaves `ዝ` holding
+ * `ጨምር`, `ሰርዝ` and `ዘር` are imperatives in Amharic, so they change
+ * something and return `ምንም`: `ዝ = ጨምር(ዝ፣ 4)` then leaves `ዝ` holding
  * `ምንም`, which fails loudly instead of looking like it worked (§4.5).
  */
 function createBuiltins(interpreter: Interpreter): Map<string, Value> {
@@ -1136,9 +1136,9 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     interpreter.fail(AH3002, at, err.illegalUnary('"ርዝመት"', typeName(value)));
   });
 
-  define('አዋህድ', (args, at) => {
-    arity('አዋህድ', args, 2, at);
-    expectList('አዋህድ', args, at).items.push(args[1] as Value);
+  define('ጨምር', (args, at) => {
+    arity('ጨምር', args, 2, at);
+    expectList('ጨምር', args, at).items.push(args[1] as Value);
     return NOTHING;
   });
 
@@ -1157,10 +1157,10 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return NOTHING;
   });
 
-  define('ቅጂ', (args, at) => {
-    arity('ቅጂ', args, 1, at);
+  define('ቅጂ_አድርግ', (args, at) => {
+    arity('ቅጂ_አድርግ', args, 1, at);
     // Shallow: a nested list is still shared (§4.5).
-    return list([...expectList('ቅጂ', args, at).items]);
+    return list([...expectList('ቅጂ_አድርግ', args, at).items]);
   });
 
   define('አይነት', (args, at) => {
@@ -1186,12 +1186,12 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
   // named for the direction they go in.
   // -------------------------------------------------------------------------
 
-  define('ወደቁጥር', (args, at) => {
-    arity('ወደቁጥር', args, 1, at);
+  define('ወደ_ቁጥር', (args, at) => {
+    arity('ወደ_ቁጥር', args, 1, at);
     const value = args[0] as Value;
     if (value.kind === 'number') return value;
     if (value.kind !== 'string') {
-      interpreter.fail(AH3002, at, err.illegalUnary('"ወደቁጥር"', typeName(value)));
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደ_ቁጥር"', typeName(value)));
     }
     const parsed = parseNumericText(value.value);
     // Loudly, not as `ምንም`: a calculator that quietly computed with nothing
@@ -1200,19 +1200,19 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return num(parsed);
   });
 
-  define('ወደጽሁፍ', (args, at) => {
-    arity('ወደጽሁፍ', args, 1, at);
+  define('ወደ_ጽሁፍ', (args, at) => {
+    arity('ወደ_ጽሁፍ', args, 1, at);
     // Exactly what `ጻፍ` would have printed, so there is one rendering to learn.
     return str(render(args[0] as Value));
   });
 
-  define('ቁጥርነው', (args, at) => {
-    arity('ቁጥርነው', args, 1, at);
+  define('ቁጥር_ነው', (args, at) => {
+    arity('ቁጥር_ነው', args, 1, at);
     const value = args[0] as Value;
     if (value.kind === 'number') return bool(true);
     if (value.kind !== 'string') return bool(false);
     // Never fails, for anything: its whole job is to be the guard in front of
-    // `ወደቁጥር`, and a guard that can itself raise is no guard.
+    // `ወደ_ቁጥር`, and a guard that can itself raise is no guard.
     return bool(parseNumericText(value.value) !== null);
   });
 
@@ -1225,8 +1225,8 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
   // and check its output (SITE.md §2).
   // -------------------------------------------------------------------------
 
-  define('አጋጣሚ', (args, at) => {
-    arity('አጋጣሚ', args, 2, at);
+  define('ዘፈቀደ_ቁጥር', (args, at) => {
+    arity('ዘፈቀደ_ቁጥር', args, 2, at);
     const low = args[0] as Value;
     const high = args[1] as Value;
     if (low.kind !== 'number' || high.kind !== 'number') {
@@ -1259,12 +1259,12 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     });
   };
 
-  numeric('ወደታች', Math.floor);
-  numeric('ወደላይ', Math.ceil);
-  // Half goes up, toward positive infinity, so አቅርብ(2.5) is 3 and
-  // አቅርብ(0 - 2.5) is -2. Documented in §8.7 rather than left to be discovered.
-  numeric('አቅርብ', Math.round);
-  numeric('ፍጹም', Math.abs);
+  numeric('ወለል_ዋጋ', Math.floor);
+  numeric('ጣሪያ_ዋጋ', Math.ceil);
+  // Half goes up, toward positive infinity, so ቅርብ_ሙሉ_ቁጥር(2.5) is 3 and
+  // ቅርብ_ሙሉ_ቁጥር(0 - 2.5) is -2. Documented in §8.7 rather than left to be discovered.
+  numeric('ቅርብ_ሙሉ_ቁጥር', Math.round);
+  numeric('ፍጹም_ዋጋ', Math.abs);
 
   // -------------------------------------------------------------------------
   // Text
@@ -1281,7 +1281,7 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
 
     // One argument: split on runs of whitespace and drop the empties, which is
     // what reading words off a line of input wants. Leading and trailing
-    // spaces then cost nothing, as they do for `ወደቁጥር` (§8.3).
+    // spaces then cost nothing, as they do for `ወደ_ቁጥር` (§8.3).
     if (args.length === 1) {
       const trimmed = trimText(text.value);
       return list(
@@ -1301,17 +1301,17 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return list(text.value.split(separator.value).map((part) => str(part)));
   });
 
-  define('አገናኝ', (args, at) => {
+  define('ጽሁፍ_አድርግ', (args, at) => {
     if (args.length < 1 || args.length > 2) {
-      interpreter.fail(AH3010, at, err.argumentCount('አገናኝ', 2, args.length));
+      interpreter.fail(AH3010, at, err.argumentCount('ጽሁፍ_አድርግ', 2, args.length));
     }
-    const items = expectList('አገናኝ', args, at).items;
+    const items = expectList('ጽሁፍ_አድርግ', args, at).items;
 
     let separator = ' ';
     if (args.length === 2) {
       const given = args[1] as Value;
       if (given.kind !== 'string') {
-        interpreter.fail(AH3002, at, err.illegalUnary('"አገናኝ"', typeName(given)));
+        interpreter.fail(AH3002, at, err.illegalUnary('"ጽሁፍ_አድርግ"', typeName(given)));
       }
       separator = given.value;
     }
@@ -1332,11 +1332,11 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return str(trimText(text.value));
   });
 
-  define('ወደግዕዝ', (args, at) => {
-    arity('ወደግዕዝ', args, 1, at);
+  define('ወደ_ግዕዝ', (args, at) => {
+    arity('ወደ_ግዕዝ', args, 1, at);
     const value = args[0] as Value;
     if (value.kind !== 'number') {
-      interpreter.fail(AH3002, at, err.illegalUnary('"ወደግዕዝ"', typeName(value)));
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደ_ግዕዝ"', typeName(value)));
     }
     const written = writeGeezNumeral(value.value);
     // §3.4.1 reads Ge'ez numerals; this is the other direction, so the
@@ -1395,9 +1395,9 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return dateList(gregorianToEthiopic({ year, month, day }));
   });
 
-  define('ወርመጠሪያ', (args, at) => {
-    arity('ወርመጠሪያ', args, 1, at);
-    const month = whole('ወርመጠሪያ', args, 0, at);
+  define('ወር_መጠሪያ', (args, at) => {
+    arity('ወር_መጠሪያ', args, 1, at);
+    const month = whole('ወር_መጠሪያ', args, 0, at);
     if (!Number.isInteger(month) || month < 1 || month > 13) {
       interpreter.fail(AH3022, at, err.badMonthNumber(render(num(month))));
     }
@@ -1410,7 +1410,7 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     if (seed.kind !== 'number') {
       interpreter.fail(AH3002, at, err.illegalUnary('"ዘር"', typeName(seed)));
     }
-    // An imperative, like `አዋህድ` and `ሰርዝ`: it changes something and hands
+    // An imperative, like `ጨምር` and `ሰርዝ`: it changes something and hands
     // back `ምንም`, so `ሀ = ዘር(5)` fails loudly instead of looking useful.
     interpreter.reseed(seed.value);
     return NOTHING;

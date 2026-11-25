@@ -16,8 +16,8 @@
 ጻፍ(ከፍተኛው(ዝ)፣ ዝቅተኛው(ዝ))
 
 # ደርድር and ገልብጥ are imperatives, so they change the list and return ምንም
-# (§4.5). A sorted copy takes ቅጂ first.
-ተደርድሯል = ቅጂ(ዝ)
+# (§4.5). A sorted copy takes ቅጂ_አድርግ first.
+ተደርድሯል = ቅጂ_አድርግ(ዝ)
 ደርድር(ተደርድሯል)
 ጻፍ(ተደርድሯል)
 ጻፍ(ዝ)

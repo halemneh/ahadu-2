@@ -2,4 +2,4 @@
 # with nothing standing for none — so zero has no spelling (§8.7). That is a
 # fact about the numerals, not a gap in the implementation.
 # expect-error: AH3021 at 5:4
-ጻፍ(ወደግዕዝ(0))
+ጻፍ(ወደ_ግዕዝ(0))

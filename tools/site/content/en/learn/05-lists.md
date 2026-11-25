@@ -82,7 +82,7 @@ A collection **can be changed**.
 ቁጥሮች[0] = 99
 ጻፍ(ቁጥሮች)
 
-አዋህድ(ቁጥሮች፣ 4)
+ጨምር(ቁጥሮች፣ 4)
 ጻፍ(ቁጥሮች)
 
 ሰርዝ(ቁጥሮች፣ 0)
@@ -95,7 +95,7 @@ A collection **can be changed**.
 [2፣ 3፣ 4]
 ```
 
-`አዋህድ` appends and `ሰርዝ` removes by position.
+`ጨምር` appends and `ሰርዝ` removes by position.
 
 Text, by contrast, cannot be changed in place. `ስም[0] = "ለ"` is an error;
 you build a new piece of text instead.

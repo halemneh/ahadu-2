@@ -1,7 +1,7 @@
 ---
 id: amharic-numbers-and-dates
 title: Amharic numbers and dates
-summary: ወደግዕዝ, ዛሬ, and the thirteen months
+summary: ወደ_ግዕዝ, ዛሬ, and the thirteen months
 order: 67
 ---
 
@@ -10,10 +10,10 @@ Two things Ahadu can do that no other programming language can.
 ## Writing Ge'ez numerals
 
 You have been able to *type* Amharic numerals since lesson two — `፳፩` is a
-perfectly good `21`. `ወደግዕዝ` goes the other way:
+perfectly good `21`. `ወደ_ግዕዝ` goes the other way:
 
 ```ahadu
-ጻፍ(ወደግዕዝ(1)፣ ወደግዕዝ(7)፣ ወደግዕዝ(10)፣ ወደግዕዝ(100))
+ጻፍ(ወደ_ግዕዝ(1)፣ ወደ_ግዕዝ(7)፣ ወደ_ግዕዝ(10)፣ ወደ_ግዕዝ(100))
 ```
 
 ```ውጤት
@@ -23,8 +23,8 @@ perfectly good `21`. `ወደግዕዝ` goes the other way:
 The system is additive rather than positional: `፫፻፳፩` is 3×100 + 20 + 1.
 
 ```ahadu
-ጻፍ(ወደግዕዝ(2017))
-ጻፍ(ወደቁጥር("፳፩") + 1)
+ጻፍ(ወደ_ግዕዝ(2017))
+ጻፍ(ወደ_ቁጥር("፳፩") + 1)
 ```
 
 ```ውጤት
@@ -32,12 +32,12 @@ The system is additive rather than positional: `፫፻፳፩` is 3×100 + 20 + 1
 22
 ```
 
-`ወደቁጥር` and `ወደግዕዝ` are each other's opposite, so one undoes the other.
+`ወደ_ቁጥር` and `ወደ_ግዕዝ` are each other's opposite, so one undoes the other.
 
 ### There is no ፼ for zero
 
 ```ahadu error=AH3021
-ጻፍ(ወደግዕዝ(0))
+ጻፍ(ወደ_ግዕዝ(0))
 ```
 
 Ge'ez numerals are built from symbols that each carry a value, added
@@ -54,7 +54,7 @@ five — or six, every fourth year.
 ```ahadu
 ወር = 1
 ወር <= 13 እስከሆነ ድረስ፦
-    ጻፍ(ወደግዕዝ(ወር)፣ ወርመጠሪያ(ወር))
+    ጻፍ(ወደ_ግዕዝ(ወር)፣ ወር_መጠሪያ(ወር))
     ወር = ወር + 1
 ```
 
@@ -78,7 +78,7 @@ five — or six, every fourth year.
 
 ```ahadu
 ቀኑ = ዛሬ()
-ጻፍ(ወርመጠሪያ(ቀኑ[1]) + " " + ወደግዕዝ(ቀኑ[2]) + " ቀን " + ወደግዕዝ(ቀኑ[0]))
+ጻፍ(ወር_መጠሪያ(ቀኑ[1]) + " " + ወደ_ግዕዝ(ቀኑ[2]) + " ቀን " + ወደ_ግዕዝ(ቀኑ[0]))
 ```
 
 This page deliberately does not promise you an answer for that one. Press Run
@@ -144,7 +144,7 @@ Ge'ez numerals.
 ```ahadu
 ቀኑ = ከግሪጎሪ(2024፣ 9፣ 11)
 
-ጻፍ("ዛሬ " + ወርመጠሪያ(ቀኑ[1]) + " " + ወደግዕዝ(ቀኑ[2]) + " ቀን " + ወደግዕዝ(ቀኑ[0]) + " ዓ.ም. ነው።")
+ጻፍ("ዛሬ " + ወር_መጠሪያ(ቀኑ[1]) + " " + ወደ_ግዕዝ(ቀኑ[2]) + " ቀን " + ወደ_ግዕዝ(ቀኑ[0]) + " ዓ.ም. ነው።")
 ```
 
 ```ውጤት

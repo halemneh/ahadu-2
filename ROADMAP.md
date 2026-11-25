@@ -52,7 +52,7 @@ opener, which only the parser can see; that is `AH2015` now.
 
 Values including `እውነታ` and `ምንም`, presence-based scope lookup (C19), a real
 return signal (C17), immutable strings and mutable list references with
-concatenating `+` and in-place `አዋህድ` / `ሰርዝ` (C15, C32), slices defaulting to
+concatenating `+` and in-place `ጨምር` / `ሰርዝ` (C15, C32), slices defaulting to
 `n` (C16), dynamic method dispatch with constructor inheritance (C18), the
 seven built-ins (C13, C28), and the full `AH3xxx` catalogue with tracebacks.
 
@@ -173,11 +173,11 @@ M6 shipped a site that taught a language in which a calculator could not be
 written: `አንብብ` returns `ጽሁፍ`, `+` refuses to mix a `ጽሁፍ` with a `ቁጥር`, and
 nothing converted between them. M7 is what closed that.
 
-- **Conversion and chance** — `ወደቁጥር`, `ወደጽሁፍ`, `ቁጥርነው`, `አጋጣሚ`, `ዘር`.
+- **Conversion and chance** — `ወደ_ቁጥር`, `ወደ_ጽሁፍ`, `ቁጥር_ነው`, `ዘፈቀደ_ቁጥር`, `ዘር`.
   Randomness is seeded and its default seed is fixed, so the site can keep
   running every snippet at build time (LANGUAGE.md §8.4).
 - **`ለእያንዳንዱ`** (§7.4), which left the reserved list below. The iteration is
-  a snapshot of the collection, so `አዋህድ` in the body cannot loop forever and
+  a snapshot of the collection, so `ጨምር` in the body cannot loop forever and
   `ሰርዝ` cannot skip an element.
 - **A standard library**, written in Ahadu and run as its own program before
   the learner's, so their line numbers and step budget stay their own

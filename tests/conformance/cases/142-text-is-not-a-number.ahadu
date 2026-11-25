@@ -1,4 +1,4 @@
-# ወደቁጥር fails loudly rather than returning ምንም: a calculator that quietly
+# ወደ_ቁጥር fails loudly rather than returning ምንም: a calculator that quietly
 # computed with nothing would print an answer and be believed (§8.2).
 # expect-error: AH3019 at 4:4
-ጻፍ(ወደቁጥር("ሰላም"))
+ጻፍ(ወደ_ቁጥር("ሰላም"))

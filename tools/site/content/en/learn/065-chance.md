@@ -1,27 +1,27 @@
 ---
 id: chance
 title: Chance
-summary: አጋጣሚ, ዘር, and why this page can show you the answer
+summary: ዘፈቀደ_ቁጥር, ዘር, and why this page can show you the answer
 order: 65
 ---
 
-`አጋጣሚ` picks a number between two you give it.
+`ዘፈቀደ_ቁጥር` picks a number between two you give it.
 
 ```ahadu
-ጻፍ(አጋጣሚ(1፣ 6))
+ጻፍ(ዘፈቀደ_ቁጥር(1፣ 6))
 ```
 
 ```ውጤት
 4
 ```
 
-Both ends are included, so `አጋጣሚ(1፣ 6)` really is a die — all six faces, not
+Both ends are included, so `ዘፈቀደ_ቁጥር(1፣ 6)` really is a die — all six faces, not
 five. Roll it a few times:
 
 ```ahadu
 ዙር = 1
 ዙር <= 5 እስከሆነ ድረስ፦
-    ጻፍ(አጋጣሚ(1፣ 6))
+    ጻፍ(ዘፈቀደ_ቁጥር(1፣ 6))
     ዙር = ዙር + 1
 ```
 
@@ -38,7 +38,7 @@ five. Roll it a few times:
 That should bother you. If it is random, how can this page say the answer in
 advance?
 
-Because `አጋጣሚ` is not quite random. It follows a sequence worked out from a
+Because `ዘፈቀደ_ቁጥር` is not quite random. It follows a sequence worked out from a
 starting number called a **seed**, and whoever runs your program chooses the
 seed. The playground and `ahadu` at a terminal use the clock, so you get
 different rolls every time. **This page uses a fixed seed** — which is exactly
@@ -58,10 +58,10 @@ and the playground disagree on purpose.
 
 ```ahadu
 ዘር(7)
-ጻፍ(አጋጣሚ(1፣ 100)፣ አጋጣሚ(1፣ 100))
+ጻፍ(ዘፈቀደ_ቁጥር(1፣ 100)፣ ዘፈቀደ_ቁጥር(1፣ 100))
 
 ዘር(7)
-ጻፍ(አጋጣሚ(1፣ 100)፣ አጋጣሚ(1፣ 100))
+ጻፍ(ዘፈቀደ_ቁጥር(1፣ 100)፣ ዘፈቀደ_ቁጥር(1፣ 100))
 ```
 
 ```ውጤት
@@ -73,7 +73,7 @@ The same seed, the same numbers. This is more useful than it looks: a game
 that misbehaves is much easier to fix when you can make it misbehave the same
 way twice.
 
-`ዘር` is a command, like `አዋህድ` — it changes something and gives back `ምንም`.
+`ዘር` is a command, like `ጨምር` — it changes something and gives back `ምንም`.
 So `ሀ = ዘር(7)` leaves `ሀ` holding `ምንም`, not a number.
 
 ## Counting what comes up
@@ -83,7 +83,7 @@ So `ሀ = ዘር(7)` leaves `ሀ` holding `ምንም`, not a number.
 ዙር = 1
 
 ዙር <= 60 እስከሆነ ድረስ፦
-    ጎን = አጋጣሚ(1፣ 6)
+    ጎን = ዘፈቀደ_ቁጥር(1፣ 6)
     ጎኖች[ጎን - 1] = ጎኖች[ጎን - 1] + 1
     ዙር = ዙር + 1
 
@@ -108,7 +108,7 @@ tries, and tell them after each guess whether the number is higher or lower.
 <summary>Show the answer</summary>
 
 ```ahadu
-ሚስጥር = አጋጣሚ(1፣ 20)
+ሚስጥር = ዘፈቀደ_ቁጥር(1፣ 20)
 ቀሪ = 5
 አገኘ = ሃሰት
 
@@ -118,10 +118,10 @@ tries, and tell them after each guess whether the number is higher or lower.
     መልስ = አንብብ("ግምትህ፦ ")
     ቀሪ = ቀሪ - 1
 
-    ተቃርኖ ቁጥርነው(መልስ) ከሆነ፦
+    ተቃርኖ ቁጥር_ነው(መልስ) ከሆነ፦
         ጻፍ("ቁጥር ጻፍ።")
     አለበለዚያ፦
-        ግምት = ወደቁጥር(መልስ)
+        ግምት = ወደ_ቁጥር(መልስ)
         ግምት == ሚስጥር ከሆነ፦
             አገኘ = እውነት
         ግን ግምት < ሚስጥር ከሆነ፦

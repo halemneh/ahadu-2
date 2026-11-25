@@ -134,7 +134,7 @@ export function stepLimitExceeded(limit: number): string {
 }
 
 /**
- * The message for `ወደቁጥር` on text that is not a number (§8).
+ * The message for `ወደ_ቁጥር` on text that is not a number (§8).
  *
  * The text is quoted back, because the usual cause is invisible: a space, a
  * `፡` typed for a colon, or an empty prompt someone pressed Enter through.
@@ -146,16 +146,16 @@ export function notNumericText(text: string): string {
   return `"${text}" ቁጥር አይደለም።`;
 }
 
-/** The message for `አጋጣሚ` given bounds it cannot draw from (§8). */
+/** The message for `ዘፈቀደ_ቁጥር` given bounds it cannot draw from (§8). */
 export function badRandomRange(low: string, high: string): string {
-  return `አጋጣሚ ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
+  return `ዘፈቀደ_ቁጥር ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
 }
 
 /**
  * The message for calling a name that used to be a built-in (§8, AH3013).
  *
  * Built-ins are ordinary shadowable bindings, and several are nouns —
- * `ርዝመት`, `ቅጂ`, `አይነት`, `ዘር` — so assigning to one by accident is easy and
+ * `ርዝመት`, `ቅጂ_አድርግ`, `አይነት`, `ዘር` — so assigning to one by accident is easy and
  * the consequence appears at the *next* call, somewhere else entirely. Naming
  * the cause is the difference between a two-second fix and a mystery.
  */
@@ -178,7 +178,7 @@ export function insideLibrary(name: string, message: string): string {
 }
 
 /**
- * The message for `ወደግዕዝ` on a number with no Ge'ez spelling (§8.7).
+ * The message for `ወደ_ግዕዝ` on a number with no Ge'ez spelling (§8.7).
  *
  * Says *why* rather than only that it failed. Zero is the interesting case:
  * the system is additive, built from symbols that each carry a value, with

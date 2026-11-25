@@ -1,7 +1,7 @@
 # The loop visits the elements the collection had when it began (§7.4).
 #
 # Walking by live index is the obvious implementation and it has two failure
-# modes a beginner cannot debug: አዋህድ in the body never terminates, and ሰርዝ
+# modes a beginner cannot debug: ጨምር in the body never terminates, and ሰርዝ
 # in the body silently skips the next element. The list stays mutable and
 # shared — only the iteration is fixed.
 # expect: [1፣ 2፣ 10፣ 20]
@@ -9,13 +9,13 @@
 # expect: []
 ዝ = [1፣ 2]
 ዝ ለእያንዳንዱ ቁ፦
-    አዋህድ(ዝ፣ ቁ * 10)
+    ጨምር(ዝ፣ ቁ * 10)
 ጻፍ(ዝ)
 
 ሁ = [1፣ 2፣ 3]
 ታይተዋል = []
 ሁ ለእያንዳንዱ ቁ፦
-    አዋህድ(ታይተዋል፣ ቁ)
+    ጨምር(ታይተዋል፣ ቁ)
     ሰርዝ(ሁ፣ 0)
 ጻፍ(ታይተዋል)
 ጻፍ(ሁ)

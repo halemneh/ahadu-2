@@ -45,12 +45,12 @@ typed:
 protecting you here. `"22" + 1` has no sensible answer: should it be `23`, or
 `"221"`?
 
-## ወደቁጥር
+## ወደ_ቁጥር
 
 So you say which one you meant.
 
 ```ahadu
-ዕድሜ = ወደቁጥር(አንብብ("ዕድሜ፦ "))
+ዕድሜ = ወደ_ቁጥር(አንብብ("ዕድሜ፦ "))
 ጻፍ("በሚቀጥለው ዓመት"፣ ዕድሜ + 1)
 ```
 
@@ -62,16 +62,16 @@ So you say which one you meant.
 ዕድሜ፦ በሚቀጥለው ዓመት 23
 ```
 
-`ወደቁጥር` takes text and gives you the number it spells. It accepts spaces
+`ወደ_ቁጥር` takes text and gives you the number it spells. It accepts spaces
 around it, so `" 22 "` is fine — someone typing at a prompt should not have
 to be careful. It also reads Amharic's own numerals, so `፳፪` works too.
 
-And `ወደጽሁፍ` goes the other way, for when you want a number inside a longer
+And `ወደ_ጽሁፍ` goes the other way, for when you want a number inside a longer
 piece of text:
 
 ```ahadu
 ነጥብ = 17
-ጻፍ("ነጥብህ " + ወደጽሁፍ(ነጥብ) + " ነው።")
+ጻፍ("ነጥብህ " + ወደ_ጽሁፍ(ነጥብ) + " ነው።")
 ```
 
 ```ውጤት
@@ -79,22 +79,22 @@ piece of text:
 ```
 
 > You do not always need it. `ጻፍ("ነጥብህ"፣ ነጥብ፣ "ነው።")` prints the same thing,
-> because `ጻፍ` takes many values and puts a space between them. `ወደጽሁፍ` is
+> because `ጻፍ` takes many values and puts a space between them. `ወደ_ጽሁፍ` is
 > for when you are *building* one piece of text.
 
 ## When they do not type a number
 
-`ወደቁጥር("ሰላም")` is an error, and that is on purpose — a calculator that
+`ወደ_ቁጥር("ሰላም")` is an error, and that is on purpose — a calculator that
 quietly carried on with nothing would print an answer and you would believe
 it. But an error stops the program, which is not what you want either.
 
-Ask first. `ቁጥርነው` tells you whether `ወደቁጥር` would work:
+Ask first. `ቁጥር_ነው` tells you whether `ወደ_ቁጥር` would work:
 
 ```ahadu
 መልስ = አንብብ("ቁጥር ጻፍ፦ ")
 
-ቁጥርነው(መልስ) ከሆነ፦
-    ጻፍ("እጥፉ"፣ ወደቁጥር(መልስ) * 2)
+ቁጥር_ነው(መልስ) ከሆነ፦
+    ጻፍ("እጥፉ"፣ ወደ_ቁጥር(መልስ) * 2)
 አለበለዚያ፦
     ጻፍ("ያ ቁጥር አይደለም።")
 ```
@@ -107,7 +107,7 @@ Ask first. `ቁጥርነው` tells you whether `ወደቁጥር` would work:
 ቁጥር ጻፍ፦ ያ ቁጥር አይደለም።
 ```
 
-`ቁጥርነው` never fails, whatever you hand it. That is its whole job: a guard
+`ቁጥር_ነው` never fails, whatever you hand it. That is its whole job: a guard
 that could itself stop the program would be no guard at all.
 
 ## Exercise
@@ -122,8 +122,8 @@ so instead.
 አንደኛው = አንብብ("አንደኛው፦ ")
 ሁለተኛው = አንብብ("ሁለተኛው፦ ")
 
-ቁጥርነው(አንደኛው) እና ቁጥርነው(ሁለተኛው) ከሆነ፦
-    ድምሩ = ወደቁጥር(አንደኛው) + ወደቁጥር(ሁለተኛው)
+ቁጥር_ነው(አንደኛው) እና ቁጥር_ነው(ሁለተኛው) ከሆነ፦
+    ድምሩ = ወደ_ቁጥር(አንደኛው) + ወደ_ቁጥር(ሁለተኛው)
     ጻፍ("ድምር፦"፣ ድምሩ)
 አለበለዚያ፦
     ጻፍ("ሁለቱም ቁጥር መሆን አለባቸው።")

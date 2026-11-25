@@ -124,18 +124,18 @@ describe('the built-ins (§8.8)', () => {
     expect(out('ጻፍ(ዛሬ())')).toEqual(out('ጻፍ(ዛሬ())'));
   });
 
-  it('ወርመጠሪያ names each month', () => {
-    expect(out('ጻፍ(ወርመጠሪያ(1)፣ ወርመጠሪያ(3)፣ ወርመጠሪያ(13))')).toEqual(['መስከረም ኅዳር ጳጉሜ']);
+  it('ወር_መጠሪያ names each month', () => {
+    expect(out('ጻፍ(ወር_መጠሪያ(1)፣ ወር_መጠሪያ(3)፣ ወር_መጠሪያ(13))')).toEqual(['መስከረም ኅዳር ጳጉሜ']);
   });
 
-  it('ወርመጠሪያ rejects a month that does not exist', () => {
+  it('ወር_መጠሪያ rejects a month that does not exist', () => {
     for (const month of ['0', '14', '1.5']) {
-      expect(code(`ጻፍ(ወርመጠሪያ(${month}))`), month).toBe('AH3022');
+      expect(code(`ጻፍ(ወር_መጠሪያ(${month}))`), month).toBe('AH3022');
     }
   });
 
   it('says how many months the year has, which is the surprising part', () => {
-    expect(message('ጻፍ(ወርመጠሪያ(14))')).toContain('13');
+    expect(message('ጻፍ(ወር_መጠሪያ(14))')).toContain('13');
   });
 
   it('ከግሪጎሪ refuses a date that does not exist', () => {
@@ -208,16 +208,16 @@ describe('Ge’ez numerals out (§8.7)', () => {
   it('says why zero has none, because that is worth learning', () => {
     // The system is additive, built from symbols that each carry a value,
     // with nothing standing for none.
-    const text = message('ጻፍ(ወደግዕዝ(0))');
+    const text = message('ጻፍ(ወደ_ግዕዝ(0))');
     expect(text).toContain('ዜሮ');
     expect(text).toContain('፩');
   });
 
   it('round-trips through the language itself', () => {
-    expect(out('ጻፍ(ወደቁጥር(ወደግዕዝ(4567)) == 4567)')).toEqual(['እውነት']);
+    expect(out('ጻፍ(ወደ_ቁጥር(ወደ_ግዕዝ(4567)) == 4567)')).toEqual(['እውነት']);
   });
 
   it('is AH3021 for a number with no spelling', () => {
-    expect(code('ጻፍ(ወደግዕዝ(0))')).toBe('AH3021');
+    expect(code('ጻፍ(ወደ_ግዕዝ(0))')).toBe('AH3021');
   });
 });

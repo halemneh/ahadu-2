@@ -95,7 +95,7 @@ export const CHAINED_ASSIGNMENT = 'ሰንሰለት ምደባ አይቻልም። 
 
 export const UNEXPECTED_AFTER_STATEMENT = 'ከትእዛዙ በኋላ ያልተጠበቀ ነገር አለ።';
 
-export const SLICE_ASSIGNMENT = 'ቁራጭ መቀየር አይቻልም። "አዋህድ" ወይም "ሰርዝ" ይጠቀሙ።';
+export const SLICE_ASSIGNMENT = 'ቁራጭ መቀየር አይቻልም። "ጨምር" ወይም "ሰርዝ" ይጠቀሙ።';
 
 export const INVALID_TARGET = 'ለዚህ ነገር ዋጋ መስጠት አይቻልም።';
 

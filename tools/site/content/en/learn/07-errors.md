@@ -70,7 +70,7 @@ divisor is zero is only known once it runs. That is exactly why it is an AH3.
 | `AH3002` | an operation the types do not allow — adding text to a number |
 | `AH3003` | division by zero |
 | `AH3008` | a position outside the collection was asked for |
-| `AH3019` | `ወደቁጥር` was given text that is not a number |
+| `AH3019` | `ወደ_ቁጥር` was given text that is not a number |
 | `AH1002` | the indentation at the start of a line is wrong |
 | `AH2002` | a bracket was never closed |
 
@@ -82,11 +82,11 @@ The full list is in the [reference](/en/reference/).
 they account for most of a beginner's errors:
 
 ```ahadu error=AH3019
-ጻፍ(ወደቁጥር("ሰላም"))
+ጻፍ(ወደ_ቁጥር("ሰላም"))
 ```
 
-`ወደቁጥር` was handed something that does not spell a number. Guard with
-`ቁጥርነው` before converting — the "Asking a question" lesson shows how.
+`ወደ_ቁጥር` was handed something that does not spell a number. Guard with
+`ቁጥር_ነው` before converting — the "Asking a question" lesson shows how.
 
 ### When a name used to be a function
 

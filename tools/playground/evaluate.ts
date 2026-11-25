@@ -29,7 +29,7 @@ export interface RunRequest {
   readonly input: readonly string[];
   readonly maxSteps: number;
   /**
-   * Starting seed for `አጋጣሚ`, or omitted for the interpreter's fixed default.
+   * Starting seed for `ዘፈቀደ_ቁጥር`, or omitted for the interpreter's fixed default.
    *
    * Omitting it is the safe direction: the site's snippet checker calls this
    * function at build time and compares the output to what the page claims

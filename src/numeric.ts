@@ -1,7 +1,7 @@
 /**
  * Numbers and their written forms (LANGUAGE.md §8.3, §8.7).
  *
- * The lexer already decides what a number literal looks like. `ወደቁጥር` has to
+ * The lexer already decides what a number literal looks like. `ወደ_ቁጥር` has to
  * answer the same question about text that arrives at runtime — from `አንብብ`,
  * nearly always — and the two answers must agree, or the language would accept
  * `፫፻፳፩` written in a file and reject the same digits typed at a prompt.
@@ -19,7 +19,7 @@ import { isDigit, isGeezNumeral } from './lexer/constants.js';
 import { readGeezNumeral } from './lexer/geez.js';
 
 /**
- * Whitespace `ወደቁጥር` ignores at either end.
+ * Whitespace `ወደ_ቁጥር` ignores at either end.
  *
  * Someone typing at a prompt adds a space without meaning anything by it, and
  * refusing `" 7 "` would teach them nothing except to distrust the prompt.
@@ -31,8 +31,8 @@ const TRIM = /^[\s ]+|[\s ]+$/gu;
 /**
  * Strips the whitespace Ahadu ignores from both ends.
  *
- * Exported so `ከርክም` and `ወደቁጥር` agree about what whitespace is. Two
- * definitions would eventually disagree, and then `ወደቁጥር(ከርክም(ግቤት))` would
+ * Exported so `ከርክም` and `ወደ_ቁጥር` agree about what whitespace is. Two
+ * definitions would eventually disagree, and then `ወደ_ቁጥር(ከርክም(ግቤት))` would
  * fail on something `ከርክም` claimed to have cleaned.
  */
 export function trimText(text: string): string {
@@ -64,8 +64,8 @@ function readGeez(text: string): number | null {
  * Reads text as a number, or returns null when it is not one.
  *
  * Null rather than a thrown error, because both callers want to decide for
- * themselves what "not a number" means: `ወደቁጥር` raises `AH3019` and
- * `ቁጥርነው` answers `ሃሰት`.
+ * themselves what "not a number" means: `ወደ_ቁጥር` raises `AH3019` and
+ * `ቁጥር_ነው` answers `ሃሰት`.
  */
 export function parseNumericText(text: string): number | null {
   const trimmed = text.replace(TRIM, '');
@@ -78,7 +78,7 @@ export function parseNumericText(text: string): number | null {
   const magnitude = isGeezNumeral(digits[0] as string) ? readGeez(digits) : readDecimal(digits);
   if (magnitude === null || !Number.isFinite(magnitude)) return null;
 
-  // `-0` is 0: the language has one zero, and `ወደቁጥር("-0") == 0` must hold.
+  // `-0` is 0: the language has one zero, and `ወደ_ቁጥር("-0") == 0` must hold.
   return negative ? -magnitude || 0 : magnitude;
 }
 
@@ -125,7 +125,7 @@ function writeHundreds(value: number): string {
  * has no Ge'ez numeral** — the system is additive, built from symbols that
  * each carry a value, with nothing standing for none — and neither do
  * negatives or fractions. That is a fact about the numerals rather than a
- * limitation of this function, so `ወደግዕዝ` reports it (`AH3021`) instead of
+ * limitation of this function, so `ወደ_ግዕዝ` reports it (`AH3021`) instead of
  * inventing a spelling.
  *
  * The inverse of `readGeezNumeral`, and a test round-trips every value in a

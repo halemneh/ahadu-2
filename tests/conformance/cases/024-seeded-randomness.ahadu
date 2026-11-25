@@ -1,4 +1,4 @@
-# አጋጣሚ is seeded, so the same ዘር repeats exactly (§8.3). This case asserts
+# ዘፈቀደ_ቁጥር is seeded, so the same ዘር repeats exactly (§8.3). This case asserts
 # properties, not particular numbers: the numbers belong to an implementation,
 # the properties belong to the language.
 # expect: እውነት
@@ -6,19 +6,19 @@
 # expect: እውነት
 # expect: 4
 ዘር(፩)
-ሀ = አጋጣሚ(1፣ 6)
-ለ = አጋጣሚ(1፣ 6)
+ሀ = ዘፈቀደ_ቁጥር(1፣ 6)
+ለ = ዘፈቀደ_ቁጥር(1፣ 6)
 
 ዘር(1)
-ሐ = አጋጣሚ(1፣ 6)
-መ = አጋጣሚ(1፣ 6)
+ሐ = ዘፈቀደ_ቁጥር(1፣ 6)
+መ = ዘፈቀደ_ቁጥር(1፣ 6)
 
 # The same seed gives the same sequence.
 ጻፍ(ሀ == ሐ እና ለ == መ)
 
-# Both ends are included, so አጋጣሚ(1፣ 6) is a die.
+# Both ends are included, so ዘፈቀደ_ቁጥር(1፣ 6) is a die.
 ጻፍ(ሀ >= 1 እና ሀ <= 6)
 
 # A single-value range is the only draw whose value is the language's business.
-ጻፍ(አጋጣሚ(4፣ 4) == 4)
-ጻፍ(አጋጣሚ(4፣ 4))
+ጻፍ(ዘፈቀደ_ቁጥር(4፣ 4) == 4)
+ጻፍ(ዘፈቀደ_ቁጥር(4፣ 4))

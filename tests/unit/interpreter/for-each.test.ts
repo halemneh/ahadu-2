@@ -94,7 +94,7 @@ describe('the loop variable lives in the enclosing scope (§5.3)', () => {
 describe('the iteration is a snapshot (§7.4)', () => {
   it('does not loop forever when the body appends', () => {
     // The whole reason for the rule: by-live-index, this never terminates.
-    expect(out(lines('ዝ = [1፣ 2]', 'ዝ ለእያንዳንዱ ቁ፦', '    አዋህድ(ዝ፣ ቁ * 10)', 'ጻፍ(ዝ)'))).toEqual([
+    expect(out(lines('ዝ = [1፣ 2]', 'ዝ ለእያንዳንዱ ቁ፦', '    ጨምር(ዝ፣ ቁ * 10)', 'ጻፍ(ዝ)'))).toEqual([
       '[1፣ 2፣ 10፣ 20]',
     ]);
   });
@@ -105,7 +105,7 @@ describe('the iteration is a snapshot (§7.4)', () => {
       'ሁ = [1፣ 2፣ 3]',
       'ታይተዋል = []',
       'ሁ ለእያንዳንዱ ቁ፦',
-      '    አዋህድ(ታይተዋል፣ ቁ)',
+      '    ጨምር(ታይተዋል፣ ቁ)',
       '    ሰርዝ(ሁ፣ 0)',
       'ጻፍ(ታይተዋል)',
       'ጻፍ(ሁ)',
@@ -119,7 +119,7 @@ describe('the iteration is a snapshot (§7.4)', () => {
   });
 
   it('hands out the same list object, not a copy of each element', () => {
-    const source = lines('ውስጥ = [1]', '[ውስጥ] ለእያንዳንዱ ዝ፦', '    አዋህድ(ዝ፣ 2)', 'ጻፍ(ውስጥ)');
+    const source = lines('ውስጥ = [1]', '[ውስጥ] ለእያንዳንዱ ዝ፦', '    ጨምር(ዝ፣ 2)', 'ጻፍ(ውስጥ)');
     expect(out(source)).toEqual(['[1፣ 2]']);
   });
 });

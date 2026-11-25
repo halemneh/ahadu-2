@@ -37,7 +37,7 @@ const USAGE = `አሃዱ — Ahadu 2.0
 
   --json                 machine-readable output
   --no-color             no colour, as NO_COLOR also does
-  --seed=<n>             fix what አጋጣሚ draws, so a run repeats exactly
+  --seed=<n>             fix what ዘፈቀደ_ቁጥር draws, so a run repeats exactly
   --help                 this message
 
 See spec/TOOLING.md for the full design, ROADMAP.md for what lands when.
@@ -51,7 +51,7 @@ interface Flags {
   readonly colors: Palette;
   readonly errorColors: Palette;
   /**
-   * The seed `አጋጣሚ` starts from.
+   * The seed `ዘፈቀደ_ቁጥር` starts from.
    *
    * A changing one unless `--seed=<n>` was given: running a program twice at
    * a terminal should roll different dice. The interpreter's own default is

@@ -66,13 +66,13 @@ element instead of telling you anything.
 [9፣ 4፣ 3፣ 1]
 ```
 
-`ደርድር` and `ገልብጥ` are commands — like `አዋህድ` and `ሰርዝ`, they change the
+`ደርድር` and `ገልብጥ` are commands — like `ጨምር` and `ሰርዝ`, they change the
 collection you give them and hand back `ምንም`. If you want to keep the
 original, sort a copy:
 
 ```ahadu
 ዋናው = [3፣ 9፣ 1]
-ተደርድሯል = ቅጂ(ዋናው)
+ተደርድሯል = ቅጂ_አድርግ(ዋናው)
 ደርድር(ተደርድሯል)
 
 ጻፍ("ዋናው፦"፣ ዋናው)
@@ -99,10 +99,10 @@ Division gives you a fraction, always:
 When you need a whole number, say which way to go:
 
 ```ahadu
-ጻፍ(ወደታች(7 / 2))
-ጻፍ(ወደላይ(7 / 2))
-ጻፍ(አቅርብ(3.5)፣ አቅርብ(3.4))
-ጻፍ(ፍጹም(0 - 7))
+ጻፍ(ወለል_ዋጋ(7 / 2))
+ጻፍ(ጣሪያ_ዋጋ(7 / 2))
+ጻፍ(ቅርብ_ሙሉ_ቁጥር(3.5)፣ ቅርብ_ሙሉ_ቁጥር(3.4))
+ጻፍ(ፍጹም_ዋጋ(0 - 7))
 ```
 
 ```ውጤት
@@ -112,13 +112,13 @@ When you need a whole number, say which way to go:
 7
 ```
 
-`ወደታች` rounds down, `ወደላይ` rounds up, `አቅርብ` goes to whichever is nearer,
-and `ፍጹም` gives a number's distance from zero — so it throws away the minus
+`ወለል_ዋጋ` rounds down, `ጣሪያ_ዋጋ` rounds up, `ቅርብ_ሙሉ_ቁጥር` goes to whichever is nearer,
+and `ፍጹም_ዋጋ` gives a number's distance from zero — so it throws away the minus
 sign.
 
 ## Splitting and joining text
 
-`ከፋፍል` breaks a piece of text apart, and `አገናኝ` puts a collection back
+`ከፋፍል` breaks a piece of text apart, and `ጽሁፍ_አድርግ` puts a collection back
 together:
 
 ```ahadu
@@ -127,7 +127,7 @@ together:
 
 ጻፍ(ርዝመት(ስሞች))
 ጻፍ(ስሞች[0])
-ጻፍ(አገናኝ(ስሞች፣ "፣ "))
+ጻፍ(ጽሁፍ_አድርግ(ስሞች፣ "፣ "))
 ```
 
 ```ውጤት
@@ -159,13 +159,13 @@ whatever somebody typed:
 [ሰላም]
 ```
 
-## A name for each value: ካርታ
+## A name for each value: መዝገብ
 
 A collection finds things by position. Sometimes you want to find them by
-name — an age for each person, a score for each team. That is a `ካርታ`.
+name — an age for each person, a score for each team. That is a `መዝገብ`.
 
 ```ahadu
-ዕድሜ = ካርታ()
+ዕድሜ = መዝገብ()
 
 ዕድሜ.አስገባ("አበበ"፣ 22)
 ዕድሜ.አስገባ("ከበደ"፣ 30)
@@ -187,7 +187,7 @@ name is in there, `አውጣ` takes a pair out, `ብዛት` counts them, and `�
 gives you all the names:
 
 ```ahadu
-ነጥብ = ካርታ()
+ነጥብ = መዝገብ()
 ነጥብ.አስገባ("ቀይ"፣ 3)
 ነጥብ.አስገባ("ሰማያዊ"፣ 5)
 
@@ -204,7 +204,7 @@ Storing the same name twice replaces the old value rather than adding a
 second one:
 
 ```ahadu
-ዕድሜ = ካርታ()
+ዕድሜ = መዝገብ()
 ዕድሜ.አስገባ("አበበ"፣ 22)
 ዕድሜ.አስገባ("አበበ"፣ 23)
 
@@ -234,11 +234,11 @@ Here is `ደምር`, exactly as the language defines it:
 ```
 
 That is not a translation of it — it is the code. `ደምር`, `ቁጠር`, `ፈልግ`,
-`ከፍተኛው`, `ዝቅተኛው`, `ደርድር`, `ገልብጥ` and `ካርታ` are all written in Ahadu, in
+`ከፍተኛው`, `ዝቅተኛው`, `ደርድር`, `ገልብጥ` and `መዝገብ` are all written in Ahadu, in
 loops and conditions you have already met. You can read every one of them,
 and if you wanted, you could have written them yourself.
 
-A few of the others — `ወደታች`, `ከፋፍል`, `ወደቁጥር` — are part of the language
+A few of the others — `ወለል_ዋጋ`, `ከፋፍል`, `ወደ_ቁጥር` — are part of the language
 itself rather than written in it, because they need to do things Ahadu cannot
 express.
 
@@ -255,8 +255,8 @@ their total, and the largest.
 ቁጥሮች = []
 
 ከፋፍል(መስመር) ለእያንዳንዱ ክፍል፦
-    ቁጥርነው(ክፍል) ከሆነ፦
-        አዋህድ(ቁጥሮች፣ ወደቁጥር(ክፍል))
+    ቁጥር_ነው(ክፍል) ከሆነ፦
+        ጨምር(ቁጥሮች፣ ወደ_ቁጥር(ክፍል))
 
 ርዝመት(ቁጥሮች) == 0 ከሆነ፦
     ጻፍ("ምንም ቁጥር አልተገኘም።")
