@@ -17,47 +17,12 @@ import { KEYWORDS } from '../../../src/lexer/constants.js';
 import { MESSAGES } from '../../../src/diagnostics.js';
 import { withLibrary } from '../../../src/engine.js';
 import { LIBRARY_NAMES, LIBRARY_SOURCE } from '../../../src/library/index.js';
-import { FN_ENTRIES } from './functions.js';
+import { FN_ENTRIES, GLOSS } from './functions.js';
 import type { FnEntry } from './functions.js';
 import { tokenize } from '../../../src/lexer/index.js';
 import { highlight } from '../../playground/highlight.js';
 import { escapeHtml } from '../../playground/view.js';
 import type { Strings } from './strings.js';
-
-/**
- * What each keyword group means, in both languages.
- *
- * Every type the lexer knows must appear here; `keywordTable` fails the build
- * on one that does not. Falling back to the internal type name would put
- * `func` and `init` in a reference meant for someone learning their first
- * language — a quiet wrong answer, which is the kind this project tries not
- * to ship.
- */
-const GLOSS: Record<string, { am: string; en: string }> = {
-  IF: { am: 'ሁኔታ', en: 'if' },
-  ELIF: { am: 'ሌላ ሁኔታ ማስገቢያ', en: 'else-if lead-in' },
-  ELSE: { am: 'አለበለዚያ', en: 'otherwise' },
-  WHILE: { am: 'ድግግሞሽ', en: 'repeat while' },
-  FOREACH: { am: 'ለእያንዳንዱ ዕቃ', en: 'repeat for each item' },
-  RETURN: { am: 'ዋጋ መመለሻ', en: 'return a value' },
-  FUNC: { am: 'ተግባር መግለጫ', en: 'define a function' },
-  CLASS: { am: 'ክላስ መግለጫ', en: 'define a class' },
-  INIT: { am: 'የክላስ መነሻ ተግባር', en: "a class's set-up method" },
-  AND: { am: 'እና', en: 'and' },
-  OR: { am: 'ወይም', en: 'or' },
-  NOT: { am: 'አይደለም', en: 'not' },
-  TRUE: { am: 'እውነት', en: 'true' },
-  FALSE: { am: 'ሐሰት', en: 'false' },
-  NOTHING: { am: 'ምንም', en: 'nothing' },
-  TYPE_NUM: { am: 'የቁጥር አይነት', en: 'the number type' },
-  TYPE_BOOL: { am: 'የእውነታ አይነት', en: 'the truth type' },
-  TYPE_STRING: { am: 'የጽሁፍ አይነት', en: 'the text type' },
-  TYPE_LIST: { am: 'የስብስብ አይነት', en: 'the collection type' },
-  RESERVED_NEW: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_BREAK: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_CONTINUE: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_CHAR: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-};
 
 const STAGE_TITLE: Record<string, { am: string; en: string }> = {
   AH1: { am: 'የቃላት ስተቶች', en: 'Lexical errors' },

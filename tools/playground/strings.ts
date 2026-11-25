@@ -28,6 +28,8 @@ export interface Strings {
   readonly stop: string;
   readonly theme: string;
   readonly languageToggle: string;
+  /** The header search box. */
+  readonly findLabel: string;
 
   // The site header the playground shares with every other page.
   readonly navHome: string;
@@ -143,6 +145,7 @@ const amharic: Strings = {
   inputLabel: 'ግቤት',
   inputHint: 'በየመስመሩ አንድ መልስ።',
   inputUnlabelled: '(ጥያቄ የለውም)',
+  findLabel: 'ማጣቀሻውን ፈልግ',
   inputRepeats: 'ይህ ፕሮግራም በዑደት ውስጥ ይጠይቃል — ከአንድ ጊዜ በላይ ያነባል። ለእያንዳንዱ መልስ አንድ መስመር ይጻፉ።',
   contact: 'አግኙን',
   contactTitle: 'መልእክት ይላኩ',
@@ -216,6 +219,7 @@ const english: Strings = {
   inputLabel: 'Input',
   inputHint: 'One answer per line.',
   inputUnlabelled: '(no prompt)',
+  findLabel: 'Search the reference',
   inputRepeats:
     'This program asks inside a loop, so it reads more than once. Write one line for each answer.',
   contact: 'Contact',

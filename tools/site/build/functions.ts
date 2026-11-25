@@ -29,11 +29,14 @@ export interface FnEntry {
   readonly en: string;
   readonly eg: string;
   readonly out: string;
+  /** English search terms, so the box finds an Amharic name by its idea. */
+  readonly also: string;
 }
 
 export const FN_ENTRIES: readonly FnEntry[] = [
   {
     name: 'ጻፍ',
+    also: 'print write output',
     sig: 'ጻፍ(…)',
     takes: [
       {
@@ -53,6 +56,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ርዝመት',
+    also: 'length size count len',
     sig: 'ርዝመት(ጽሁፍ)',
     takes: [{ n: 'ጽሁፍ', t: 'ጽሁፍ', am: 'የሚቆጠረው ጽሁፍ', en: 'The text to measure' }],
     gives: { am: 'ቁጥር', en: 'ቁጥር' },
@@ -65,6 +69,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ርዝመት',
+    also: 'length size count len',
     sig: 'ርዝመት(ስብስብ)',
     takes: [{ n: 'ስብስብ', t: 'ስብስብ', am: 'የሚቆጠረው ስብስብ', en: 'The list to measure' }],
     gives: { am: 'ቁጥር', en: 'ቁጥር' },
@@ -77,6 +82,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ጨምር',
+    also: 'append push add',
     sig: 'ጨምር(ስብስብ፣ ዕቃ)',
     takes: [
       { n: 'ስብስብ', t: 'ስብስብ', am: 'የሚጨመርበት ስብስብ', en: 'The list to add to' },
@@ -92,6 +98,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ሰርዝ',
+    also: 'remove delete pop',
     sig: 'ሰርዝ(ስብስብ፣ ቦታ)',
     takes: [
       { n: 'ስብስብ', t: 'ስብስብ', am: 'የሚቀነስበት ስብስብ', en: 'The list to remove from' },
@@ -112,6 +119,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ቅጂ_አድርግ',
+    also: 'copy clone duplicate',
     sig: 'ቅጂ_አድርግ(ስብስብ)',
     takes: [{ n: 'ስብስብ', t: 'ስብስብ', am: 'የሚገለበጠው ስብስብ', en: 'The list to copy' }],
     gives: { am: 'ስብስብ', en: 'ስብስብ' },
@@ -124,6 +132,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'አይነት',
+    also: 'type typeof kind',
     sig: 'አይነት(ማንኛውም)',
     takes: [{ n: 'ዋጋ', t: 'ማንኛውም / any', am: 'የትኛውም ዋጋ', en: 'Any value at all' }],
     gives: { am: 'ጽሁፍ', en: 'ጽሁፍ' },
@@ -136,6 +145,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'አንብብ',
+    also: 'read input prompt readline',
     sig: 'አንብብ()',
     takes: [],
     gives: { am: 'ጽሁፍ', en: 'ጽሁፍ' },
@@ -148,6 +158,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'አንብብ',
+    also: 'read input prompt readline',
     sig: 'አንብብ(ጥያቄ)',
     takes: [
       {
@@ -167,6 +178,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወደ_ቁጥር',
+    also: 'to number parse int parseint',
     sig: 'ወደ_ቁጥር(ጽሁፍ)',
     takes: [
       {
@@ -186,6 +198,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወደ_ቁጥር',
+    also: 'to number parse int parseint',
     sig: 'ወደ_ቁጥር(ቁጥር)',
     takes: [{ n: 'ቁጥር', t: 'ቁጥር', am: 'አስቀድሞ ቁጥር የሆነ ዋጋ', en: 'A value that is already a number' }],
     gives: { am: 'ቁጥር', en: 'ቁጥር' },
@@ -198,6 +211,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወደ_ጽሁፍ',
+    also: 'to string tostring str',
     sig: 'ወደ_ጽሁፍ(ማንኛውም)',
     takes: [{ n: 'ዋጋ', t: 'ማንኛውም / any', am: 'የትኛውም ዋጋ', en: 'Any value' }],
     gives: { am: 'ጽሁፍ', en: 'ጽሁፍ' },
@@ -210,6 +224,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ቁጥር_ነው',
+    also: 'is number isnumeric check',
     sig: 'ቁጥር_ነው(ማንኛውም)',
     takes: [
       {
@@ -229,6 +244,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ዘፈቀደ_ቁጥር',
+    also: 'random randint dice chance',
     sig: 'ዘፈቀደ_ቁጥር(ከ፣ እስከ)',
     takes: [
       { n: 'ከ', t: 'ቁጥር', am: 'ዝቅተኛው — ሊወጣ ይችላል', en: 'The low end — it can come up' },
@@ -244,6 +260,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ዘር',
+    also: 'seed random',
     sig: 'ዘር(ቁጥር)',
     takes: [
       {
@@ -263,6 +280,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወለል_ዋጋ',
+    also: 'floor round down integer division',
     sig: 'ወለል_ዋጋ(ቁጥር)',
     takes: [
       {
@@ -282,6 +300,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ጣሪያ_ዋጋ',
+    also: 'ceil ceiling round up',
     sig: 'ጣሪያ_ዋጋ(ቁጥር)',
     takes: [
       {
@@ -301,6 +320,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ቅርብ_ሙሉ_ቁጥር',
+    also: 'round nearest',
     sig: 'ቅርብ_ሙሉ_ቁጥር(ቁጥር)',
     takes: [
       {
@@ -320,6 +340,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ፍጹም_ዋጋ',
+    also: 'abs absolute',
     sig: 'ፍጹም_ዋጋ(ቁጥር)',
     takes: [
       {
@@ -339,6 +360,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ከፋፍል',
+    also: 'split words tokenize',
     sig: 'ከፋፍል(ጽሁፍ)',
     takes: [{ n: 'ጽሁፍ', t: 'ጽሁፍ', am: 'የሚከፋፈለው ጽሁፍ', en: 'The text to split' }],
     gives: { am: 'ስብስብ', en: 'ስብስብ' },
@@ -351,6 +373,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ከፋፍል',
+    also: 'split words tokenize',
     sig: 'ከፋፍል(ጽሁፍ፣ መለያ)',
     takes: [
       { n: 'ጽሁፍ', t: 'ጽሁፍ', am: 'የሚከፋፈለው ጽሁፍ', en: 'The text to split' },
@@ -371,6 +394,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ጽሁፍ_አድርግ',
+    also: 'join concat implode',
     sig: 'ጽሁፍ_አድርግ(ስብስብ)',
     takes: [
       {
@@ -390,6 +414,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ጽሁፍ_አድርግ',
+    also: 'join concat implode',
     sig: 'ጽሁፍ_አድርግ(ስብስብ፣ መለያ)',
     takes: [
       { n: 'ስብስብ', t: 'ስብስብ', am: 'የሚገናኙት ዕቃዎች', en: 'The items to join' },
@@ -405,6 +430,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ከርክም',
+    also: 'trim strip whitespace',
     sig: 'ከርክም(ጽሁፍ)',
     takes: [{ n: 'ጽሁፍ', t: 'ጽሁፍ', am: 'የሚከረከመው ጽሁፍ', en: 'The text to trim' }],
     gives: { am: 'ጽሁፍ', en: 'ጽሁፍ' },
@@ -417,6 +443,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወደ_ግዕዝ',
+    also: 'geez numerals roman numeral format',
     sig: 'ወደ_ግዕዝ(ቁጥር)',
     takes: [
       {
@@ -436,6 +463,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ዛሬ',
+    also: 'today date now ethiopian calendar',
     sig: 'ዛሬ()',
     takes: [],
     gives: { am: 'ስብስብ', en: 'ስብስብ' },
@@ -448,6 +476,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ከግሪጎሪ',
+    also: 'gregorian convert date calendar',
     sig: 'ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)',
     takes: [
       { n: 'ዓመት', t: 'ቁጥር', am: 'የግሪጎሪ ዓመት', en: 'The Gregorian year' },
@@ -464,6 +493,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ወር_መጠሪያ',
+    also: 'month name calendar',
     sig: 'ወር_መጠሪያ(ቁጥር)',
     takes: [
       {
@@ -483,6 +513,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ደምር',
+    also: 'sum total add',
     sig: 'ደምር(ስብስብ)',
     takes: [
       {
@@ -502,6 +533,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ቁጠር',
+    also: 'count occurrences tally',
     sig: 'ቁጠር(ስብስብ፣ ዕቃ)',
     takes: [
       { n: 'ስብስብ', t: 'ስብስብ', am: 'የሚፈለግበት ስብስብ', en: 'The list to search' },
@@ -517,6 +549,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ፈልግ',
+    also: 'find index indexof search',
     sig: 'ፈልግ(ስብስብ፣ ዕቃ)',
     takes: [
       { n: 'ስብስብ', t: 'ስብስብ', am: 'የሚፈለግበት ስብስብ', en: 'The list to search' },
@@ -532,6 +565,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ከፍተኛው',
+    also: 'max maximum largest biggest',
     sig: 'ከፍተኛው(ስብስብ)',
     takes: [
       {
@@ -551,6 +585,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ዝቅተኛው',
+    also: 'min minimum smallest',
     sig: 'ዝቅተኛው(ስብስብ)',
     takes: [
       {
@@ -570,6 +605,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ደርድር',
+    also: 'sort order arrange',
     sig: 'ደርድር(ስብስብ)',
     takes: [
       {
@@ -589,6 +625,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'ገልብጥ',
+    also: 'reverse flip invert',
     sig: 'ገልብጥ(ስብስብ)',
     takes: [{ n: 'ስብስብ', t: 'ስብስብ', am: 'የሚገለበጠው ስብስብ', en: 'The list to reverse' }],
     gives: { am: 'ምንም', en: 'ምንም' },
@@ -601,6 +638,7 @@ export const FN_ENTRIES: readonly FnEntry[] = [
   },
   {
     name: 'መዝገብ',
+    also: 'map dict dictionary hash record key value',
     sig: 'መዝገብ()',
     takes: [],
     gives: { am: 'መዝገብ', en: 'a መዝገብ' },
@@ -612,3 +650,36 @@ export const FN_ENTRIES: readonly FnEntry[] = [
     out: '22',
   },
 ];
+
+/**
+ * What each group of keywords means, in both languages.
+ *
+ * Here rather than in `reference.ts` because the header's search builds its
+ * index in the browser, and `reference.ts` reads the grammar off disk — one
+ * `node:fs` import is enough to keep a module out of a bundle.
+ */
+export const GLOSS: Record<string, { am: string; en: string }> = {
+  IF: { am: 'ሁኔታ', en: 'if' },
+  ELIF: { am: 'ሌላ ሁኔታ ማስገቢያ', en: 'else-if lead-in' },
+  ELSE: { am: 'አለበለዚያ', en: 'otherwise' },
+  WHILE: { am: 'ድግግሞሽ', en: 'repeat while' },
+  FOREACH: { am: 'ለእያንዳንዱ ዕቃ', en: 'repeat for each item' },
+  RETURN: { am: 'ዋጋ መመለሻ', en: 'return a value' },
+  FUNC: { am: 'ተግባር መግለጫ', en: 'define a function' },
+  CLASS: { am: 'ክላስ መግለጫ', en: 'define a class' },
+  INIT: { am: 'የክላስ መነሻ ተግባር', en: "a class's set-up method" },
+  AND: { am: 'እና', en: 'and' },
+  OR: { am: 'ወይም', en: 'or' },
+  NOT: { am: 'አይደለም', en: 'not' },
+  TRUE: { am: 'እውነት', en: 'true' },
+  FALSE: { am: 'ሐሰት', en: 'false' },
+  NOTHING: { am: 'ምንም', en: 'nothing' },
+  TYPE_NUM: { am: 'የቁጥር አይነት', en: 'the number type' },
+  TYPE_BOOL: { am: 'የእውነታ አይነት', en: 'the truth type' },
+  TYPE_STRING: { am: 'የጽሁፍ አይነት', en: 'the text type' },
+  TYPE_LIST: { am: 'የስብስብ አይነት', en: 'the collection type' },
+  RESERVED_NEW: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
+  RESERVED_BREAK: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
+  RESERVED_CONTINUE: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
+  RESERVED_CHAR: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
+};

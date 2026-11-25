@@ -14,6 +14,7 @@
  */
 
 import { setUpContact } from '../shared/contact-dialog.js';
+import { setUpSearch } from '../shared/search.js';
 import { highlight } from './highlight.js';
 import type { Region } from './highlight.js';
 import {
@@ -786,4 +787,5 @@ applyLanguage();
 setUpMenu();
 // And the footer's contact button, which is inert until this runs.
 setUpContact();
+setUpSearch();
 panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;

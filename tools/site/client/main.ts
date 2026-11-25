@@ -24,6 +24,7 @@ import { escapeHtml } from '../../playground/view.js';
 import { formatDiagnostic } from '../../../src/diagnostics.js';
 import { encodeProgram } from '../../shared/share.js';
 import { setUpMenu } from '../../shared/menu.js';
+import { setUpSearch } from '../../shared/search.js';
 import { setUpContact } from '../../shared/contact-dialog.js';
 
 /** Smaller than the playground's: a lesson's program should be quick. */
@@ -190,6 +191,7 @@ function setUpSnippet(snippet: HTMLElement): void {
 setUpTheme();
 setUpMenu();
 setUpContact();
+setUpSearch();
 for (const snippet of document.querySelectorAll('.snip')) {
   if (snippet instanceof HTMLElement) setUpSnippet(snippet);
 }
