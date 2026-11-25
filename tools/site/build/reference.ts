@@ -314,6 +314,12 @@ ${glossRows(library, s)}
  * constant the interpreter loads, highlighted by the same lexer that
  * highlights every other snippet on the site. Nothing is retyped, so the page
  * cannot show a library that is not the one running.
+ *
+ * The newlines become `&#10;`, which a `<pre>` renders identically. They have
+ * to: this HTML is handed to the Markdown renderer with the rest of the
+ * reference, and a blank line inside a block of raw HTML ends that block —
+ * so the library's own blank lines were splitting its `<pre>` apart and
+ * leaving `<p>` tags scattered through the code.
  */
 export function librarySource(s: Strings): string {
   const { tokens } = tokenize(LIBRARY_SOURCE);
@@ -325,7 +331,7 @@ export function librarySource(s: Strings): string {
 <div class="snip snip-fragment"><pre class="snip-code"><code>${highlight({
     source: LIBRARY_SOURCE,
     tokens,
-  })}</code></pre></div>`;
+  }).replace(/\n/g, '&#10;')}</code></pre></div>`;
 }
 
 export function referenceBody(s: Strings): string {

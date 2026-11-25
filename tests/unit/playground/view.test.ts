@@ -6,6 +6,7 @@
  * elements.
  */
 
+import { tokenize } from '../../../src/lexer/index.js';
 import { describe, expect, it } from 'vitest';
 import {
   analyse,
@@ -14,6 +15,8 @@ import {
   diagnosticsHtml,
   escapeHtml,
   exampleName,
+  inputPrompts,
+  needsInput,
   outputHtml,
   statusOf,
   tokenRowsHtml,
@@ -350,5 +353,35 @@ describe('a diagnostic card (§2.1)', () => {
     );
     expect(html).not.toContain('<img>');
     expect(html).toContain('&lt;img&gt;');
+  });
+});
+
+describe('the prompts the input dialog shows (inputPrompts)', () => {
+  const prompts = (source: string): (string | null)[] => inputPrompts(tokenize(source).tokens);
+
+  it('reports each አንብብ prompt in order', () => {
+    expect(prompts('ሀ = አንብብ("ስም፦ ")\nለ = አንብብ("ዕድሜ፦ ")')).toEqual(['ስም፦ ', 'ዕድሜ፦ ']);
+  });
+
+  it('reports null where a call has no prompt, so position still lines up', () => {
+    // The third box is the third `አንብብ` whether or not the first two were
+    // labelled, so an unlabelled call has to hold its place.
+    expect(prompts('ሀ = አንብብ()\nለ = አንብብ("ሁለተኛው፦ ")')).toEqual([null, 'ሁለተኛው፦ ']);
+  });
+
+  it('is empty for a program that reads nothing', () => {
+    expect(prompts('ጻፍ("ሰላም")')).toEqual([]);
+  });
+
+  it('reports nothing for a prompt built at runtime, which is not knowable', () => {
+    // The same limit `needsInput` works under: this runs before the program.
+    expect(prompts('ሀ = አንብብ("ስም" + "፦ ")')).toEqual([null]);
+  });
+
+  it('agrees with needsInput about whether there is any input at all', () => {
+    for (const source of ['ጻፍ(1)', 'አንብብ()', 'ሀ = አንብብ("ሀ፦ ")']) {
+      const tokens = tokenize(source).tokens;
+      expect(inputPrompts(tokens).length > 0, source).toBe(needsInput(tokens));
+    }
   });
 });

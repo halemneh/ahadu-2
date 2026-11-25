@@ -58,6 +58,25 @@ export interface Strings {
   // The input dialog, shown only when a program calls አንብብ
   readonly inputLabel: string;
   readonly inputHint: string;
+  /** Shown for an `አንብብ` that prints no prompt of its own. */
+  readonly inputUnlabelled: string;
+
+  /** The contact dialog, shared with every other page. */
+  readonly contact: string;
+  readonly contactTitle: string;
+  readonly contactLead: string;
+  readonly contactMessage: string;
+  readonly contactEmail: string;
+  readonly contactEmailOptional: string;
+  readonly contactEmailHint: string;
+  readonly contactPrivacy: string;
+  readonly contactSend: string;
+  readonly contactSending: string;
+  readonly contactSent: string;
+  readonly contactFailed: string;
+  readonly contactNeedMessage: string;
+  readonly contactTooLong: string;
+  readonly contactBadEmail: string;
   readonly inputWhy: string;
   readonly cancel: string;
   /** `(line, column)` → the position readout under the editor. */
@@ -121,6 +140,22 @@ const amharic: Strings = {
   editorLabel: 'የአሃዱ ኮድ',
   inputLabel: 'ግቤት',
   inputHint: 'በየመስመሩ አንድ መልስ።',
+  inputUnlabelled: '(ጥያቄ የለውም)',
+  contact: 'አግኙን',
+  contactTitle: 'መልእክት ይላኩ',
+  contactLead: 'ስለ ትምህርቶቹ ወይም ስለ ቋንቋው ማለት የሚፈልጉት ነገር ካለ ይጻፉ።',
+  contactMessage: 'መልእክት',
+  contactEmail: 'ኢሜይል',
+  contactEmailOptional: 'አማራጭ ነው',
+  contactEmailHint: 'መልስ ከፈለጉ ብቻ',
+  contactPrivacy: 'የሚላከው የጻፉት መልእክት ነው፤ ኢሜይሉን ከሞሉት ደግሞ ኢሜይሉ። መልስ ለመስጠት ብቻ ይጠቅማሉ። ሌላ ምንም አይሰበሰብም።',
+  contactSend: 'ላክ',
+  contactSending: 'በመላክ ላይ…',
+  contactSent: 'መልእክቱ ተልኳል። እናመሰግናለን።',
+  contactFailed: 'መልእክቱ አልተላከም። የጻፉት እንደተጠበቀ ነው፤ እንደገና መሞከር ይችላሉ ወይም በGitHub ላይ ያሳውቁ።',
+  contactNeedMessage: 'እባክዎ መጀመሪያ መልእክት ይጻፉ።',
+  contactTooLong: 'መልእክቱ በጣም ረጅም ነው። እባክዎ ያሳጥሩት።',
+  contactBadEmail: 'ኢሜይሉ ትክክል አይመስልም። ያስተካክሉት ወይም ባዶውን ይተዉት።',
   inputWhy: 'ይህ ፕሮግራም "አንብብ" ይጠቀማል።',
   cancel: 'ተወው',
   position: (line, column) => `መስመር ${line}፣ ዓምድ ${column}`,
@@ -177,6 +212,25 @@ const english: Strings = {
   editorLabel: 'Ahadu code',
   inputLabel: 'Input',
   inputHint: 'One answer per line.',
+  inputUnlabelled: '(no prompt)',
+  contact: 'Contact',
+  contactTitle: 'Send a message',
+  contactLead:
+    'If there is something you want to say about the lessons or the language, write it here.',
+  contactMessage: 'Message',
+  contactEmail: 'Email',
+  contactEmailOptional: 'optional',
+  contactEmailHint: 'only if you would like a reply',
+  contactPrivacy:
+    'What is sent is the message you write, and your email address if you fill it in. They are used only to reply to you. Nothing else is collected.',
+  contactSend: 'Send',
+  contactSending: 'Sending…',
+  contactSent: 'Your message was sent. Thank you.',
+  contactFailed:
+    'The message could not be sent. What you wrote is still here — try again, or report it on GitHub instead.',
+  contactNeedMessage: 'Please write a message first.',
+  contactTooLong: 'That message is too long. Please shorten it.',
+  contactBadEmail: 'That email address does not look right. Correct it, or leave it empty.',
   inputWhy: 'This program calls አንብብ.',
   cancel: 'Cancel',
   position: (line, column) => `Ln ${line}, Col ${column}`,

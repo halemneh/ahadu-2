@@ -310,6 +310,36 @@ export function needsInput(tokens: readonly Token[]): boolean {
   return tokens.some((token) => token.type === 'IDENTIFIER' && token.value === READ_LINE);
 }
 
+/**
+ * The prompt each `አንብብ` in the program will print, in order.
+ *
+ * The dialog opens before the run, so the reader is asked for every line at
+ * once — and without this they are asked for them blind. The program knows
+ * what each one is for; the box in front of them did not say.
+ *
+ * An entry is `null` where the call has no prompt, because position matters:
+ * the third box is the third `አንብብ` whether or not the first two were
+ * labelled. Only a literal is reported — a prompt built at runtime is not
+ * knowable before the program runs, which is the same limit `needsInput`
+ * works under.
+ */
+export function inputPrompts(tokens: readonly Token[]): (string | null)[] {
+  const prompts: (string | null)[] = [];
+  tokens.forEach((token, i) => {
+    if (token.type !== 'IDENTIFIER' || token.value !== READ_LINE) return;
+    const open = tokens[i + 1];
+    const first = tokens[i + 2];
+    const after = tokens[i + 3];
+    if (open?.type !== 'LPAREN') return;
+    // Only when the literal is the *whole* argument. `አንብብ("ስም" + "፦ ")`
+    // would otherwise be reported as `ስም`, which is not what it prints —
+    // a half-right prompt is worse than admitting there is none.
+    const literal = first?.type === 'STRING' && after?.type === 'RPAREN';
+    prompts.push(literal ? String(first.value) : null);
+  });
+  return prompts;
+}
+
 /** The example name shown in the menu, from its path. */
 export function exampleName(path: string): string {
   return (

@@ -13,6 +13,7 @@
  * tab.
  */
 
+import { setUpContact } from '../shared/contact-dialog.js';
 import { highlight } from './highlight.js';
 import type { Region } from './highlight.js';
 import {
@@ -22,6 +23,7 @@ import {
   escapeHtml,
   exampleName,
   gutterHtml,
+  inputPrompts,
   needsInput,
   outputHtml,
   positionLabel,
@@ -91,6 +93,7 @@ const tip = need<HTMLElement>('tip');
 const brand = need<HTMLAnchorElement>('brand');
 const ask = need<HTMLElement>('ask');
 const askInput = need<HTMLTextAreaElement>('ask-input');
+const askPrompts = need<HTMLOListElement>('ask-prompts');
 const askRun = need<HTMLButtonElement>('ask-run');
 const askCancel = need<HTMLButtonElement>('ask-cancel');
 const runButton = need<HTMLButtonElement>('run');
@@ -176,6 +179,26 @@ function applyLanguage(): void {
   }
 
   // A few elements want the text as a label rather than as content.
+  for (const element of document.querySelectorAll<HTMLElement>('[data-i18n-placeholder]')) {
+    const key = element.dataset.i18nPlaceholder;
+    if (key !== undefined && element instanceof HTMLInputElement) {
+      element.placeholder = (s as unknown as Record<string, string>)[key] ?? '';
+    }
+  }
+
+  // The dialog reads its own messages off `data-` attributes, which the site
+  // writes at build time from the page's language. This page has one URL and
+  // learns its language at runtime, so it writes them here instead.
+  const modal = document.getElementById('contact');
+  if (modal !== null) {
+    modal.dataset.sending = s.contactSending;
+    modal.dataset.sent = s.contactSent;
+    modal.dataset.failed = s.contactFailed;
+    modal.dataset.needMessage = s.contactNeedMessage;
+    modal.dataset.tooLong = s.contactTooLong;
+    modal.dataset.badEmail = s.contactBadEmail;
+  }
+
   for (const element of document.querySelectorAll<HTMLElement>('[data-i18n-label]')) {
     const key = element.dataset.i18nLabel as keyof Strings | undefined;
     if (key === undefined) continue;
@@ -506,6 +529,22 @@ function start(): void {
     return;
   }
 
+  // Show what the program is going to ask for. Being asked for three lines
+  // of input with no indication of what they are is the whole complaint.
+  const prompts = inputPrompts(current.tokens);
+  askPrompts.textContent = '';
+  for (const prompt of prompts) {
+    const item = document.createElement('li');
+    if (prompt === null || prompt.trim() === '') {
+      item.textContent = s.inputUnlabelled;
+      item.className = 'ask-plain';
+    } else {
+      item.textContent = prompt.trim();
+    }
+    askPrompts.append(item);
+  }
+  askPrompts.hidden = prompts.length === 0;
+
   ask.hidden = false;
   askInput.focus();
   askInput.setSelectionRange(askInput.value.length, askInput.value.length);
@@ -719,4 +758,6 @@ showPanel('output');
 applyLanguage();
 // After applyLanguage, which is what gives the hamburger its label.
 setUpMenu();
+// And the footer's contact button, which is inert until this runs.
+setUpContact();
 panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;

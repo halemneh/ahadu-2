@@ -405,12 +405,23 @@ a {
   line-height: 1.75;
   tab-size: 4;
   white-space: pre;
-  overflow-x: auto;
 }
 
+/*
+ * The painted copy does not scroll; the textarea over it does.
+ *
+ * They were the other way round, and the result was a scrollbar drawn across
+ * the code that could not be used: it belonged to the layer underneath, while
+ * the textarea on top swallowed the pointer and never scrolled. The textarea
+ * is the one with the caret and the keyboard, so it is the one that scrolls,
+ * and `client/main.ts` mirrors its `scrollLeft` onto the backdrop — which it
+ * always did, but never ran, because a `hidden` textarea emits no scroll
+ * event.
+ */
 .snip-backdrop {
   color: var(--ink);
   pointer-events: none;
+  overflow: hidden;
 }
 
 /* The textarea sits exactly over its painted copy, as in the playground. */
@@ -423,7 +434,8 @@ a {
   color: transparent;
   caret-color: var(--ink);
   outline: none;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .snip-input::selection {
@@ -992,9 +1004,18 @@ details.answer[open] summary {
  * short of the right margin by a different amount, which reads as a mistake
  * rather than as texture.
  */
+/*
+ * A grid of equal columns, not a flex row spread with `space-between`.
+ *
+ * `space-between` equalises the *gaps*, and Ethiopic glyphs are not all the
+ * same width — so every row started and ended flush but no column lined up
+ * with the one above it. Fourteen equal tracks put glyph N at the same place
+ * on every row, which is what makes it read as a chart.
+ */
 .fidel span {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  justify-items: center;
   overflow: hidden;
 }
 
