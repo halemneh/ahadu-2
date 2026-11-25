@@ -1,7 +1,7 @@
 ---
 id: reference-index
 title: የቋንቋው ማጣቀሻ
-summary: ቁልፍ ቃላት እና የስተት ኮዶች
+summary: ቁልፍ ቃላት፣ ተግባራት እና የስተት ኮዶች
 order: 2
 ---
 

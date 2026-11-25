@@ -1189,8 +1189,10 @@ body:has(.fidel) .foot {
   white-space: nowrap;
 }
 
+/* `inline-block`, so the code background hugs the signature instead of
+   stretching across the column as a bar. */
 .ref-sig {
-  display: block;
+  display: inline-block;
   font-weight: 700;
 }
 
