@@ -583,7 +583,7 @@ details.answer summary {
   align-items: center;
   min-height: 2.25rem;
   cursor: pointer;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.95rem;
 }
 

@@ -60,20 +60,20 @@
 :root[data-theme='dark'] {
   /* One scale of solid shades: the page's regions are told apart by these. */
   /*
-   * Onyx. A neutral near-black, not a teal-tinted one: tinting every shade
-   * with the accent made the whole page read as green-black, which is a lot
-   * of brand for a surface nobody is meant to look at.
+   * A deep Charcoal Brown. Warm rather than neutral, to sit under the
+   * palette's own warm greys — but still dark enough that the page is a
+   * background and not a colour in its own right.
    */
-  --bg: #0a090c;
-  --surface-1: #141317;
-  --surface-2: #1b1a20;
-  --surface-3: #232229;
+  --bg: #22231d;
+  --surface-1: #2a2c24;
+  --surface-2: #32342b;
+  --surface-3: #3c3e33;
 
-  --ink: #f0edee;
-  --muted: #a3a2ab;
+  --ink: #ede6e3;
+  --muted: #b4b5a7;
 
   /*
-   * Dark Teal, and it is the same in both themes.
+   * Charcoal Brown, and it is the same in both themes.
    *
    * The header and the footer are the two bands that frame every page and
    * never belong to the reader's content, so they are where the brand can
@@ -81,9 +81,9 @@
    * in light and dark makes the chrome a constant: the page inverts, the
    * frame does not.
    */
-  --bar: #07393c;
-  --bar-ink: #eaf4f4;
-  --bar-muted: #a9cbcb;
+  --bar: #36382e;
+  --bar-ink: #ede6e3;
+  --bar-muted: #b7b9aa;
 
   /* Translucent, for things that sit on top of whatever shade they land on. */
   --layer: rgb(255 255 255 / 5%);
@@ -94,32 +94,40 @@
   --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 50%);
   --shadow-lg: 0 14px 40px -10px rgb(0 0 0 / 72%);
 
-  /* Frosted Blue, which has the luminance to carry on Onyx. */
-  --accent: #90ddf0;
+  /* Tomato. */
+  --accent: #f06449;
+  /*
+   * The accent when it is *text* rather than a fill.
+   *
+   * Tomato carries easily as a background with light type on it, and lands at
+   * 4.4:1 as type on a surface — just under AA. A brand colour doing two jobs
+   * needs two values; this is the one that has to be readable.
+   */
+  --accent-text: #f4886f;
   /*
    * Solid, not translucent. A focus ring has to clear 3:1 against whatever it
    * lands on (WCAG 2.2 §1.4.11), and a translucent one cannot promise that:
    * it takes the colour of the surface beneath it.
    */
-  --ring: #90ddf0;
+  --ring: #f06449;
   --bad: #ff7578;
   --good: #5cc26e;
 
   /* Syntax, on the ladder described above. */
-  --id: #a8c6d6;
-  --kw: #d4a0ff;
-  --type: #90ddf0;
-  --lit: #ff7ab0;
-  --num: #ffc49a;
-  --str: #7ad980;
-  --op: #6fd3cb;
-  --punct: #95aab0;
-  --comment: #8ba0a4;
+  --id: #c7cabb;
+  --kw: #f4917a;
+  --type: #5bc3eb;
+  --lit: #eca0d4;
+  --num: #edc77f;
+  --str: #aed083;
+  --op: #8fd6ea;
+  --punct: #9ea093;
+  --comment: #a0a296;
 
   /* Bracket nesting depth, cycling every three levels. */
-  --br0: #ffe6a0;
-  --br1: #f39ff8;
-  --br2: #4fb9c4;
+  --br0: #edc77f;
+  --br1: #dda2e6;
+  --br2: #6fb9d0;
 
   --bad-wash: rgb(255 117 120 / 16%);
   --hot: rgb(3 209 190 / 22%);
@@ -163,7 +171,7 @@
     --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
     --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-    /* Stormy Teal, dark enough to carry on Platinum. */
+    /* Tomato, darkened to carry text weight on Parchment. */
   --accent: #2c666e;
     --ring: #2c666e;
     --bad: #b8012f;
@@ -191,19 +199,19 @@
 }
 
 :root[data-theme='light'] {
-  /* Platinum. */
-  --bg: #f0edee;
-  --surface-1: #e7e4e5;
-  --surface-2: #ddd9db;
-  --surface-3: #d3cfd1;
+  /* Parchment. */
+  --bg: #ede6e3;
+  --surface-1: #e4dedb;
+  --surface-2: #dadad9;
+  --surface-3: #cfcfcd;
 
-  --ink: #0a090c;
-  --muted: #4c4b53;
+  --ink: #26271f;
+  --muted: #4b4d42;
 
-  /* The same Dark Teal band as the dark theme — see above. */
-  --bar: #07393c;
-  --bar-ink: #eaf4f4;
-  --bar-muted: #a9cbcb;
+  /* The same Charcoal Brown band as the dark theme — see above. */
+  --bar: #36382e;
+  --bar-ink: #ede6e3;
+  --bar-muted: #b7b9aa;
 
   --layer: rgb(13 26 26 / 5%);
   --layer-strong: rgb(13 26 26 / 8%);
@@ -213,24 +221,25 @@
   --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
   --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-  --accent: #2c666e;
-  --ring: #2c666e;
+  --accent: #b33d22;
+  --accent-text: #9e3317;
+  --ring: #b33d22;
   --bad: #b8012f;
   --good: #006f29;
 
-  --id: #33455c;
-  --kw: #4d1d81;
-  --type: #15575f;
-  --lit: #4f002c;
-  --num: #8a4400;
-  --str: #005916;
-  --op: #00555f;
-  --punct: #3f5558;
-  --comment: #4d6360;
+  --id: #434537;
+  --kw: #9c3317;
+  --type: #15607c;
+  --lit: #7c2057;
+  --num: #754f00;
+  --str: #3b5a1c;
+  --op: #13556a;
+  --punct: #55574b;
+  --comment: #55574b;
 
-  --br0: #6a5800;
-  --br1: #6e1277;
-  --br2: #07393c;
+  --br0: #674b00;
+  --br1: #6f256a;
+  --br2: #18566a;
 
   --bad-wash: rgb(184 1 47 / 10%);
   --hot: rgb(0 105 95 / 16%);
