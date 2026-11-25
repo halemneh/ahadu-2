@@ -30,6 +30,20 @@ export interface Strings {
   readonly pathReference: string;
   readonly pathExamples: string;
 
+  /*
+   * The names of the page's landmarks, and of the control that opens the
+   * navigation on a narrow screen.
+   *
+   * A page carries four `nav` elements — the sections, the lesson list, the
+   * contents of this page, and the step to the next lesson — and a screen
+   * reader offers them as a list of landmarks to jump between. Four entries
+   * all called "navigation" is a list that says nothing.
+   */
+  readonly navLabel: string;
+  readonly navMenu: string;
+  readonly navSteps: string;
+  readonly skipToContent: string;
+
   readonly languageToggle: string;
   readonly themeToggle: string;
 
@@ -102,6 +116,11 @@ const am: Strings = {
   pathReference: 'ማጣቀሻ',
   pathExamples: 'ምሳሌዎች',
 
+  navLabel: 'ክፍሎች',
+  navMenu: 'ዝርዝር',
+  navSteps: 'ትምህርት መቀየሪያ',
+  skipToContent: 'ወደ ይዘቱ ዝለል',
+
   languageToggle: 'English',
   themeToggle: 'ብርሃን ቀይር',
 
@@ -168,6 +187,11 @@ const en: Strings = {
   pathLearn: 'learn',
   pathReference: 'reference',
   pathExamples: 'examples',
+
+  navLabel: 'Sections',
+  navMenu: 'Menu',
+  navSteps: 'Lesson steps',
+  skipToContent: 'Skip to content',
 
   languageToggle: 'አማርኛ',
   themeToggle: 'Toggle theme',

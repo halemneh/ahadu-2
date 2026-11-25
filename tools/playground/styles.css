@@ -1,4 +1,5 @@
 @import '../shared/tokens.css';
+@import '../shared/syntax.css';
 @import '../shared/chrome.css';
 
 /*
@@ -66,6 +67,7 @@ button {
   background: var(--layer-strong);
   border: 0;
   border-radius: 6px;
+  min-height: 2.25rem;
   padding: 0.33rem 0.62rem;
   box-shadow: var(--shadow-sm);
   transition:
@@ -83,19 +85,27 @@ button:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* The ring replaces the outline a border-less control would otherwise lack. */
+/*
+ * A solid 3px ring rather than a shadow. A shadow ring takes its contrast
+ * from whatever is behind it and these controls sit on three different
+ * shades; an outline is one colour against all of them (WCAG 2.2 §1.4.11).
+ */
 select:focus-visible,
 button:focus-visible {
-  outline: none;
-  box-shadow:
-    var(--shadow-sm),
-    0 0 0 3px var(--ring);
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
+/*
+ * `nowrap`, because the label is "▸ አሂድ": one string with a space in it,
+ * which on a phone broke at the space and stacked the triangle above the
+ * word. It is the most-pressed control on the page.
+ */
 .run,
 .stop {
   color: var(--bg);
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .run {
@@ -124,14 +134,16 @@ button:focus-visible {
   color: var(--muted);
   min-width: 10ch;
   text-align: right;
+  white-space: nowrap;
 }
 
 .status[data-state='bad'] {
   color: var(--bad);
 }
 
+/* `--good`, not the type keyword's colour: this is chrome, not code. */
 .status[data-state='good'] {
-  color: var(--type);
+  color: var(--good);
 }
 
 /* ---- layout ---- */
@@ -178,22 +190,36 @@ button:focus-visible {
  * text. It is also what lets locate.ts map a row of pixels to one line.
  */
 
+/*
+ * One rem and 1.7, up from 0.95 and 1.6. Ge'ez carries the vowel as a mark
+ * on the consonant, so what a smaller size costs is not a letter's outline
+ * but which letter it is — and no font is fetched (SITE.md §6), so size and
+ * leading are the only controls there are.
+ *
+ * `locate.ts` reads the line height from the computed style rather than
+ * assuming one, so the pointer maths follows these numbers on its own.
+ */
 .gutter,
 .backdrop,
 .editor {
   margin: 0;
   border: 0;
   font-family: var(--code);
-  font-size: 0.95rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.7;
   tab-size: 4;
   white-space: pre;
+}
+
+/* One name for the gutter's width: three layers have to agree on it. */
+.editor-wrap {
+  --gutter-w: 3.4rem;
 }
 
 .gutter {
   position: absolute;
   inset: 0 auto 0 0;
-  width: 3.4rem;
+  width: var(--gutter-w);
   padding: 0.9rem 0.6rem 0.9rem 0;
   overflow: hidden;
   text-align: right;
@@ -205,7 +231,7 @@ button:focus-visible {
 
 .backdrop {
   position: absolute;
-  inset: 0 0 0 3.4rem;
+  inset: 0 0 0 var(--gutter-w);
   padding: 0.9rem;
   overflow: auto;
   color: var(--ink);
@@ -214,7 +240,7 @@ button:focus-visible {
 
 .editor {
   position: absolute;
-  inset: 0 0 0 3.4rem;
+  inset: 0 0 0 var(--gutter-w);
   padding: 0.9rem;
   resize: none;
   background: transparent;
@@ -228,73 +254,23 @@ button:focus-visible {
   background: var(--select);
 }
 
-/* ---- token colours, set from the lexer's own spans ---- */
-
-.tk-kw {
-  color: var(--kw);
-  font-weight: 600;
-}
-
-.tk-type {
-  color: var(--type);
-}
-
-.tk-lit {
-  color: var(--lit);
-}
-
-.tk-reserved {
-  color: var(--lit);
-  text-decoration: underline dotted;
-}
-
-.tk-str {
-  color: var(--str);
-}
-
-.tk-num {
-  color: var(--num);
-}
-
-.tk-id {
-  color: var(--ink);
-}
-
-.tk-op {
-  color: var(--accent);
-}
-
-.tk-then {
-  color: var(--kw);
-  font-weight: 600;
-}
-
-.tk-punct {
-  color: var(--muted);
-}
-
-.tk-comment {
-  color: var(--comment);
-  font-style: italic;
+/*
+ * The editor had `outline: none` and nothing in its place, so tabbing to the
+ * one control that matters most on this page showed nothing at all. The ring
+ * is drawn inside its own box rather than around it: the editor fills the
+ * region edge to edge, and an outline outside would be clipped away by
+ * `.editor-wrap`.
+ */
+.editor:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 
 /*
- * An error in the editor: a wavy underline and a faint wash behind it. The
- * underline alone was easy to miss against coloured code, and the wash is kept
- * weak so it reads as a mark on the text rather than as a selection.
+ * Token colours are in `shared/syntax.css`. They were here, which meant the
+ * site — which does not import this file — shipped highlighted markup with
+ * nothing to colour it.
  */
-.tk-bad {
-  background: var(--bad-wash);
-  border-radius: 2px;
-  text-decoration: underline wavy var(--bad);
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-}
-
-.tk-hot {
-  background: var(--hot);
-  border-radius: 2px;
-}
 
 /* ---- the position readout, under the editor (§2.1) ---- */
 
@@ -608,13 +584,14 @@ button:focus-visible {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--code);
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.7;
   outline: none;
 }
 
 #ask-input:focus-visible {
-  box-shadow: 0 0 0 2px var(--ring);
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
 }
 
 #ask-input::selection {
@@ -626,4 +603,108 @@ button:focus-visible {
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.8rem;
+}
+
+/* ---- phone widths ---- */
+
+/*
+ * The toolbar keeps its one row down to 320px. The example menu is the only
+ * thing on it that can give ground, so it does: the run button and the
+ * error count are what someone came here to use.
+ */
+@media (max-width: 560px) {
+  .bar {
+    gap: 0.5rem;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .examples {
+    min-width: 0;
+  }
+
+  .examples select {
+    max-width: 10rem;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+
+  /*
+   * `overflow: hidden` is what lets it shrink at all: a nowrap line's
+   * min-content width is the whole line, so without this it refuses to give
+   * ground and slides under the run button instead.
+   */
+  .status {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.78rem;
+  }
+}
+
+/*
+ * Narrower still, and the status line gives up its space — but only its
+ * space. It keeps being rendered, off-screen, because it is the `aria-live`
+ * region that announces "3 errors" and "finished"; `display: none` would
+ * stop it being spoken. What a sighted reader loses is already on the
+ * ስተቶች tab, which carries the same count as a badge.
+ */
+@media (max-width: 480px) {
+  .status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* A narrower rail: at 320px, 3.4rem of line numbers is a tenth of it. */
+  .editor-wrap {
+    --gutter-w: 2.6rem;
+  }
+
+  .gutter,
+  .backdrop,
+  .editor {
+    font-size: 0.95rem;
+  }
+
+  .backdrop,
+  .editor {
+    padding: 0.7rem;
+  }
+
+  .gutter {
+    padding: 0.7rem 0.45rem 0.7rem 0;
+  }
+
+  /*
+   * The panels keep a third rather than two fifths. The editor is the point
+   * of the page, and on a phone there is not enough of either to share.
+   */
+  .layout {
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    white-space: nowrap;
+  }
+}
+
+/*
+ * Transitions off for a reader who asked for less motion. Nothing here says
+ * anything by moving: they are all hover polish.
+ */
+@media (prefers-reduced-motion: reduce) {
+  select,
+  button {
+    transition: none;
+  }
 }

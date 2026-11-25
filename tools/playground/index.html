@@ -11,6 +11,9 @@
         var t = localStorage.getItem('ahadu.theme');
         if (t) document.documentElement.dataset.theme = t;
       } catch (e) {}
+      // Says that scripting is on. The narrow navigation is a drawer only
+      // under this class; see tools/shared/menu.ts.
+      document.documentElement.className += ' js';
     </script>
   </head>
   <body>
@@ -31,7 +34,8 @@
         <span class="version">2.0</span>
       </a>
 
-      <nav class="nav">
+      <!-- Below 760px this is a drawer, opened by #menu (shared/menu.ts). -->
+      <nav class="nav" id="sitenav" data-i18n-label="navLabel">
         <a data-section="home" data-i18n="navHome"></a>
         <a data-section="learn" data-i18n="navLearn"></a>
         <a data-section="reference" data-i18n="navReference"></a>
@@ -43,7 +47,29 @@
 
       <button id="language" class="chip" type="button" data-i18n="languageToggle"></button>
       <button id="theme" class="chip" type="button" aria-live="off">◐</button>
+      <button
+        id="menu"
+        class="chip menu"
+        type="button"
+        aria-controls="sitenav"
+        aria-expanded="false"
+        data-i18n-label="navMenu"
+        hidden
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <!-- Closes the drawer when the page behind it is tapped. -->
+      <div class="scrim" id="nav-scrim" hidden></div>
     </header>
+
+    <!--
+      The page's heading. Not drawn — the header already says where you are
+      to anyone who can see it — but a page with no h1 gives a screen reader
+      nothing to announce and nothing to jump to, and this is the one page of
+      the site whose heading is not in its own prose.
+    -->
+    <h1 class="sr-only" data-i18n="pageTitle"></h1>
 
     <!-- The playground's own toolbar: the things only it has. -->
     <header class="bar">

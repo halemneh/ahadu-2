@@ -102,14 +102,37 @@ export function keywordTable(s: Strings): string {
     })
     .join('\n');
 
-  return `<table class="ref">
+  return wrapped(
+    `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ቃል' : 'Keyword'}</th><th>${
     s.code === 'am' ? 'ትርጉም' : 'Meaning'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+  );
+}
+
+/**
+ * Puts a table in a box that can scroll sideways rather than overflow the
+ * page.
+ *
+ * It is insurance, not the plan: the table is sized to fit at any width,
+ * because two columns that wrap read better than two columns you have to
+ * drag. The alternative — shrinking the type until it fits — is the one
+ * thing a syllabary cannot take.
+ *
+ * No `tabindex` or `role` on the wrapper. A scrolling region does need to be
+ * reachable from a keyboard, but this one does not scroll at any width the
+ * audit measures, and a tab stop that does nothing is worse than none;
+ * browsers make a container that genuinely overflows focusable by
+ * themselves. The tables are already announced by the headings above them.
+ */
+function wrapped(table: string): string {
+  return `<div class="table-wrap">
+${table}
+</div>`;
 }
 
 /** The error catalogue, one section per stage. */
@@ -131,14 +154,16 @@ export function errorTable(s: Strings): string {
 
       return `<h3>${escapeHtml(STAGE_TITLE[stage]?.[s.code] ?? stage)}</h3>
 <p>${escapeHtml(STAGE_NOTE[stage]?.[s.code] ?? '')}</p>
-<table class="ref">
+${wrapped(
+  `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ኮድ' : 'Code'}</th><th>${
     s.code === 'am' ? 'መልእክት' : 'Message'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+)}`;
     })
     .join('\n\n');
 }

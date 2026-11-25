@@ -149,6 +149,44 @@ The reference is generated from the implementation, not written beside it:
 Prose around those tables is written by hand in both languages. The tables
 themselves are never retyped.
 
+## 5.1 Being readable
+
+The site is for a beginner who may be on a school's phone, on a slow
+connection, with whatever fonts that device happens to have. Three things
+follow, and all three are checked rather than asserted: `npm run site:audit`
+drives the built pages in a real browser and measures them.
+
+**WCAG 2.2 AA, in both themes.** Every run of text clears 4.5:1 against the
+colour actually painted behind it — which is not the same as the nearest
+named shade, because this design stacks translucent layers over solid ones,
+sometimes twice. The audit composites them. The lowest ratio anywhere on the
+site is 4.68:1. Every interactive element has a visible focus ring, every
+page has one `h1` and no skipped heading levels, every `nav` landmark is
+named (a page carries four of them), and every target is at least 24px.
+
+**Colour is never the only cue.** A dichromat has two usable axes rather than
+three, so eight syntax categories cannot be told apart by hue: the ones a
+reader could confuse are spread along a luminance ladder, and each carries a
+weight, a style, or a shape of its own — keywords bold, comments italic,
+reserved words dotted, bracket depths three steps of lightness. The colours
+were solved for this rather than chosen (`tools/shared/tokens.css`), and
+`npm run site:cvd` photographs them through Chrome's own simulation of
+deuteranopia, protanopia, tritanopia and achromatopsia.
+
+**The type is set for Ge'ez.** A syllabary carries the vowel as a mark on the
+consonant, so what is on the page lives in detail at x-height rather than in
+the outline of a word, and a step down in size costs not a letter's shape but
+which letter it is. Code is therefore set at the same size as the prose
+around it rather than a step smaller, and with more leading than Latin would
+ask for. Since the site fetches no font (§6), size and leading are the entire
+toolkit.
+
+On a phone the header's sections become a drawer rather than three wrapped
+rows (`TOOLING.md` §2.1.1); the document comes before the lesson list in the
+markup, so a reader meets the lesson they opened rather than eight links to
+other ones; and the reference tables scroll sideways inside a named,
+focusable region rather than being shrunk.
+
 ## 6. Non-goals
 
 - **No tracking, no analytics, no fonts fetched from anywhere.** The playground

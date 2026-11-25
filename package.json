@@ -43,6 +43,8 @@
     "site:build": "vite build --config tools/site/vite.config.ts && vite build --config tools/playground/vite.config.ts --outDir ../site/dist/playground --emptyOutDir --base /playground/",
     "site:shot": "node tools/site/shot.mjs",
     "site:smoke": "node tools/site/smoke.mjs",
+    "site:audit": "node tools/site/audit.mjs",
+    "site:cvd": "node tools/site/cvd.mjs",
     "site:health": "node tools/site/health.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
