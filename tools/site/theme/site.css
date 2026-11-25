@@ -1172,3 +1172,67 @@ body:has(.fidel) .foot {
     letter-spacing: 0.9rem;
   }
 }
+
+/* ---- the reference's function tables ---- */
+
+/*
+ * Each row is a small article: the signature and what it gives back, then a
+ * sentence, then an example you could paste into the playground with the
+ * result it prints. The old table said only what a function was *called* —
+ * which is the one thing a reader could already see from the name.
+ */
+.ref-fns td {
+  vertical-align: top;
+}
+
+.ref-fn {
+  white-space: nowrap;
+}
+
+.ref-sig {
+  display: block;
+  font-weight: 700;
+}
+
+.ref-gives {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.ref-fns td p {
+  margin: 0 0 0.6rem;
+  max-width: 34rem;
+}
+
+.ref-eg {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: var(--surface-1);
+  font-family: var(--code);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  overflow-x: auto;
+}
+
+.ref-out {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0.45rem 0 0 !important;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.ref-out code {
+  font-family: var(--code);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .ref-fn {
+    white-space: normal;
+  }
+}
