@@ -22,4 +22,18 @@ describe('conformance header parsing', () => {
     const c = parseCase('x', 'x.ahadu', 'ጻፍ("# expect: አይደለም")\n');
     expect(c.expectedOutput).toEqual([]);
   });
+
+  it('collects input lines in order, so an interactive program is testable', () => {
+    const c = parseCase('x', 'x.ahadu', '# input: 12\n# input: 30\nጻፍ(አንብብ())\n');
+    expect(c.input).toEqual(['12', '30']);
+  });
+
+  it('keeps an empty input line, which is what pressing Enter sends', () => {
+    const c = parseCase('x', 'x.ahadu', '# input:\n# input: 7\n');
+    expect(c.input).toEqual(['', '7']);
+  });
+
+  it('has no input when none is declared', () => {
+    expect(parseCase('x', 'x.ahadu', 'ጻፍ(1)\n').input).toEqual([]);
+  });
 });

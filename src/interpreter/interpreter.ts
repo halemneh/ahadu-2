@@ -33,7 +33,10 @@ import {
   AH3015,
   AH3017,
   AH3018,
+  AH3019,
+  AH3020,
 } from '../diagnostics.js';
+import { parseNumericText } from '../numeric.js';
 import type {
   AssignTarget,
   AttributeDeclaration,
@@ -83,6 +86,17 @@ export interface RunOptions {
   /** Evaluation-step budget before `AH3018`. Unlimited by default. */
   readonly maxSteps?: number;
   /**
+   * Starting seed for `አጋጣሚ` (§8).
+   *
+   * Fixed by default, so a program that draws random numbers prints the same
+   * thing every time unless a host asks for otherwise. That direction is
+   * deliberate: the website runs every snippet at build time and fails the
+   * build when the output is not what the page claims (SITE.md §2), so a host
+   * that forgets this option gets a verifiable program, not a flaky one. The
+   * playground and the CLI opt into variation explicitly.
+   */
+  readonly seed?: number;
+  /**
    * Called for each statement worth showing, with its line, the value worth
    * showing for it, and how deep in calls it ran. This is what `ahadu trace`
    * prints, so a learner can watch a loop actually loop (TOOLING.md §1.1).
@@ -123,6 +137,46 @@ export const GLOBAL_SCOPE_NAME = 'ዋና ፕሮግራም';
  */
 const DEFAULT_MAX_DEPTH = 200;
 
+/**
+ * The seed `አጋጣሚ` starts from when no host supplies one.
+ *
+ * Any constant would do; 1 is the one the spec names so a second
+ * implementation can match it.
+ */
+const DEFAULT_SEED = 1;
+
+/**
+ * One step of the generator behind `አጋጣሚ` — mulberry32.
+ *
+ * Chosen because it is nine lines, has no dependencies, and is fully
+ * determined by a 32-bit state, so "the same seed gives the same sequence" is
+ * a property of the arithmetic rather than a promise about a library. Quality
+ * beyond that does not matter here: this draws dice rolls for a learner, and
+ * nothing in Ahadu should ever be used for anything that needs a real CSPRNG.
+ *
+ * Returns the next state and a fraction in [0, 1).
+ */
+function mulberry32(state: number): { readonly state: number; readonly fraction: number } {
+  const next = (state + 0x6d2b79f5) | 0;
+  let t = next;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return { state: next, fraction: ((t ^ (t >>> 14)) >>> 0) / 4294967296 };
+}
+
+/**
+ * Turns a seed into generator state.
+ *
+ * A seed is an ordinary Ahadu `ቁጥር`, so it can be negative, fractional or
+ * enormous; the state is 32 bits. Truncating toward zero and wrapping means
+ * every seed is usable and `ዘር(1)` matches the default. Two seeds can collide
+ * — `ዘር(1)` and `ዘር(1.5)` are the same run — which is a fair trade for never
+ * rejecting a number someone chose.
+ */
+function seedState(seed: number): number {
+  return Number.isFinite(seed) ? Math.trunc(seed) | 0 : 0;
+}
+
 /** Amharic names for the operations named in `AH3002` messages (§6.2). */
 const OPERATION_NAMES: Record<string, string> = {
   ADD: 'መደመር',
@@ -151,6 +205,8 @@ export class Interpreter {
   private readonly maxDepth: number;
   private readonly maxSteps: number;
   private readonly onStatement: RunOptions['onStatement'];
+  /** The generator's 32-bit state, which `ዘር` resets and `አጋጣሚ` advances. */
+  private randomState: number;
 
   constructor(
     readonly host: Host,
@@ -159,7 +215,31 @@ export class Interpreter {
     this.maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY;
     this.onStatement = options.onStatement;
+    this.randomState = seedState(options.seed ?? DEFAULT_SEED);
     for (const [name, value] of createBuiltins(this)) this.globals.define(name, value);
+  }
+
+  // =========================================================================
+  // Randomness (§8)
+  // =========================================================================
+
+  /** Restarts the generator, which is what `ዘር` does. */
+  reseed(seed: number): void {
+    this.randomState = seedState(seed);
+  }
+
+  /**
+   * Draws an integer in `[low, high]`, both ends included.
+   *
+   * Inclusive because `አጋጣሚ(1፣ 6)` has to be a die. A half-open range is the
+   * right default for a library and the wrong one for a first program: every
+   * learner who writes `አጋጣሚ(1፣ 6)` means six faces, and an exclusive upper
+   * bound would hand them five and no error.
+   */
+  nextInt(low: number, high: number): number {
+    const { state, fraction } = mulberry32(this.randomState);
+    this.randomState = state;
+    return low + Math.floor(fraction * (high - low + 1));
   }
 
   // =========================================================================
@@ -847,14 +927,14 @@ export class Interpreter {
 // ===========================================================================
 
 /**
- * The seven globals.
+ * The twelve globals.
  *
  * They are ordinary bindings, not keywords, so user code may shadow them.
  * v1-py made `ጻፍ`, `አዋህድ` and `ሰርዝ` keywords and then implemented only the
  * first, so calling either other one crashed the interpreter (CHANGES C13).
  *
- * `አዋህድ` and `ሰርዝ` are imperatives in Amharic, so they change the list they
- * are given and return `ምንም`: `ዝ = አዋህድ(ዝ፣ 4)` then leaves `ዝ` holding
+ * `አዋህድ`, `ሰርዝ` and `ዘር` are imperatives in Amharic, so they change
+ * something and return `ምንም`: `ዝ = አዋህድ(ዝ፣ 4)` then leaves `ዝ` holding
  * `ምንም`, which fails loudly instead of looking like it worked (§4.5).
  */
 function createBuiltins(interpreter: Interpreter): Map<string, Value> {
@@ -930,6 +1010,80 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     }
     const prompt = args.length === 1 ? render(args[0] as Value) : null;
     return str(interpreter.host.readLine(prompt));
+  });
+
+  // -------------------------------------------------------------------------
+  // Conversion
+  //
+  // `አንብብ` hands back `ጽሁፍ`, and `+` refuses to mix a `ጽሁፍ` with a `ቁጥር`
+  // (§6.2). Without these three, nothing a learner types at a prompt can be
+  // counted, compared or added — a calculator cannot add its own inputs. The
+  // type keywords `ቁጥር` and `ጽሁፍ` are reserved (§3.3), so the conversions are
+  // named for the direction they go in.
+  // -------------------------------------------------------------------------
+
+  define('ወደቁጥር', (args, at) => {
+    arity('ወደቁጥር', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind === 'number') return value;
+    if (value.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደቁጥር"', typeName(value)));
+    }
+    const parsed = parseNumericText(value.value);
+    // Loudly, not as `ምንም`: a calculator that quietly computed with nothing
+    // would print an answer, and the learner would believe it.
+    if (parsed === null) interpreter.fail(AH3019, at, err.notNumericText(value.value));
+    return num(parsed);
+  });
+
+  define('ወደጽሁፍ', (args, at) => {
+    arity('ወደጽሁፍ', args, 1, at);
+    // Exactly what `ጻፍ` would have printed, so there is one rendering to learn.
+    return str(render(args[0] as Value));
+  });
+
+  define('ቁጥርነው', (args, at) => {
+    arity('ቁጥርነው', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind === 'number') return bool(true);
+    if (value.kind !== 'string') return bool(false);
+    // Never fails, for anything: its whole job is to be the guard in front of
+    // `ወደቁጥር`, and a guard that can itself raise is no guard.
+    return bool(parseNumericText(value.value) !== null);
+  });
+
+  // -------------------------------------------------------------------------
+  // Randomness
+  //
+  // Seeded, always. `ዘር` is the only way a program changes the sequence; the
+  // starting seed comes from the host and is fixed unless the host says
+  // otherwise, which is what lets the website run every snippet at build time
+  // and check its output (SITE.md §2).
+  // -------------------------------------------------------------------------
+
+  define('አጋጣሚ', (args, at) => {
+    arity('አጋጣሚ', args, 2, at);
+    const low = args[0] as Value;
+    const high = args[1] as Value;
+    if (low.kind !== 'number' || high.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalBinary('መምረጥ', typeName(low), typeName(high)));
+    }
+    if (!Number.isInteger(low.value) || !Number.isInteger(high.value) || low.value > high.value) {
+      interpreter.fail(AH3020, at, err.badRandomRange(render(low), render(high)));
+    }
+    return num(interpreter.nextInt(low.value, high.value));
+  });
+
+  define('ዘር', (args, at) => {
+    arity('ዘር', args, 1, at);
+    const seed = args[0] as Value;
+    if (seed.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ዘር"', typeName(seed)));
+    }
+    // An imperative, like `አዋህድ` and `ሰርዝ`: it changes something and hands
+    // back `ምንም`, so `ሀ = ዘር(5)` fails loudly instead of looking useful.
+    interpreter.reseed(seed.value);
+    return NOTHING;
   });
 
   return builtins;

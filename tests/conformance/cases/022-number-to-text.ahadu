@@ -1,0 +1,12 @@
+# ወደጽሁፍ gives exactly what ጻፍ would have printed (§8.1), so there is one
+# rendering to learn rather than two that could drift apart.
+# expect: 42 ነው
+# expect: እውነት
+# expect: [1፣ 2]
+# expect: ምንም
+# expect: ጽሁፍ
+ጻፍ(ወደጽሁፍ(42) + " ነው")
+ጻፍ(ወደጽሁፍ(እውነት))
+ጻፍ(ወደጽሁፍ([1፣ 2]))
+ጻፍ(ወደጽሁፍ(ምንም))
+ጻፍ(አይነት(ወደጽሁፍ(42)))

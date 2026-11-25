@@ -4,9 +4,14 @@
  * A case is an Ahadu program that carries its own expectations in comment
  * headers (TOOLING.md §3):
  *
+ *   # input: <one line served to አንብብ>
  *   # expect: <exact stdout line>
  *   # expect-error: <CODE>
  *   # expect-error: <CODE> at <line>:<col>
+ *
+ * `# input:` lines are served to `አንብብ` in the order they appear. Without
+ * them an interactive program could only ever be tested against the empty
+ * string, which is the one input a learner never types.
  *
  * Expectations are program behavior — never token or AST snapshots.
  */
@@ -26,14 +31,18 @@ export interface ConformanceCase {
   source: string;
   expectedOutput: string[];
   expectedErrors: ExpectedError[];
+  /** Lines served to `አንብብ`, in order. */
+  input: string[];
 }
 
 const EXPECT = /^#\s*expect:\s?(.*)$/;
+const INPUT = /^#\s*input:\s?(.*)$/;
 const EXPECT_ERROR = /^#\s*expect-error:\s*([A-Z]{2}\d{4})(?:\s+at\s+(\d+):(\d+))?\s*$/;
 
 export function parseCase(name: string, path: string, source: string): ConformanceCase {
   const expectedOutput: string[] = [];
   const expectedErrors: ExpectedError[] = [];
+  const input: string[] = [];
 
   for (const line of source.split(/\r\n|\r|\n/)) {
     const trimmed = line.trim();
@@ -50,11 +59,17 @@ export function parseCase(name: string, path: string, source: string): Conforman
       continue;
     }
 
+    const given = INPUT.exec(trimmed);
+    if (given) {
+      input.push(given[1] ?? '');
+      continue;
+    }
+
     const out = EXPECT.exec(trimmed);
     if (out) expectedOutput.push(out[1] ?? '');
   }
 
-  return { name, path, source, expectedOutput, expectedErrors };
+  return { name, path, source, expectedOutput, expectedErrors, input };
 }
 
 export function loadCases(dir: string): ConformanceCase[] {

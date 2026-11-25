@@ -45,7 +45,10 @@ describe('conformance corpus', () => {
 describe('conformance cases', () => {
   for (const c of cases) {
     it(c.name, () => {
-      const { output, errors } = runSource(c.source, { maxSteps: 1_000_000 });
+      const { output, errors } = runSource(c.source, {
+        maxSteps: 1_000_000,
+        input: c.input,
+      });
 
       if (c.expectedErrors.length > 0) {
         expect(errors.map((e) => e.code)).toEqual(c.expectedErrors.map((e) => e.code));
@@ -65,7 +68,7 @@ describe('conformance cases', () => {
 describe('examples run clean', () => {
   for (const c of loadCases(examplesDir)) {
     it(c.name, () => {
-      const { errors } = runSource(c.source, { maxSteps: 1_000_000 });
+      const { errors } = runSource(c.source, { maxSteps: 1_000_000, input: c.input });
       expect(errors.map((e) => `${e.code} ${e.line}:${e.startCol} ${e.message}`)).toEqual([]);
     });
   }

@@ -523,7 +523,15 @@ function launch(input: readonly string[]): void {
     dispose();
   };
 
-  const request: RunRequest = { source: editor.value, input, maxSteps: MAX_STEPS };
+  const request: RunRequest = {
+    source: editor.value,
+    input,
+    maxSteps: MAX_STEPS,
+    // A changing seed, so `አጋጣሚ` is actually random here. The interpreter's
+    // default is fixed, which is what the site's build-time checker wants;
+    // a guessing game that picks the same number every time is not one.
+    seed: Date.now(),
+  };
   worker.postMessage(request);
 }
 

@@ -1,0 +1,14 @@
+# ቁጥርነው is the guard in front of ወደቁጥር, so it answers for any value and
+# never raises — a guard that can itself fail is no guard (§8.2).
+# expect: እውነት
+# expect: ሃሰት
+# expect: እውነት
+# expect: ሃሰት
+# expect: ሃሰት
+# expect: ሃሰት
+ጻፍ(ቁጥርነው("12"))
+ጻፍ(ቁጥርነው("ሰላም"))
+ጻፍ(ቁጥርነው(5))
+ጻፍ(ቁጥርነው([1]))
+ጻፍ(ቁጥርነው(""))
+ጻፍ(ቁጥርነው("5."))

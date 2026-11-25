@@ -847,8 +847,8 @@ Semantics:
 
 ## 8. Built-in functions
 
-These seven names are pre-bound in the global scope. They are not keywords and
-MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
+These twelve names are pre-bound in the global scope. They are not keywords
+and MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
 keywords but implemented only `ጻፍ`; calling either other one crashed the
 interpreter with a Python exception (CHANGES §C13).
 
@@ -861,10 +861,22 @@ interpreter with a Python exception (CHANGES §C13).
 | `ቅጂ` | `ቅጂ(ስብስብ)` | a new `ስብስብ` with the same elements — a shallow copy |
 | `አይነት` | `አይነት(any)` | `ጽሁፍ` naming the type (§4.1) |
 | `አንብብ` | `አንብብ()` or `አንብብ(ጽሁፍ)` | reads one line from standard input as `ጽሁፍ`; the optional argument is printed as a prompt first |
+| `ወደቁጥር` | `ወደቁጥር(ጽሁፍ \| ቁጥር)` | the number that text spells; `AH3019` when it spells none (§8.2) |
+| `ወደጽሁፍ` | `ወደጽሁፍ(any)` | `ጽሁፍ` — exactly what `ጻፍ` would have printed (§8.1) |
+| `ቁጥርነው` | `ቁጥርነው(any)` | `እውነታ` — whether `ወደቁጥር` would succeed. Never fails |
+| `አጋጣሚ` | `አጋጣሚ(ቁጥር፣ ቁጥር)` | a `ቁጥር` drawn from the two bounds **inclusive**; `AH3020` on bounds it cannot use (§8.3) |
+| `ዘር` | `ዘር(ቁጥር)` | **restarts `አጋጣሚ` from that seed**; returns `ምንም` (§8.3) |
 
 `ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
 example hardcodes `< 5`.
+
+`ወደቁጥር`, `ወደጽሁፍ`, `ቁጥርነው`, `አጋጣሚ` and `ዘር` were added after the website
+shipped, for a reason worth recording: `አንብብ` returns `ጽሁፍ` and `+` refuses
+to mix a `ጽሁፍ` with a `ቁጥር` (§6.2), so there was no way to add two numbers a
+learner had typed. A calculator was not a missing example — it was
+unwritable. `ወደቁጥር` is named for its direction because `ቁጥር` and `ጽሁፍ` are
+reserved type keywords (§3.3) and cannot be reused as function names.
 
 `አዋህድ` and `ሰርዝ` are imperatives in Amharic — "merge!", "delete!" — so they
 change the list rather than handing back a new one, and returning `ምንም` makes
@@ -889,6 +901,72 @@ the non-mutating half of the pair (§4.5).
 
 Nesting is the only context where a string is quoted, so that `ጻፍ(["ሀ"])`
 shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
+
+`ወደጽሁፍ` returns exactly this rendering, so there is one answer to "how does
+this value look" rather than two that could drift apart.
+
+### 8.2 What text counts as a number
+
+`ወደቁጥር` accepts exactly what the language itself accepts as a number
+literal, optionally signed, with surrounding whitespace ignored:
+
+- a run of ASCII digits, with at most one `.` that has digits on both sides
+  (§3.4) — so `5.` and `.5` are **not** numbers, the same rule the lexer
+  applies;
+- or a well-formed run of Ge'ez numerals (§3.4.1) — `፫፻፳፩` is 321.
+
+Nothing else. Not `1e3`, not `0x10`, not digits from another script. A leading
+`-` is accepted; a leading `+` is not, because the language has no unary plus.
+`ወደቁጥር` given a `ቁጥር` returns it unchanged, so a program need not know
+whether a value has already been converted.
+
+One rule, two readers: the same function decides what a literal in a file
+means and what text from `አንብብ` means. A language that read `፫፻፳፩` from a file
+and refused the same digits typed at a prompt would be lying about its own
+numerals.
+
+Whitespace is ignored because someone typing at a prompt adds a space without
+meaning anything by it. The Ethiopic word space `፡` is punctuation and not
+whitespace, so `"7፡"` is `AH3019`.
+
+Failure is loud. `ወደቁጥር` on text that is not a number raises `AH3019`; it does
+not return `ምንም`. A calculator that quietly computed with `ምንም` would print an
+answer and the learner would believe it. A program that wants to check first
+calls `ቁጥርነው`, which answers `እውነት` or `ሃሰት` for **any** value and never
+raises — a guard that can itself fail is no guard.
+
+### 8.3 Randomness is seeded
+
+`አጋጣሚ(ሀ፣ ለ)` draws an integer from `ሀ` to `ለ` with **both ends included**, so
+`አጋጣሚ(1፣ 6)` is a die. An exclusive upper bound is the right default for a
+library and the wrong one for a first program: everyone who writes
+`አጋጣሚ(1፣ 6)` means six faces, and an exclusive bound would hand them five and
+no error. Both bounds MUST be integers and `ሀ` MUST NOT exceed `ለ`; otherwise
+`AH3020`.
+
+The sequence is **fully determined by a seed**. A program sets it with `ዘር`,
+which is an imperative like `አዋህድ` and `ሰርዝ` and returns `ምንም`. The same seed
+MUST produce the same sequence in a given implementation; implementations
+SHOULD document their generator, and this one documents mulberry32 in
+`src/interpreter/README.md`.
+
+Where the first seed comes from is **the host's decision**, and the default is
+fixed rather than clock-based. That direction is deliberate and it is not a
+detail: the website runs every snippet on it through the real interpreter at
+build time and fails the build when the output is not what the page claims
+(SITE.md §2). A clock-seeded default would mean a lesson could not show what
+`አጋጣሚ` prints, and the one mechanism that keeps the teaching material honest
+would have a hole in it exactly where a learner is most likely to be confused.
+
+So a host that says nothing gets a reproducible program; a host that wants
+dice asks for them. `ahadu` seeds from the clock and takes `--seed=<n>` to pin
+a run (TOOLING.md §1); the playground seeds from the clock; the conformance
+suite and the site's snippet checker take the fixed default.
+
+This is also why conformance cases for `አጋጣሚ` assert **properties** — that a
+draw is within its bounds, and that the same seed repeats — rather than
+particular numbers. The numbers are this implementation's; the properties are
+the language's.
 
 ---
 
@@ -972,6 +1050,8 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
 | `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` |
 | `AH3018` | step limit exceeded — `ፕሮግራሙ ከመጠን በላይ ረዘመ።` |
+| `AH3019` | `ወደቁጥር` on text that is not a number — `ጽሁፉ ቁጥር አይደለም።` |
+| `AH3020` | `አጋጣሚ` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
 
 ### 9.3 Recovery
 

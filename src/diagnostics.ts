@@ -73,6 +73,8 @@ export const AH3014 = 'AH3014';
 export const AH3015 = 'AH3015';
 export const AH3017 = 'AH3017';
 export const AH3018 = 'AH3018';
+export const AH3019 = 'AH3019';
+export const AH3020 = 'AH3020';
 
 /**
  * Default Amharic text, keyed by code.
@@ -122,6 +124,8 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH3015]: 'ጽሁፍን በቦታው መቀየር አይቻልም።',
   [AH3017]: 'የጥሪ ጥልቀት ከመጠን አለፈ።',
   [AH3018]: 'ፕሮግራሙ ከመጠን በላይ ረዘመ።',
+  [AH3019]: 'ጽሁፉ ቁጥር አይደለም።',
+  [AH3020]: 'የአጋጣሚው ክልል አይሰራም።',
 };
 
 export function diagnostic(

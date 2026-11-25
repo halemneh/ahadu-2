@@ -34,6 +34,7 @@ const USAGE = `አሃዱ — Ahadu 2.0
 
   --json                 machine-readable output
   --no-color             no colour, as NO_COLOR also does
+  --seed=<n>             fix what አጋጣሚ draws, so a run repeats exactly
   --help                 this message
 
 See spec/TOOLING.md for the full design, ROADMAP.md for what lands when.
@@ -46,6 +47,15 @@ interface Flags {
   readonly json: boolean;
   readonly colors: Palette;
   readonly errorColors: Palette;
+  /**
+   * The seed `አጋጣሚ` starts from.
+   *
+   * A changing one unless `--seed=<n>` was given: running a program twice at
+   * a terminal should roll different dice. The interpreter's own default is
+   * fixed instead, because its other callers — the conformance suite, the
+   * site's snippet checker — want the opposite (LANGUAGE.md §8).
+   */
+  readonly seed: number;
 }
 
 function reportDiagnostics(source: string, diagnostics: readonly Diagnostic[], flags: Flags): void {
@@ -191,7 +201,7 @@ function execute(source: string, flags: Flags, options: RunOptions = {}): number
     return 1;
   }
 
-  const result = run(parsed.program, cliHost(), options);
+  const result = run(parsed.program, cliHost(), { seed: flags.seed, ...options });
 
   if (result.diagnostic !== null) {
     if (flags.json) {
@@ -251,6 +261,20 @@ function cmdRepl(flags: Flags): number {
 // Entry point
 // ---------------------------------------------------------------------------
 
+/**
+ * Reads `--seed=<n>`, falling back to the clock.
+ *
+ * A malformed value falls back too rather than failing: `--seed=abc` asks for
+ * a repeatable run and gets a run, which is a smaller surprise than an exit
+ * code from a flag that only affects dice.
+ */
+function readSeed(args: readonly string[]): number {
+  const flag = args.find((a) => a.startsWith('--seed='));
+  if (flag === undefined) return Date.now();
+  const value = Number(flag.slice('--seed='.length));
+  return Number.isFinite(value) ? value : Date.now();
+}
+
 function main(args: string[]): number {
   const json = args.includes('--json');
   const wantsColor = !args.includes('--no-color');
@@ -260,6 +284,7 @@ function main(args: string[]): number {
     json,
     colors: palette(colorEnabled(stdout, wantsColor)),
     errorColors: palette(colorEnabled(stderr, wantsColor)),
+    seed: readSeed(args),
   };
 
   if (args.includes('--help') || (operands.length === 0 && args.length > 0 && !json)) {

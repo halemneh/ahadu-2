@@ -130,3 +130,21 @@ export function callDepthExceeded(limit: number): string {
 export function stepLimitExceeded(limit: number): string {
   return `ፕሮግራሙ ${limit} እርምጃ አለፈ። ዑደቱ መቆሚያ አለው?`;
 }
+
+/**
+ * The message for `ወደቁጥር` on text that is not a number (§8).
+ *
+ * The text is quoted back, because the usual cause is invisible: a space, a
+ * `፡` typed for a colon, or an empty prompt someone pressed Enter through.
+ */
+export function notNumericText(text: string): string {
+  // Pressing Enter at a prompt is the commonest way to land here, and
+  // `"" ቁጥር አይደለም።` shows a learner nothing at all.
+  if (text.trim().length === 0) return 'ምንም አልተጻፈም፤ ቁጥር ያስፈልጋል።';
+  return `"${text}" ቁጥር አይደለም።`;
+}
+
+/** The message for `አጋጣሚ` given bounds it cannot draw from (§8). */
+export function badRandomRange(low: string, high: string): string {
+  return `አጋጣሚ ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
+}

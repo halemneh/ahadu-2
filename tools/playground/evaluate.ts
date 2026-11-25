@@ -24,6 +24,16 @@ export interface RunRequest {
   /** Lines the input panel holds, served to `አንብብ` in order. */
   readonly input: readonly string[];
   readonly maxSteps: number;
+  /**
+   * Starting seed for `አጋጣሚ`, or omitted for the interpreter's fixed default.
+   *
+   * Omitting it is the safe direction: the site's snippet checker calls this
+   * function at build time and compares the output to what the page claims
+   * (SITE.md §2), so a caller that says nothing gets a program whose random
+   * numbers are the same every build. The playground passes a changing seed,
+   * because a guessing game with one answer is not a game.
+   */
+  readonly seed?: number;
 }
 
 export interface RunReply {
@@ -76,7 +86,10 @@ export function evaluate(request: RunRequest): RunReply {
         return pending.shift() ?? '';
       },
     },
-    { maxSteps: request.maxSteps },
+    {
+      maxSteps: request.maxSteps,
+      ...(request.seed === undefined ? {} : { seed: request.seed }),
+    },
   );
 
   return {

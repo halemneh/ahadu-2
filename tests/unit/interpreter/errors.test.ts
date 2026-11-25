@@ -32,6 +32,8 @@ const triggers: Record<string, string> = {
   AH3015: 'ስም = "ሰላም"\nስም[0] = "ሀ"',
   AH3017: lines('ተግባር ድ(ቁ)፦', '    ተመላሽ ድ(ቁ + 1)', '', 'ድ(1)'),
   AH3018: 'እውነት እስከሆነ ድረስ፦\n    ሀ = 1',
+  AH3019: 'ጻፍ(ወደቁጥር("ሰላም"))',
+  AH3020: 'ጻፍ(አጋጣሚ(6፣ 1))',
 };
 
 describe('the whole runtime catalogue is reachable (§9.2)', () => {

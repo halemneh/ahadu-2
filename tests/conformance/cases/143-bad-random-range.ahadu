@@ -1,0 +1,4 @@
+# Both bounds must be whole numbers and the first must not exceed the
+# second (§8.3).
+# expect-error: AH3020 at 4:4
+ጻፍ(አጋጣሚ(6፣ 1))
