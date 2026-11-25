@@ -16,7 +16,9 @@ import { join } from 'node:path';
 import { KEYWORDS } from '../../../src/lexer/constants.js';
 import { MESSAGES } from '../../../src/diagnostics.js';
 import { withLibrary } from '../../../src/engine.js';
-import { LIBRARY_NAMES } from '../../../src/library/index.js';
+import { LIBRARY_NAMES, LIBRARY_SOURCE } from '../../../src/library/index.js';
+import { tokenize } from '../../../src/lexer/index.js';
+import { highlight } from '../../playground/highlight.js';
 import { escapeHtml } from '../../playground/view.js';
 import type { Strings } from './strings.js';
 
@@ -292,6 +294,28 @@ ${glossRows(library, s)}
 </table>`)}`;
 }
 
+/**
+ * The standard library's own source.
+ *
+ * LANGUAGE.md §8.5 says the library is written in Ahadu so that a learner can
+ * read it. That claim needs somewhere to point, and this is it: the actual
+ * constant the interpreter loads, highlighted by the same lexer that
+ * highlights every other snippet on the site. Nothing is retyped, so the page
+ * cannot show a library that is not the one running.
+ */
+export function librarySource(s: Strings): string {
+  const { tokens } = tokenize(LIBRARY_SOURCE);
+  return `<p>${escapeHtml(
+    s.code === 'am'
+      ? 'ከታች ያለው ኮድ ነው — መግለጫው አይደለም። ቋንቋው ራሱ የሚጭነው ይኸው ነው፤ ዑደቱና ሁኔታው አስቀድመህ የምታውቃቸው ናቸው።'
+      : 'Below is the code, not a description of it. This is what the language loads, and the loops and conditions in it are the ones you already know.',
+  )}</p>
+<div class="snip snip-fragment"><pre class="snip-code"><code>${highlight({
+    source: LIBRARY_SOURCE,
+    tokens,
+  })}</code></pre></div>`;
+}
+
 export function referenceBody(s: Strings): string {
   const t = (am: string, en: string): string => (s.code === 'am' ? am : en);
 
@@ -304,6 +328,10 @@ ${keywordTable(s)}
 ## ${t('ተግባራት', 'Functions')}
 
 ${builtinTable(s)}
+
+## ${t('የቤተ-መጻሕፍቱ ኮድ', 'The library’s source')}
+
+${librarySource(s)}
 
 ## ${t('የስተት ኮዶች', 'Error codes')}
 
