@@ -1,0 +1,7 @@
+# The collection comes before ለእያንዳንዱ, as the condition comes before ከሆነ.
+# This is the shape someone arriving from another language writes (§7.4).
+# expect-error: AH2001 at 6:1
+ቤተሰብ = ["አበበ"]
+
+ለእያንዳንዱ ስም በቤተሰብ፦
+    ጻፍ(ስም)

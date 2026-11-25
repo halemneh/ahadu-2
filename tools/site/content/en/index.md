@@ -5,20 +5,46 @@ summary: A programming language written in Amharic
 order: 0
 ---
 
+<div class="hero">
+<div>
+
 Ahadu is a programming language written in Amharic words. Its keywords, its
-variable names and its error messages are all in Ge'ez script.
-
-```ahadu
-ጻፍ("ሰላም ዓለም!")
-```
-
-You can change the code above and press **Run**. Every piece of code on this
-site runs in the real interpreter.
+variable names, its error messages — and its numerals — are all in Ge'ez
+script. Nothing to install.
 
 <div class="hero-actions">
-  <a class="button" href="/en/learn/01-hello/">Start learning</a>
+  <a class="button" href="/en/learn/00-start/">Start learning</a>
   <a class="button button-quiet" href="/playground/">Open the playground</a>
 </div>
+
+</div>
+<div>
+
+```ahadu
+ቤተሰብ = ["አበበ"፣ "ከበደ"፣ "አስቴር"]
+
+ቤተሰብ ለእያንዳንዱ ስም፦
+    ጻፍ(ስም፣ "—"፣ ርዝመት(ስም)፣ "ፊደል")
+
+ቀኑ = ከግሪጎሪ(2024፣ 9፣ 11)
+ጻፍ(ወር_መጠሪያ(ቀኑ[1])፣ ወደ_ግዕዝ(ቀኑ[2])፣ "ቀን"፣ ወደ_ግዕዝ(ቀኑ[0]))
+```
+
+```ውጤት
+አበበ — 3 ፊደል
+ከበደ — 3 ፊደል
+አስቴር — 4 ፊደል
+መስከረም ፩ ቀን ፳፻፲፯
+```
+
+</div>
+</div>
+
+Change the code and press **Run**. Every snippet on this site is executed by
+the real interpreter when the site is built — if the output is not what the
+page claims, the page does not build.
+
+Note that `ርዝመት("አበበ")` is **3**: Ahadu counts Ge'ez characters, not bytes.
 
 ## Why Ahadu?
 

@@ -1,0 +1,14 @@
+# A ጽሁፍ walks its code points, the same breadth ርዝመት and x[i] already have
+# (§4.3, §7.4). Indexing a string but not being able to walk it would be
+# arbitrary.
+# expect: ሰ
+# expect: ላ
+# expect: ም
+# expect: 3
+# expect: ጽሁፍ
+ቆጥር = 0
+"ሰላም" ለእያንዳንዱ ፊደሉ፦
+    ጻፍ(ፊደሉ)
+    ቆጥር = ቆጥር + 1
+ጻፍ(ቆጥር)
+ጻፍ(አይነት(ፊደሉ))

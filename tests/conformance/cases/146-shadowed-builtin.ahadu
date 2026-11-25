@@ -1,0 +1,9 @@
+# Built-ins are ordinary shadowable bindings, so this assignment is legal —
+# but the call must say what happened (§8.2). Four built-ins are nouns, and
+# the consequence of assigning to one lands at the next call, on another
+# line, as a complaint about a type.
+# expect: 5
+# expect-error: AH3013 at 9:4
+ርዝመት = 5
+ጻፍ(ርዝመት)
+ጻፍ(ርዝመት("ሰላም"))

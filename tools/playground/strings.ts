@@ -35,6 +35,22 @@ export interface Strings {
   readonly navReference: string;
   readonly navExamples: string;
   readonly navPlayground: string;
+  /** Names the nav landmark, and the button that opens it on a phone. */
+  readonly navLabel: string;
+  readonly navMenu: string;
+
+  /** The footer, which the playground shares with every other page. */
+  readonly footer: string;
+  readonly footerActions: string;
+  readonly reportProblem: string;
+  readonly privacyLink: string;
+  /**
+   * The page's h1. It is not drawn: the header says where you are to anyone
+   * who can see it. But a page with no h1 gives a screen reader no title to
+   * announce and nothing to jump to, and this is the one page of the site
+   * whose heading is not in its prose.
+   */
+  readonly pageTitle: string;
 
   // Editor
   readonly editorLabel: string;
@@ -94,6 +110,13 @@ const amharic: Strings = {
   navReference: 'ማጣቀሻ',
   navExamples: 'ምሳሌዎች',
   navPlayground: 'ሜዳ',
+  footer: 'አሃዱ ነጻ እና ክፍት ምንጭ ነው።',
+  footerActions: 'አስተያየትና ግንኙነት',
+  reportProblem: 'ችግር አሳውቁ',
+  privacyLink: 'ግላዊነት',
+  navLabel: 'ክፍሎች',
+  navMenu: 'ዝርዝር',
+  pageTitle: 'የአሃዱ ሜዳ',
 
   editorLabel: 'የአሃዱ ኮድ',
   inputLabel: 'ግቤት',
@@ -143,6 +166,13 @@ const english: Strings = {
   navReference: 'Reference',
   navExamples: 'Examples',
   navPlayground: 'Playground',
+  footer: 'Ahadu is free and open source.',
+  footerActions: 'Feedback and contact',
+  reportProblem: 'Report a problem',
+  privacyLink: 'Privacy',
+  navLabel: 'Sections',
+  navMenu: 'Menu',
+  pageTitle: 'Ahadu playground',
 
   editorLabel: 'Ahadu code',
   inputLabel: 'Input',

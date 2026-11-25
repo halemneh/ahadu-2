@@ -11,3 +11,6 @@ tools/site/.generated/
 tools/site/dist/
 tools/site/shots/
 tools/site/.playground/
+
+# Scratch: the PR description, not part of the project.
+PR.md

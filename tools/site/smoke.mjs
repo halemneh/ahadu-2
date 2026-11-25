@@ -66,7 +66,10 @@ try {
 
   console.log('the playground as a page of the site');
   await page.goto(`${base}/en/learn/01-hello/`, { waitUntil: 'networkidle' });
-  await page.locator('.sitebar .chip').last().click(); // to dark
+  // By id, not "the last chip in the bar". The last chip is now the
+  // hamburger, which is display:none at this width — and a selector that
+  // depends on the order of the bar's buttons breaks whenever one is added.
+  await page.locator('#theme').click(); // to dark
   await page.waitForTimeout(200);
   await page.locator('.nav a', { hasText: 'Playground' }).click();
   await page.waitForTimeout(900);
@@ -86,6 +89,61 @@ try {
     await page.locator('.sitebar .nav a[data-section="learn"]').getAttribute('href'),
     '/en/learn/',
   );
+
+  /*
+   * The header on a phone. Five sections, a brand and two switches do not
+   * fit across 390px, and flex-wrap spent three rows of a phone screen on
+   * chrome before the lesson began. None of that is visible to a unit test:
+   * it is a question about a real layout at a real width.
+   */
+  console.log('the header on a phone');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${base}/en/learn/01-hello/`, { waitUntil: 'networkidle' });
+  const barHeight = await page.locator('.sitebar').evaluate((el) => el.getBoundingClientRect().height);
+  check('the bar is one row, not three', barHeight, (h) => h < 70);
+  check('the sections are out of the bar', await page.locator('#sitenav').isVisible(), false);
+  check('and a button is offered instead', await page.locator('#menu').isVisible(), true);
+
+  await page.locator('#menu').click();
+  await page.waitForTimeout(350);
+  check('which opens them', await page.locator('#sitenav').isVisible(), true);
+  check(
+    'says so to a screen reader',
+    await page.locator('#menu').getAttribute('aria-expanded'),
+    'true',
+  );
+  check(
+    'and moves focus into the drawer',
+    await page.evaluate(() => document.activeElement?.textContent?.trim()),
+    'Home',
+  );
+
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(350);
+  check('Escape closes it', await page.locator('#sitenav').isVisible(), false);
+  check(
+    'and hands focus back to the button that opened it',
+    await page.evaluate(() => document.activeElement?.id),
+    'menu',
+  );
+
+  // The two things the reader asked about, measured rather than looked at.
+  const runBox = await page
+    .locator('.snip-run')
+    .first()
+    .evaluate((el) => el.getBoundingClientRect().height);
+  check('the Run button is one line, not two', runBox, (h) => h < 48);
+  check(
+    'the lesson comes before the list of lessons',
+    await page.evaluate(() => {
+      const main = document.getElementById('main');
+      const side = document.querySelector('.side');
+      if (main === null || side === null) return 'missing';
+      return main.compareDocumentPosition(side) & Node.DOCUMENT_POSITION_FOLLOWING ? 'after' : 'before';
+    }),
+    'after',
+  );
+  await page.setViewportSize({ width: 1280, height: 720 });
 
   console.log('a snippet sent from a lesson');
   await page.goto(`${base}/en/learn/04-loops/`, { waitUntil: 'networkidle' });

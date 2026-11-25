@@ -26,6 +26,63 @@ describe('ጻፍ (§8)', () => {
   });
 });
 
+describe('shadowing a built-in is legal and says so (§8.2)', () => {
+  // Four of the built-ins are nouns — ርዝመት, ቅጂ_አድርግ, አይነት, ዘር — which are exactly
+  // the words someone reaches for as a variable name. The consequence lands
+  // at the next call, on a different line, as a complaint about a type, so
+  // "ቁጥር ሊጠራ አይችልም።" is true and tells a learner nothing.
+  const nouns = ['ርዝመት', 'ቅጂ_አድርግ', 'አይነት', 'ዘር'];
+
+  it('still allows the assignment itself', () => {
+    expect(out('ርዝመት = 5\nጻፍ(ርዝመት)')).toEqual(['5']);
+  });
+
+  it('names the built-in when the shadowed name is called', () => {
+    const text = message('ርዝመት = 5\nጻፍ(ርዝመት("ሰላም"))');
+    expect(text).toContain('"ርዝመት"');
+    expect(text).toContain('ተግባር ነበር');
+  });
+
+  it('reports the type the name now holds', () => {
+    expect(message('አይነት = "ሀ"\nጻፍ(አይነት(5))')).toContain('ጽሁፍ');
+    expect(message('ቅጂ_አድርግ = [1]\nጻፍ(ቅጂ_አድርግ([1]))')).toContain('ስብስብ');
+  });
+
+  it('is still AH3013', () => {
+    expect(code('ርዝመት = 5\nጻፍ(ርዝመት("ሰላም"))')).toBe('AH3013');
+  });
+
+  it('covers every built-in, not just the nouns', () => {
+    for (const name of [
+      ...nouns,
+      'ጻፍ',
+      'ጨምር',
+      'ሰርዝ',
+      'አንብብ',
+      'ወደ_ቁጥር',
+      'ወደ_ጽሁፍ',
+      'ቁጥር_ነው',
+      'ዘፈቀደ_ቁጥር',
+    ]) {
+      const text = message(`${name} = 5\n${name}()`);
+      expect(text, name).toContain(`"${name}"`);
+      expect(text, name).toContain('ተግባር ነበር');
+    }
+  });
+
+  it('leaves an ordinary non-callable with the plain message', () => {
+    // The rule is about the spelling at the call site, not about every AH3013.
+    const text = message('ሀ = 1\nሀ()');
+    expect(text).not.toContain('ተግባር ነበር');
+    expect(text).toContain('ቁጥር');
+  });
+
+  it('does not fire for a name that merely holds a non-function', () => {
+    // Shadowing is only interesting when the name was a built-in.
+    expect(message('ለእያንዳንዱም = 1\nለእያንዳንዱም()')).not.toContain('ተግባር ነበር');
+  });
+});
+
 describe('ርዝመት (§8, CHANGES C28)', () => {
   it('counts a list', () => {
     expect(shows('ርዝመት([1፣ 2፣ 3])')).toBe('3');
@@ -60,18 +117,18 @@ describe('ርዝመት (§8, CHANGES C28)', () => {
   });
 });
 
-describe('አዋህድ and ሰርዝ change the list (§4.5, §8)', () => {
+describe('ጨምር and ሰርዝ change the list (§4.5, §8)', () => {
   it('appends in place and returns ምንም', () => {
-    expect(out(lines('ዝ = [1]', 'ጻፍ(አዋህድ(ዝ፣ 2))', 'ጻፍ(ዝ)'))).toEqual(['ምንም', '[1፣ 2]']);
+    expect(out(lines('ዝ = [1]', 'ጻፍ(ጨምር(ዝ፣ 2))', 'ጻፍ(ዝ)'))).toEqual(['ምንም', '[1፣ 2]']);
   });
 
   it('makes the mistaken reassignment fail loudly (§8)', () => {
-    // ዝ = አዋህድ(ዝ፣ 4) leaves ዝ holding ምንም rather than looking like it worked.
-    expect(out(lines('ዝ = [1]', 'ዝ = አዋህድ(ዝ፣ 2)', 'ጻፍ(ዝ)'))).toEqual(['ምንም']);
+    // ዝ = ጨምር(ዝ፣ 4) leaves ዝ holding ምንም rather than looking like it worked.
+    expect(out(lines('ዝ = [1]', 'ዝ = ጨምር(ዝ፣ 2)', 'ጻፍ(ዝ)'))).toEqual(['ምንም']);
   });
 
   it('appends one element, whatever it is', () => {
-    expect(out(lines('ዝ = [1]', 'አዋህድ(ዝ፣ [2])', 'ጻፍ(ዝ)'))).toEqual(['[1፣ [2]]']);
+    expect(out(lines('ዝ = [1]', 'ጨምር(ዝ፣ [2])', 'ጻፍ(ዝ)'))).toEqual(['[1፣ [2]]']);
   });
 
   it('removes by index, in place', () => {
@@ -88,38 +145,38 @@ describe('አዋህድ and ሰርዝ change the list (§4.5, §8)', () => {
   });
 
   it('refuses anything that is not a list', () => {
-    expect(code('አዋህድ("ሀ"፣ 1)')).toBe('AH3002');
+    expect(code('ጨምር("ሀ"፣ 1)')).toBe('AH3002');
     expect(code('ሰርዝ(1፣ 0)')).toBe('AH3002');
   });
 
   it('checks arity', () => {
-    expect(code('ዝ = []\nአዋህድ(ዝ)')).toBe('AH3010');
+    expect(code('ዝ = []\nጨምር(ዝ)')).toBe('AH3010');
     expect(code('ዝ = []\nሰርዝ(ዝ)')).toBe('AH3010');
   });
 
   it('is visible through every name for the list (§4.5)', () => {
-    const source = lines('ሀ = [1]', 'ለ = ሀ', 'አዋህድ(ለ፣ 2)', 'ጻፍ(ሀ)');
+    const source = lines('ሀ = [1]', 'ለ = ሀ', 'ጨምር(ለ፣ 2)', 'ጻፍ(ሀ)');
     expect(out(source)).toEqual(['[1፣ 2]']);
   });
 });
 
-describe('ቅጂ (§8)', () => {
+describe('ቅጂ_አድርግ (§8)', () => {
   it('gives an independent list', () => {
-    const source = lines('ሀ = [1፣ 2]', 'ለ = ቅጂ(ሀ)', 'ለ[0] = 9', 'ጻፍ(ሀ)', 'ጻፍ(ለ)');
+    const source = lines('ሀ = [1፣ 2]', 'ለ = ቅጂ_አድርግ(ሀ)', 'ለ[0] = 9', 'ጻፍ(ሀ)', 'ጻፍ(ለ)');
     expect(out(source)).toEqual(['[1፣ 2]', '[9፣ 2]']);
   });
 
   it('is shallow, so a nested list is still shared', () => {
-    const source = lines('ውስጥ = [1]', 'ሀ = [ውስጥ]', 'ለ = ቅጂ(ሀ)', 'አዋህድ(ለ[0]፣ 2)', 'ጻፍ(ውስጥ)');
+    const source = lines('ውስጥ = [1]', 'ሀ = [ውስጥ]', 'ለ = ቅጂ_አድርግ(ሀ)', 'ጨምር(ለ[0]፣ 2)', 'ጻፍ(ውስጥ)');
     expect(out(source)).toEqual(['[1፣ 2]']);
   });
 
   it('matches what a full slice does', () => {
-    expect(out(lines('ሀ = [1፣ 2]', 'ጻፍ(ቅጂ(ሀ) == ሀ[:])'))).toEqual(['እውነት']);
+    expect(out(lines('ሀ = [1፣ 2]', 'ጻፍ(ቅጂ_አድርግ(ሀ) == ሀ[:])'))).toEqual(['እውነት']);
   });
 
   it('refuses a non-list', () => {
-    expect(code('ጻፍ(ቅጂ("ሀ"))')).toBe('AH3002');
+    expect(code('ጻፍ(ቅጂ_አድርግ("ሀ"))')).toBe('AH3002');
   });
 });
 
@@ -248,7 +305,7 @@ describe('index assignment (§6.5)', () => {
     expect(out('ዝ = [1፣ 2፣ 3]\nዝ[-1] = 9\nጻፍ(ዝ)')).toEqual(['[1፣ 2፣ 9]']);
   });
 
-  it('cannot extend a list — that is what አዋህድ is for (§6.5)', () => {
+  it('cannot extend a list — that is what ጨምር is for (§6.5)', () => {
     expect(code('ዝ = [1፣ 2፣ 3]\nዝ[3] = 4')).toBe('AH3008');
   });
 

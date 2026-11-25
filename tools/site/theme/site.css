@@ -1,4 +1,5 @@
 @import '../../shared/tokens.css';
+@import '../../shared/syntax.css';
 @import '../../shared/chrome.css';
 
 /*
@@ -23,6 +24,49 @@ html {
   scroll-padding-top: 4.5rem;
 }
 
+/*
+ * Everything that moves, turned off together.
+ *
+ * `prefers-reduced-motion` is set by someone for whom motion is a symptom,
+ * not a preference, so this is deliberately blunt: smooth scrolling, the
+ * drawer's slide and every transition become steps. Nothing on this site
+ * conveys meaning by moving, so nothing is lost.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * 1.7 for prose and 1.75 inside code. Ethiopic sets with a tall x-height and
+ * a dense, boxy syllabary: the ascenders and descenders Latin leaves empty
+ * are where Ge'ez puts its vowel marks, so lines that look generously spaced
+ * in Latin crowd in Ge'ez. The site ships no font (SITE.md §6), so leading
+ * is the only lever there is.
+ */
+/*
+ * Nothing scrolls sideways, whatever a single wide element does.
+ *
+ * `clip` and not `hidden`: `hidden` makes the element a scroll container,
+ * which breaks `position: sticky` on the header and the lesson rail. This is
+ * a backstop — the cause of an overflow still gets fixed where it is — but a
+ * page that scrolls sideways on a phone has lines cut off, and that is worth
+ * a belt as well as braces.
+ */
+html {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -31,12 +75,28 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--ui);
-  font-size: 16px;
-  line-height: 1.7;
+  /* `font-size` and `line-height` are in shared/chrome.css: the playground
+     needs the same base type, and it does not load this file. */
 }
 
 a {
-  color: var(--accent);
+  color: var(--link);
+}
+
+/*
+ * Every interactive thing on the page, in one rule.
+ *
+ * It used to be per-component, which meant the components nobody thought
+ * about — the nav links, the lesson list, the contents, the prev/next cards,
+ * a `<summary>` — had no visible focus at all. A default that covers
+ * everything and is overridden where a control wants something tighter is
+ * the only arrangement where "added a link" cannot mean "added a link a
+ * keyboard reader cannot see".
+ */
+:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .skip {
@@ -56,6 +116,13 @@ a {
 
 /* ---- layout ---- */
 
+/*
+ * The document is first in the markup and is put back in the middle column
+ * here. Source order is the reading order a screen reader and a phone both
+ * use, and in source order the lesson has to come before the list of
+ * lessons — otherwise the page's first heading is an h2 in the margin, and a
+ * reader on a phone scrolls past eight links to reach what they opened.
+ */
 .shell {
   flex: 1;
   width: 100%;
@@ -68,22 +135,59 @@ a {
   align-items: start;
 }
 
+.shell > .doc {
+  grid-area: 1 / 2;
+}
+
+.shell > .side {
+  grid-area: 1 / 1;
+}
+
+.shell > .toc {
+  grid-area: 1 / 3;
+}
+
 .shell-plain {
   grid-template-columns: minmax(0, 1fr) 13rem;
   max-width: 68rem;
 }
 
+.shell-plain > .doc {
+  grid-area: 1 / 1;
+}
+
+.shell-plain > .toc {
+  grid-area: 1 / 2;
+}
+
+/*
+ * The rail and the contents are cards, not columns of loose links.
+ *
+ * A card says "this is a thing beside the document"; loose text in a margin
+ * says "this is part of the document, somehow". On a page whose body is
+ * already one long column of prose, the second reading is the one a reader
+ * actually makes.
+ */
 .side,
 .toc {
   position: sticky;
   top: 4.5rem;
-  padding: 1.6rem 0;
+  height: max-content;
+  padding: 1.3rem 1.2rem;
+  border-radius: 18px;
+  background: var(--surface-1);
   font-size: 0.9rem;
+}
+
+/* The contents is a list of places on *this* page, so it stays plainer. */
+.toc {
+  background: none;
+  padding: 1.3rem 0;
 }
 
 .side h2,
 .toc h2 {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.9rem;
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -93,27 +197,45 @@ a {
 
 .lessons {
   margin: 0;
-  padding-left: 1.3rem;
+  padding: 0;
+  list-style: none;
 }
 
 .lessons li {
-  margin: 0.25rem 0;
+  margin: 0.1rem 0;
 }
 
-.lessons a,
+.lessons a {
+  display: block;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  color: var(--muted);
+  text-decoration: none;
+}
+
 .toc a {
   color: var(--muted);
   text-decoration: none;
 }
 
-.lessons a:hover,
+.lessons a:hover {
+  background: var(--layer);
+  color: var(--ink);
+}
+
 .toc a:hover {
   color: var(--ink);
 }
 
+/*
+ * The lesson you are on is a filled pill rather than coloured text. In a list
+ * of nine Ge'ez titles at one weight, colour alone is a weak signal; a solid
+ * shape is found without reading.
+ */
 .lessons a[aria-current='page'] {
-  color: var(--accent);
-  font-weight: 600;
+  background: var(--surface-3);
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .toc ul {
@@ -171,28 +293,54 @@ a {
   margin: 0.3rem 0;
 }
 
-/* Inline code: a tint, never a box with a line around it. */
+/*
+ * Inline code: a tint, never a box with a line around it.
+ *
+ * Full size rather than 0.92em. Inline code in a lesson is almost always one
+ * Ge'ez word, and shrinking a syllabary that already packs its vowel marks
+ * into the x-height is where the type stops being readable first — and it
+ * is set in a different face from the prose around it, which is cue enough.
+ */
 .doc :not(pre) > code {
   padding: 0.1em 0.35em;
   border-radius: 4px;
   background: var(--layer-strong);
   font-family: var(--code);
-  font-size: 0.92em;
+  font-size: 1em;
 }
 
+/*
+ * An aside is a filled note in the secondary colour, not an indented quote.
+ * Tomato is for things to press; aqua is for things to read, and an aside is
+ * emphatically the second.
+ */
 .doc blockquote {
-  margin: 0 0 1.1rem;
-  padding: 0.1rem 0 0.1rem 1rem;
-  background: var(--layer);
-  border-radius: 0 6px 6px 0;
-  color: var(--muted);
+  margin: 1.4rem 0 1.6rem;
+  padding: 1.1rem 1.3rem;
+  background: var(--aside);
+  border-radius: 18px;
+  color: var(--aside-ink);
+}
+
+/*
+ * The reference tables are two columns of Ge'ez and they are wide. Rather
+ * than shrink the type — which for a syllabary is where legibility goes
+ * first — the cells wrap, and `min-width` stops at the width available so
+ * that nothing is ever cut off the right-hand edge. The box can still
+ * scroll if some future row refuses to wrap, but at every width the audit
+ * measures it does not have to.
+ */
+.table-wrap {
+  margin: 0 0 1.4rem;
+  overflow-x: auto;
 }
 
 .doc table.ref {
   width: 100%;
-  margin: 0 0 1.4rem;
+  min-width: min(22rem, 100%);
+  margin: 0;
   border-collapse: collapse;
-  font-size: 0.93rem;
+  font-size: 1rem;
 }
 
 .doc table.ref th {
@@ -220,10 +368,16 @@ a {
 
 /* ---- code samples ---- */
 
+/*
+ * A snippet is one object: the program, what it printed, and the controls
+ * that run it. It used to read as three stacked blocks, which on a lesson
+ * with five snippets made the page a stack of fifteen.
+ */
 .snip {
-  margin: 0 0 1.6rem;
-  border-radius: 8px;
+  margin: 0 0 1.8rem;
+  border-radius: 18px;
   background: var(--surface-1);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -231,14 +385,24 @@ a {
   position: relative;
 }
 
+/*
+ * 1rem and 1.75, not 0.93rem and 1.65.
+ *
+ * Code on this site is Ge'ez, and a syllabary is not a Latin alphabet with
+ * different letters: the vowel is a mark on the consonant, so the
+ * information is in detail at x-height rather than in the outline of the
+ * word. Set a step down from the prose and it is the marks that go. There
+ * is no web font to fall back on (SITE.md §6) — size and leading are the
+ * whole toolkit — so code is set at the same size as the prose around it.
+ */
 .snip-backdrop,
 .snip-input {
   margin: 0;
   padding: 0.85rem 1rem;
   border: 0;
   font-family: var(--code);
-  font-size: 0.93rem;
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.75;
   tab-size: 4;
   white-space: pre;
   overflow-x: auto;
@@ -274,28 +438,37 @@ a {
   margin: 0;
   padding: 0.85rem 1rem;
   font-family: var(--code);
-  font-size: 0.93rem;
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.75;
   overflow-x: auto;
 }
 
 .snip-bar {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.7rem;
-  background: var(--layer);
-  font-size: 0.82rem;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface-2);
+  font-size: 0.85rem;
 }
 
+/*
+ * `nowrap`, because the label is "▸ አሂድ" — one string with a space in it,
+ * and on a phone the button broke at that space and stacked the triangle
+ * over the word. Also 2.25rem tall: it is the one control on a lesson page
+ * a reader is meant to tap, and 44px is what a thumb needs.
+ */
 .snip-run {
-  padding: 0.25rem 0.7rem;
+  min-height: 2.25rem;
+  padding: 0.42rem 1.1rem;
   border: 0;
-  border-radius: 5px;
+  border-radius: 9px;
   background: var(--accent);
   color: var(--bg);
   font: inherit;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -303,24 +476,36 @@ a {
   filter: brightness(1.08);
 }
 
-.snip-run:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
-}
-
 .snip-open {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
   color: var(--muted);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .snip-open:hover {
-  color: var(--accent);
+  color: var(--link);
+  text-decoration: underline;
 }
 
+/*
+ * The build's claim about the output. It takes the rest of the row where
+ * there is room and drops to a line of its own where there is not, rather
+ * than being hidden: it is the sentence that says the code below was
+ * actually run (SITE.md §2), which is the site's whole argument.
+ */
 .snip-note {
   margin-left: auto;
   color: var(--muted);
-  opacity: 0.8;
+}
+
+@media (max-width: 560px) {
+  .snip-note {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }
 
 /* Once the reader has run their own edit, the build's claim no longer holds. */
@@ -330,11 +515,11 @@ a {
 
 .snip-out {
   margin: 0;
-  padding: 0.7rem 1rem;
-  background: var(--layer);
+  padding: 0.9rem 1.2rem;
+  background: var(--surface-2);
   font-family: var(--code);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-x: auto;
 }
@@ -360,8 +545,8 @@ a {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  padding: 0.8rem 1rem;
-  border-radius: 8px;
+  padding: 1rem 1.2rem;
+  border-radius: 16px;
   background: var(--surface-1);
   text-decoration: none;
   color: var(--ink);
@@ -394,6 +579,10 @@ a {
 }
 
 .button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
   padding: 0.5rem 1.1rem;
   border-radius: 7px;
   background: var(--accent);
@@ -443,10 +632,18 @@ details.answer {
   background: var(--surface-1);
 }
 
+/*
+ * The exercise's answer. A `<summary>` is a control, so it gets a target
+ * worth tapping — it used to be one line of 0.92rem text, which on a phone
+ * is a 15px-tall thing to hit.
+ */
 details.answer summary {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
   cursor: pointer;
-  color: var(--accent);
-  font-size: 0.92rem;
+  color: var(--link);
+  font-size: 0.95rem;
 }
 
 details.answer[open] summary {
@@ -455,19 +652,7 @@ details.answer[open] summary {
 
 /* ---- footer ---- */
 
-.foot {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.2rem 1.4rem;
-  background: var(--surface-1);
-  color: var(--muted);
-  font-size: 0.86rem;
-}
 
-.foot a {
-  color: var(--muted);
-}
 
 /*
  * The footer's actions: report a problem, contact, the source.
@@ -477,37 +662,9 @@ details.answer[open] summary {
  * a dialog; it is painted like its neighbours so that difference does not
  * announce itself.
  */
-.foot-acts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-}
 
-.foot-act {
-  padding: 0.25rem 0.65rem;
-  border: 0;
-  border-radius: 6px;
-  background: var(--layer);
-  color: var(--muted);
-  font: inherit;
-  text-decoration: none;
-  cursor: pointer;
-}
 
-.foot-act:hover {
-  background: var(--layer-strong);
-  color: var(--ink);
-}
 
-.foot-act:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
-}
-
-.foot-act[hidden] {
-  display: none;
-}
 
 /* ---- the contact dialog ---- */
 
@@ -687,6 +844,10 @@ details.answer[open] summary {
   .shell-plain {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .shell-plain > .doc {
+    grid-area: 1 / 1;
+  }
 }
 
 @media (max-width: 760px) {
@@ -696,17 +857,297 @@ details.answer[open] summary {
     gap: 0;
   }
 
+  /*
+   * One column, so the grid stops placing anything and the markup's order
+   * stands: the lesson, then the step to the next one, then the list of all
+   * of them. A reader who opened lesson four meets lesson four.
+   */
+  .shell > .doc,
+  .shell > .side,
+  .shell > .toc,
+  .shell-plain > .doc,
+  .shell-plain > .toc {
+    grid-area: auto;
+  }
+
   .side {
     position: static;
-    padding: 1rem 0 0;
+    padding: 1.5rem 0 0;
+  }
+
+  /* A list of taps, so each gets a row rather than a line of text. */
+  .lessons a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
   }
 
   .steps {
     grid-template-columns: 1fr;
   }
 
-  /* The footer's text and its actions stack rather than squeeze together. */
-  .foot {
-    flex-wrap: wrap;
+}
+
+/*
+ * Phone widths proper. The gutters come in, because at 320px a 1.4rem rail
+ * down each side is a seventh of the screen, and a line of Ge'ez needs
+ * every pixel it can get.
+ */
+@media (max-width: 480px) {
+  .shell {
+    padding: 0 1rem;
+  }
+
+  .doc h1 {
+    font-size: 1.65rem;
+  }
+
+  .doc h2 {
+    font-size: 1.2rem;
+  }
+
+  .snip-backdrop,
+  .snip-input,
+  .snip-fragment .snip-code {
+    padding: 0.75rem;
+  }
+
+}
+
+/* ---------------------------------------------------------------------------
+ * The home page
+ * ------------------------------------------------------------------------ */
+
+/*
+ * One wide column, and no contents rail.
+ *
+ * A table of contents for a page whose sections are "Why Ahadu?" and "What
+ * does it look like?" is a list of two things the reader can already see. The
+ * space goes to the hero instead, which needs the width for a program to sit
+ * beside the pitch rather than under it.
+ */
+.shell-home {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 76rem;
+}
+
+.shell-home > .doc {
+  grid-area: 1 / 1;
+}
+
+.shell-home > .toc {
+  display: none;
+}
+
+/*
+ * The fidel, as paper texture behind the hero.
+ *
+ * Faint enough to be felt rather than read — it has to sit under body text
+ * and never compete with it, so it is held at a few percent and the figures
+ * above it keep their own contrast (the audit measures them against the page,
+ * which is what they are effectively painted on at this opacity).
+ */
+.fidel {
+  position: absolute;
+  /*
+   * Below the header, not behind it. The bar is a solid surface, so a row
+   * that starts at the top of the document is simply hidden by it — the
+   * texture appeared to begin a row late.
+   */
+  top: 3.5rem;
+  left: 0;
+  width: 100%;
+  /*
+   * The first screenful, and no further. A texture that runs the length of
+   * the page stops being texture and becomes a pattern the reader has to
+   * look past to read the prose below it — so it covers what someone sees on
+   * arrival and is gone by the time they have scrolled.
+   */
+  height: calc(100vh - 3.5rem);
+  min-height: 34rem;
+  max-height: 54rem;
+  z-index: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  /*
+   * The rows are distributed over the height rather than stacked at a fixed
+   * gap, so the vertical rhythm matches the horizontal one: each row is
+   * already spread across the width, and a fixed gap left the two spacings
+   * visibly unrelated.
+   */
+  align-content: space-between;
+  padding: 2rem 1.4rem 2.5rem;
+  color: var(--ink);
+  opacity: 0.055;
+  font-size: 2.4rem;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+/*
+ * Spread, not spaced. A fixed letter-spacing leaves every row flush left and
+ * short of the right margin by a different amount, which reads as a mistake
+ * rather than as texture.
+ */
+.fidel span {
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+/*
+ * `body` is deliberately **not** made `position: relative` to anchor the
+ * texture. It is the containing block for the phone drawer, which is
+ * positioned off to the right until it opens; making body relative moved the
+ * drawer into the document's own width and put 176px of horizontal overflow
+ * on the home page alone. The grid positions against the initial containing
+ * block instead, which is where the top of the document is anyway.
+ */
+/*
+ * Above the texture, below the drawer's scrim.
+ *
+ * These were `z-index: 1`, the same as `.scrim`, and they come later in the
+ * document — so on the home page they painted over the scrim and swallowed
+ * the taps meant to close the drawer. The texture is at 0, so 1 was only
+ * ever needed to clear *that*.
+ */
+body:has(.fidel) .shell,
+body:has(.fidel) .foot {
+  position: relative;
+  z-index: 0;
+}
+
+/*
+ * The hero: the pitch on one side, a program that proves it on the other.
+ *
+ * The program is a real snippet — the same component as every other snippet
+ * on the site, run by the real interpreter at build time (SITE.md §2) and
+ * runnable in place. A home page claiming that every snippet here executes
+ * cannot have a decorative one at the top of it.
+ */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: center;
+  margin: 1rem 0 3.5rem;
+}
+
+/*
+ * `min-width: 0`, because a grid item's default is `auto` — it refuses to be
+ * narrower than its contents, and the contents here is a program with long
+ * lines in it. Without this the hero column stays as wide as the widest line
+ * of Amharic and the whole page scrolls sideways on a phone.
+ */
+.hero > div {
+  min-width: 0;
+}
+
+.hero > div > p:first-child {
+  font-size: 1.12rem;
+  color: var(--muted);
+}
+
+.hero .snip {
+  margin: 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 1.6rem 0 0;
+}
+
+/* The section cards: one per place a reader can go next. */
+.doc ul.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2rem;
+  margin: 1.5rem 0 2.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.doc ul.cards li {
+  margin: 0;
+  padding: 1.4rem 1.5rem;
+  border-radius: 18px;
+  background: var(--surface-1);
+}
+
+.doc ul.cards li:nth-child(2) {
+  background: var(--surface-2);
+}
+
+.doc ul.cards li:nth-child(3) {
+  background: var(--card-dark);
+  color: var(--card-dark-ink);
+}
+
+.doc ul.cards li:nth-child(4) {
+  background: var(--card-aqua);
+  color: var(--card-aqua-ink);
+}
+
+.doc ul.cards h3 {
+  margin: 0 0 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: inherit;
+}
+
+/*
+ * `color: inherit`, because `.doc p` sets `--ink` and a card that overrides
+ * its own colour only on the `li` leaves the paragraph inside it painted for
+ * the page. On the filled cards that is dark text on a dark fill.
+ */
+.doc ul.cards p {
+  margin: 0;
+  color: inherit;
+  font-size: 0.93rem;
+  opacity: 0.85;
+}
+
+/*
+ * The home page leads with its name, so the name is given the size to lead
+ * with. Everywhere else an h1 is a lesson title above a paragraph of prose,
+ * and this size would shout.
+ */
+.shell-home .doc h1 {
+  font-size: 3rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+
+.shell-home .doc > article > .summary {
+  font-size: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .doc ul.cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .doc ul.cards {
+    grid-template-columns: 1fr;
+  }
+
+  .fidel {
+    font-size: 1.8rem;
+    letter-spacing: 0.9rem;
   }
 }

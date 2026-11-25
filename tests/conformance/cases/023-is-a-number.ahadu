@@ -1,0 +1,14 @@
+# ቁጥር_ነው is the guard in front of ወደ_ቁጥር, so it answers for any value and
+# never raises — a guard that can itself fail is no guard (§8.2).
+# expect: እውነት
+# expect: ሃሰት
+# expect: እውነት
+# expect: ሃሰት
+# expect: ሃሰት
+# expect: ሃሰት
+ጻፍ(ቁጥር_ነው("12"))
+ጻፍ(ቁጥር_ነው("ሰላም"))
+ጻፍ(ቁጥር_ነው(5))
+ጻፍ(ቁጥር_ነው([1]))
+ጻፍ(ቁጥር_ነው(""))
+ጻፍ(ቁጥር_ነው("5."))

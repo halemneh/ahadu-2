@@ -193,6 +193,16 @@ export interface WhileStatement extends Span {
   readonly body: Block;
 }
 
+/** `<collection> ለእያንዳንዱ <name>፦` (§7.4). */
+export interface ForEachStatement extends Span {
+  readonly type: 'ForEachStatement';
+  /** What is walked: a `ስብስብ` or a `ጽሁፍ` at runtime. */
+  readonly collection: Expression;
+  /** The loop variable, defined in the enclosing scope — a block is not one. */
+  readonly name: string;
+  readonly body: Block;
+}
+
 export interface FunctionDeclaration extends Span {
   readonly type: 'FunctionDeclaration';
   readonly name: string;
@@ -236,6 +246,7 @@ export type Statement =
   | ReturnStatement
   | IfStatement
   | WhileStatement
+  | ForEachStatement
   | FunctionDeclaration
   | ClassDeclaration;
 

@@ -13,7 +13,8 @@ grammar, Ahadu follows **Amharic word order**:
 ```
 
 The condition comes first, then `ከሆነ` ("if it is") — the way the clause is
-ordered in Amharic. Same for loops: `ቆጣሪ < 5 እስከሆነ ድረስ፦`.
+ordered in Amharic. Same for loops: `ቆጣሪ < 5 እስከሆነ ድረስ፦`, and the same again
+for walking a collection: `ቤተሰብ ለእያንዳንዱ ስም፦`.
 
 Ahadu began as a senior project: a Python interpreter, a Flask playground, and
 a paper describing the language. 2.0 is a specification-first rebuild in
@@ -90,12 +91,27 @@ their resolutions in [`spec/CHANGES-FROM-V1.md`](spec/CHANGES-FROM-V1.md).
 Types: `ቁጥር` (number) · `ጽሁፍ` (text) · `እውነታ` (boolean) · `ስብስብ` (list) ·
 `ተግባር` (function) · `ክላስ` / object · `ምንም` (nothing).
 
-Built-ins: `ጻፍ` (print) · `ርዝመት` (length) · `አዋህድ` (append) · `ሰርዝ` (remove) ·
-`ቅጂ` (copy) · `አይነት` (type of) · `አንብብ` (read a line).
+Built-ins — values and text: `ጻፍ` (print) · `ርዝመት` (length) · `ጨምር` (append) ·
+`ሰርዝ` (remove) · `ቅጂ_አድርግ` (copy) · `አይነት` (type of) · `አንብብ` (read a line) ·
+`ወደ_ቁጥር` / `ወደ_ጽሁፍ` (convert) · `ቁጥር_ነው` (is it a number) · `ከፋፍል` (split) ·
+`ጽሁፍ_አድርግ` (join) · `ከርክም` (trim).
 
-Lists are mutable and held by reference — `ዝ[0] = 9` works, `አዋህድ` appends in
+Numbers: `ወለል_ዋጋ` / `ጣሪያ_ዋጋ` / `ቅርብ_ሙሉ_ቁጥር` (floor, ceil, round — there is no integer
+division) · `ፍጹም_ዋጋ` (absolute) · `ዘፈቀደ_ቁጥር` (a random integer, seeded) · `ዘር` (set
+the seed).
+
+Amharic's own numerals and calendar: `ወደ_ግዕዝ` (321 → `፫፻፳፩`) · `ዛሬ` (today, as
+`[ዓመት፣ ወር፣ ቀን]`) · `ከግሪጎሪ` (convert a Gregorian date) · `ወር_መጠሪያ` (name of a
+month — the year has thirteen).
+
+A **standard library** is pre-bound beside them, and it is written in Ahadu
+itself so a learner can read it: `ደምር` (sum) · `ቁጠር` (count) · `ፈልግ` (find) ·
+`ከፍተኛው` / `ዝቅተኛው` (largest, smallest) · `ደርድር` (sort) · `ገልብጥ` (reverse) ·
+`መዝገብ` (a key–value map). See LANGUAGE.md §8.5.
+
+Lists are mutable and held by reference — `ዝ[0] = 9` works, `ጨምር` appends in
 place, and `ለ = ሀ` gives one list two names. Strings are immutable: build a new
-one rather than changing a character. `ቅጂ` is how you stop sharing a list.
+one rather than changing a character. `ቅጂ_አድርግ` is how you stop sharing a list.
 
 Both ASCII and Ethiopic forms work everywhere: `፦` or `:-`, `፣` or `,`, `‹` or
 `<`, `&` or `እና`, `!` or `ተቃርኖ`, and `፳፩` or `21`. Write whichever your

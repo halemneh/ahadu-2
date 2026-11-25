@@ -16,7 +16,10 @@ import type { Diagnostic } from '../diagnostics.js';
 import { tokenize } from '../lexer/index.js';
 import type { Token } from '../lexer/index.js';
 import { parse, printAst } from '../parser/index.js';
-import { render, run } from '../interpreter/index.js';
+import { render } from '../interpreter/index.js';
+// The library-loading `run`, not the bare one: a program typed at the
+// terminal gets the same globals as one in the playground (§8.5).
+import { run } from '../engine.js';
 import type { Host, RunOptions } from '../interpreter/index.js';
 import { colorEnabled, palette } from './color.js';
 import type { Palette } from './color.js';
@@ -34,6 +37,7 @@ const USAGE = `አሃዱ — Ahadu 2.0
 
   --json                 machine-readable output
   --no-color             no colour, as NO_COLOR also does
+  --seed=<n>             fix what ዘፈቀደ_ቁጥር draws, so a run repeats exactly
   --help                 this message
 
 See spec/TOOLING.md for the full design, ROADMAP.md for what lands when.
@@ -46,6 +50,17 @@ interface Flags {
   readonly json: boolean;
   readonly colors: Palette;
   readonly errorColors: Palette;
+  /**
+   * The seed `ዘፈቀደ_ቁጥር` starts from.
+   *
+   * A changing one unless `--seed=<n>` was given: running a program twice at
+   * a terminal should roll different dice. The interpreter's own default is
+   * fixed instead, because its other callers — the conformance suite, the
+   * site's snippet checker — want the opposite (LANGUAGE.md §8).
+   */
+  readonly seed: number;
+  /** The instant `ዛሬ` reports. The real clock here; fixed in the interpreter. */
+  readonly now: number;
 }
 
 function reportDiagnostics(source: string, diagnostics: readonly Diagnostic[], flags: Flags): void {
@@ -191,7 +206,7 @@ function execute(source: string, flags: Flags, options: RunOptions = {}): number
     return 1;
   }
 
-  const result = run(parsed.program, cliHost(), options);
+  const result = run(parsed.program, cliHost(), { seed: flags.seed, now: flags.now, ...options });
 
   if (result.diagnostic !== null) {
     if (flags.json) {
@@ -243,13 +258,31 @@ function cmdRepl(flags: Flags): number {
         return readLineSync();
       },
     },
-    { colors: flags.colors },
+    // The seed and the clock too, not just the palette: without them an
+    // ordinary `ahadu` session repeats one random sequence and reports the
+    // Unix epoch for `ዛሬ()`, while running the same program from a file does
+    // the right thing.
+    { colors: flags.colors, seed: flags.seed, now: flags.now },
   );
 }
 
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
+
+/**
+ * Reads `--seed=<n>`, falling back to the clock.
+ *
+ * A malformed value falls back too rather than failing: `--seed=abc` asks for
+ * a repeatable run and gets a run, which is a smaller surprise than an exit
+ * code from a flag that only affects dice.
+ */
+function readSeed(args: readonly string[]): number {
+  const flag = args.find((a) => a.startsWith('--seed='));
+  if (flag === undefined) return Date.now();
+  const value = Number(flag.slice('--seed='.length));
+  return Number.isFinite(value) ? value : Date.now();
+}
 
 function main(args: string[]): number {
   const json = args.includes('--json');
@@ -260,6 +293,8 @@ function main(args: string[]): number {
     json,
     colors: palette(colorEnabled(stdout, wantsColor)),
     errorColors: palette(colorEnabled(stderr, wantsColor)),
+    seed: readSeed(args),
+    now: Date.now(),
   };
 
   if (args.includes('--help') || (operands.length === 0 && args.length > 0 && !json)) {

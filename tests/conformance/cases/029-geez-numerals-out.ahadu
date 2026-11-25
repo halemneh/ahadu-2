@@ -1,0 +1,21 @@
+# §3.4.1 reads Ge'ez numerals; ወደ_ግዕዝ writes them, so a program can show a
+# number in Amharic's own numerals and not only accept them (§8.7).
+# expect: ፩
+# expect: ፳፩
+# expect: ፫፻፳፩
+# expect: ፻
+# expect: ፼
+# expect: ፪፼
+# expect: እውነት
+ጻፍ(ወደ_ግዕዝ(1))
+ጻፍ(ወደ_ግዕዝ(21))
+ጻፍ(ወደ_ግዕዝ(321))
+
+# A leading 1 before a separator is left out, because an empty group before a
+# separator reads as 1 (§3.4.1).
+ጻፍ(ወደ_ግዕዝ(100))
+ጻፍ(ወደ_ግዕዝ(10000))
+ጻፍ(ወደ_ግዕዝ(20000))
+
+# The two directions must agree.
+ጻፍ(ወደ_ቁጥር(ወደ_ግዕዝ(4567)) == 4567)

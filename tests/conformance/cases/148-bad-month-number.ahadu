@@ -1,0 +1,3 @@
+# The Ethiopian year has thirteen months, so 14 is not one (§8.8).
+# expect-error: AH3022 at 3:4
+ጻፍ(ወር_መጠሪያ(14))

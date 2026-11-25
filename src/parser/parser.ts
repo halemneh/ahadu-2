@@ -104,6 +104,7 @@ function endsWithBlock(statement: Statement): boolean {
   return (
     statement.type === 'IfStatement' ||
     statement.type === 'WhileStatement' ||
+    statement.type === 'ForEachStatement' ||
     statement.type === 'FunctionDeclaration' ||
     statement.type === 'ClassDeclaration'
   );
@@ -426,6 +427,12 @@ class Parser {
         return this.failStatement(AH2001, t, detail, indent);
       }
 
+      // Same mistake, same treatment: `ለእያንዳንዱ ስም በቤተሰብ፦` is the shape
+      // someone arriving from another language writes (§7.4).
+      if (sub === 'FOREACH') {
+        return this.failStatement(AH2001, t, msg.COLLECTION_BEFORE_FOREACH, indent);
+      }
+
       if (sub === 'INIT') {
         return this.failStatement(AH2001, t, msg.INIT_OUTSIDE_CLASS, indent);
       }
@@ -441,6 +448,7 @@ class Parser {
 
     if (this.checkKeyword('IF')) return this.parseIfTail(expression, indent);
     if (this.checkKeyword('WHILE')) return this.parseWhileTail(expression, indent);
+    if (this.checkKeyword('FOREACH')) return this.parseForEachTail(expression, indent);
     if (this.check('ASSIGN')) return this.parseAssignment(expression);
 
     return { type: 'ExpressionStatement', expression, ...spanning(expression, expression) };
@@ -574,6 +582,30 @@ class Parser {
     this.advance(); // እስከሆነ ድረስ
     const body = this.parseBlock(indent);
     return { type: 'WhileStatement', condition, body, ...spanning(condition, body) };
+  }
+
+  /** `<collection> ለእያንዳንዱ <name>፦` (§7.4). */
+  private parseForEachTail(collection: Expression, indent: number): Statement {
+    const kw = this.advance(); // ለእያንዳንዱ
+
+    // A missing name is reported but does not abandon the statement: the block
+    // is still parsed, so one forgotten word does not cascade into every line
+    // of the body (§9.3).
+    let name = '';
+    if (this.check('IDENTIFIER')) {
+      name = String(this.advance().value);
+    } else {
+      this.report(AH2001, this.peek() ?? kw, msg.FOREACH_NEEDS_NAME);
+    }
+
+    const body = this.parseBlock(indent);
+    return {
+      type: 'ForEachStatement',
+      collection,
+      name,
+      body,
+      ...spanning(collection, body),
+    };
   }
 
   private parseFunction(indent: number): FunctionDeclaration {

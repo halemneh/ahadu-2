@@ -15,7 +15,11 @@
 
 import { tokenize } from '../../src/lexer/index.js';
 import { parse } from '../../src/parser/index.js';
-import { render, run } from '../../src/interpreter/index.js';
+import { render } from '../../src/interpreter/index.js';
+// The library-loading `run`: the site's build-time snippet checker calls
+// this same function, so a lesson cannot teach a library the build does not
+// have (§8.5, SITE.md §2).
+import { run } from '../../src/engine.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 
@@ -24,6 +28,18 @@ export interface RunRequest {
   /** Lines the input panel holds, served to `አንብብ` in order. */
   readonly input: readonly string[];
   readonly maxSteps: number;
+  /**
+   * Starting seed for `ዘፈቀደ_ቁጥር`, or omitted for the interpreter's fixed default.
+   *
+   * Omitting it is the safe direction: the site's snippet checker calls this
+   * function at build time and compares the output to what the page claims
+   * (SITE.md §2), so a caller that says nothing gets a program whose random
+   * numbers are the same every build. The playground passes a changing seed,
+   * because a guessing game with one answer is not a game.
+   */
+  readonly seed?: number;
+  /** The instant `ዛሬ` reports, or omitted for the interpreter's fixed default. */
+  readonly now?: number;
 }
 
 export interface RunReply {
@@ -76,7 +92,11 @@ export function evaluate(request: RunRequest): RunReply {
         return pending.shift() ?? '';
       },
     },
-    { maxSteps: request.maxSteps },
+    {
+      maxSteps: request.maxSteps,
+      ...(request.seed === undefined ? {} : { seed: request.seed }),
+      ...(request.now === undefined ? {} : { now: request.now }),
+    },
   );
 
   return {

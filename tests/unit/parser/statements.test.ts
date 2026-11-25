@@ -59,7 +59,7 @@ describe('assignment (§7.1)', () => {
 
   it('reports AH2009 for a slice target', () => {
     expect(codes('ዝ[0:2] = [9፣ 9]')).toEqual(['AH2009']);
-    expect(messages('ዝ[0:2] = [9፣ 9]')[0]).toContain('አዋህድ');
+    expect(messages('ዝ[0:2] = [9፣ 9]')[0]).toContain('ጨምር');
   });
 });
 

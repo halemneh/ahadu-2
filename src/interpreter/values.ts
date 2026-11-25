@@ -49,6 +49,14 @@ export interface FunctionValue {
   readonly closure: Scope;
   /** Set when the function was reached through an object, so `አበበ.ደረጃ` is callable (§7.6). */
   readonly boundTo: ObjectValue | null;
+  /**
+   * Set when the function was declared by the standard library's prelude
+   * rather than by the program being run (§8.5).
+   *
+   * Provenance, not a name: a learner who writes their own `ተግባር ደምር` must
+   * not have errors inside it reattributed as if it were library code.
+   */
+  readonly fromLibrary?: true;
 }
 
 export interface BuiltinValue {
@@ -66,6 +74,15 @@ export interface ClassValue {
   readonly methods: ReadonlyMap<string, FunctionDeclaration>;
   /** Where the class was declared: attribute defaults evaluate here (§7.6). */
   readonly scope: Scope;
+  /**
+   * Set when the class was declared by the standard library's prelude (§8.5).
+   *
+   * Methods are built from the declaration on demand by `findMethod`, which
+   * never goes through `makeFunction` — so without this the provenance that
+   * reattributes a library error would reach every library *function* and no
+   * library *method*.
+   */
+  readonly fromLibrary?: true;
 }
 
 export interface ObjectValue {

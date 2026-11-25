@@ -67,12 +67,40 @@ divisor is zero is only known once it runs. That is exactly why it is an AH3.
 | Code | Meaning |
 | --- | --- |
 | `AH3001` | a variable was used before it was given a value |
+| `AH3002` | an operation the types do not allow — adding text to a number |
 | `AH3003` | division by zero |
 | `AH3008` | a position outside the collection was asked for |
+| `AH3019` | `ወደ_ቁጥር` was given text that is not a number |
 | `AH1002` | the indentation at the start of a line is wrong |
 | `AH2002` | a bracket was never closed |
 
 The full list is in the [reference](/en/reference/).
+
+### Two worth recognising on sight
+
+`AH3002` and `AH3019` are the two that come from reading input, and together
+they account for most of a beginner's errors:
+
+```ahadu error=AH3019
+ጻፍ(ወደ_ቁጥር("ሰላም"))
+```
+
+`ወደ_ቁጥር` was handed something that does not spell a number. Guard with
+`ቁጥር_ነው` before converting — the "Asking a question" lesson shows how.
+
+### When a name used to be a function
+
+This one reads oddly until you have seen it once:
+
+```ahadu error=AH3013
+ርዝመት = 5
+ጻፍ(ርዝመት("ሰላም"))
+```
+
+`ርዝመት` is an ordinary name that the language happens to have filled in for
+you, so you *may* assign to it — and then it is a number, and a number cannot
+be called. Ahadu notices and says which function you replaced. The fix is
+always to rename your own variable.
 
 ## How to fix one
 

@@ -10,7 +10,11 @@
 
 import { tokenize } from '../../src/lexer/index.js';
 import { parse } from '../../src/parser/index.js';
-import { render, run } from '../../src/interpreter/index.js';
+import { render } from '../../src/interpreter/index.js';
+// The library-loading `run`, so the conformance corpus runs the language as
+// shipped. A test that wants nothing pre-bound imports the bare `run` from
+// `src/interpreter/` itself.
+import { run } from '../../src/engine.js';
 import type { Frame, RunOptions } from '../../src/interpreter/index.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 

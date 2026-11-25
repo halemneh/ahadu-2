@@ -22,6 +22,8 @@ export interface Frame {
   readonly name: string;
   /** The line the call was made from. */
   readonly line: number;
+  /** Set when the frame is a standard-library function (§8.5). */
+  readonly fromLibrary?: true;
 }
 
 export class AhaduError extends Error {
@@ -129,4 +131,71 @@ export function callDepthExceeded(limit: number): string {
 
 export function stepLimitExceeded(limit: number): string {
   return `ፕሮግራሙ ${limit} እርምጃ አለፈ። ዑደቱ መቆሚያ አለው?`;
+}
+
+/**
+ * The message for `ወደ_ቁጥር` on text that is not a number (§8).
+ *
+ * The text is quoted back, because the usual cause is invisible: a space, a
+ * `፡` typed for a colon, or an empty prompt someone pressed Enter through.
+ */
+export function notNumericText(text: string): string {
+  // Pressing Enter at a prompt is the commonest way to land here, and
+  // `"" ቁጥር አይደለም።` shows a learner nothing at all.
+  if (text.trim().length === 0) return 'ምንም አልተጻፈም፤ ቁጥር ያስፈልጋል።';
+  return `"${text}" ቁጥር አይደለም።`;
+}
+
+/** The message for `ዘፈቀደ_ቁጥር` given bounds it cannot draw from (§8). */
+export function badRandomRange(low: string, high: string): string {
+  return `ዘፈቀደ_ቁጥር ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
+}
+
+/**
+ * The message for calling a name that used to be a built-in (§8, AH3013).
+ *
+ * Built-ins are ordinary shadowable bindings, and several are nouns —
+ * `ርዝመት`, `ቅጂ_አድርግ`, `አይነት`, `ዘር` — so assigning to one by accident is easy and
+ * the consequence appears at the *next* call, somewhere else entirely. Naming
+ * the cause is the difference between a two-second fix and a mystery.
+ */
+export function shadowedBuiltin(name: string, found: string): string {
+  return `"${name}" የአሃዱ ተግባር ነበር፤ ዋጋ ስለሰጡት አሁን ${found} ነው — ሊጠራ አይችልም። ለተለዋጩ ሌላ ስም ይስጡት።`;
+}
+
+/**
+ * The message for a failure that happened inside a standard-library function
+ * (§8.5).
+ *
+ * Names the function, because the learner never wrote the line the error came
+ * from and the only thing they can act on is the call they did write. The
+ * original message is kept: "you cannot add a number and text" is still the
+ * fact, and "inside ደምር" is where.
+ */
+export function insideLibrary(name: string, message: string): string {
+  const what = message.length > 0 ? `${message} ` : '';
+  return `${what}(በ"${name}" ውስጥ ተከሰተ።)`;
+}
+
+/**
+ * The message for `ወደ_ግዕዝ` on a number with no Ge'ez spelling (§8.7).
+ *
+ * Says *why* rather than only that it failed. Zero is the interesting case:
+ * the system is additive, built from symbols that each carry a value, with
+ * nothing standing for none — so the absence of a spelling for zero is a fact
+ * about Ge'ez numerals and worth learning, not a gap in the implementation.
+ */
+export function noGeezSpelling(value: string, limit: number): string {
+  if (value === '0') return 'ዜሮ በግዕዝ ቁጥር አይጻፍም፤ የግዕዝ ቁጥሮች ከ፩ ይጀምራሉ።';
+  return `${value} በግዕዝ አይጻፍም፤ ከ1 እስከ ${limit} ያለ ሙሉ ቁጥር ያስፈልጋል።`;
+}
+
+/** The message for a month number outside 1–13 (§8.8). */
+export function badMonthNumber(found: string): string {
+  return `${found} የወር ቁጥር አይደለም፤ ከ1 እስከ 13 ያስፈልጋል። የኢትዮጵያ ዓመት አሥራ ሦስት ወር አለው።`;
+}
+
+/** The message for a Gregorian date that does not exist (§8.8). */
+export function badGregorianDate(year: string, month: string, day: string): string {
+  return `${year}/${month}/${day} የሚባል የግሪጎሪ ቀን የለም።`;
 }

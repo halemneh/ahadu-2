@@ -15,6 +15,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { KEYWORDS } from '../../../src/lexer/constants.js';
 import { MESSAGES } from '../../../src/diagnostics.js';
+import { withLibrary } from '../../../src/engine.js';
+import { LIBRARY_NAMES, LIBRARY_SOURCE } from '../../../src/library/index.js';
+import { tokenize } from '../../../src/lexer/index.js';
+import { highlight } from '../../playground/highlight.js';
 import { escapeHtml } from '../../playground/view.js';
 import type { Strings } from './strings.js';
 
@@ -32,6 +36,7 @@ const GLOSS: Record<string, { am: string; en: string }> = {
   ELIF: { am: 'ሌላ ሁኔታ ማስገቢያ', en: 'else-if lead-in' },
   ELSE: { am: 'አለበለዚያ', en: 'otherwise' },
   WHILE: { am: 'ድግግሞሽ', en: 'repeat while' },
+  FOREACH: { am: 'ለእያንዳንዱ ዕቃ', en: 'repeat for each item' },
   RETURN: { am: 'ዋጋ መመለሻ', en: 'return a value' },
   FUNC: { am: 'ተግባር መግለጫ', en: 'define a function' },
   CLASS: { am: 'ክላስ መግለጫ', en: 'define a class' },
@@ -47,7 +52,6 @@ const GLOSS: Record<string, { am: string; en: string }> = {
   TYPE_STRING: { am: 'የጽሁፍ አይነት', en: 'the text type' },
   TYPE_LIST: { am: 'የስብስብ አይነት', en: 'the collection type' },
   RESERVED_NEW: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_FOR: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
   RESERVED_BREAK: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
   RESERVED_CONTINUE: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
   RESERVED_CHAR: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
@@ -102,14 +106,37 @@ export function keywordTable(s: Strings): string {
     })
     .join('\n');
 
-  return `<table class="ref">
+  return wrapped(
+    `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ቃል' : 'Keyword'}</th><th>${
     s.code === 'am' ? 'ትርጉም' : 'Meaning'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+  );
+}
+
+/**
+ * Puts a table in a box that can scroll sideways rather than overflow the
+ * page.
+ *
+ * It is insurance, not the plan: the table is sized to fit at any width,
+ * because two columns that wrap read better than two columns you have to
+ * drag. The alternative — shrinking the type until it fits — is the one
+ * thing a syllabary cannot take.
+ *
+ * No `tabindex` or `role` on the wrapper. A scrolling region does need to be
+ * reachable from a keyboard, but this one does not scroll at any width the
+ * audit measures, and a tab stop that does nothing is worse than none;
+ * browsers make a container that genuinely overflows focusable by
+ * themselves. The tables are already announced by the headings above them.
+ */
+function wrapped(table: string): string {
+  return `<div class="table-wrap">
+${table}
+</div>`;
 }
 
 /** The error catalogue, one section per stage. */
@@ -131,19 +158,176 @@ export function errorTable(s: Strings): string {
 
       return `<h3>${escapeHtml(STAGE_TITLE[stage]?.[s.code] ?? stage)}</h3>
 <p>${escapeHtml(STAGE_NOTE[stage]?.[s.code] ?? '')}</p>
-<table class="ref">
+${wrapped(
+  `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ኮድ' : 'Code'}</th><th>${
     s.code === 'am' ? 'መልእክት' : 'Message'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+)}`;
     })
     .join('\n\n');
 }
 
 /** Everything generated, appended to the reference page's own prose. */
+
+/**
+ * What each pre-bound name does, in both languages.
+ *
+ * The *list* of names is not here — it is read out of a real interpreter
+ * below, so the reference cannot miss one. This only supplies the prose, and
+ * `builtinTable` fails the build on a name it has nothing to say about. That
+ * is the same arrangement as the keyword table, for the same reason: in v1 the
+ * documentation was written beside the language and described a language the
+ * implementation did not have.
+ */
+const BUILTIN_GLOSS: Record<string, { sig: string; am: string; en: string }> = {
+  ጻፍ: {
+    sig: 'ጻፍ(…)',
+    am: 'እያንዳንዱን ግቤት በክፍተት ለያይቶ ይጽፋል',
+    en: 'prints its arguments, space-separated',
+  },
+  ርዝመት: {
+    sig: 'ርዝመት(ጽሁፍ | ስብስብ)',
+    am: 'የፊደል ወይም የዕቃ ብዛት',
+    en: 'length, in code points or elements',
+  },
+  ጨምር: { sig: 'ጨምር(ስብስብ፣ ዕቃ)', am: 'ዕቃውን በስብስቡ ላይ ይጨምራል', en: 'appends to the list, in place' },
+  ሰርዝ: { sig: 'ሰርዝ(ስብስብ፣ ቦታ)', am: 'ከስብስቡ ያንን ቦታ ያስወግዳል', en: 'removes that position, in place' },
+  ቅጂ_አድርግ: { sig: 'ቅጂ_አድርግ(ስብስብ)', am: 'ራሱን የቻለ አዲስ ስብስብ', en: 'a shallow copy' },
+  አይነት: { sig: 'አይነት(ማንኛውም)', am: 'የዋጋውን አይነት ስም', en: 'the name of the value’s type' },
+  አንብብ: { sig: 'አንብብ() | አንብብ(ጽሁፍ)', am: 'አንድ መስመር ግቤት ያነባል', en: 'reads one line of input' },
+  ወደ_ቁጥር: { sig: 'ወደ_ቁጥር(ጽሁፍ | ቁጥር)', am: 'ጽሁፉ የሚወክለውን ቁጥር', en: 'the number the text spells' },
+  ወደ_ጽሁፍ: { sig: 'ወደ_ጽሁፍ(ማንኛውም)', am: 'ጻፍ የሚጽፈው ጽሁፍ', en: 'what ጻፍ would have printed' },
+  ቁጥር_ነው: { sig: 'ቁጥር_ነው(ማንኛውም)', am: 'ወደ_ቁጥር ይሠራ አይሠራ', en: 'whether ወደ_ቁጥር would succeed' },
+  ዘፈቀደ_ቁጥር: {
+    sig: 'ዘፈቀደ_ቁጥር(ሀ፣ ለ)',
+    am: 'ከሁለቱ ጫፎች ጨምሮ የአጋጣሚ ሙሉ ቁጥር',
+    en: 'a random integer, both ends included',
+  },
+  ዘር: { sig: 'ዘር(ቁጥር)', am: 'የአጋጣሚውን ቅደም ተከተል ያስጀምራል', en: 'restarts the random sequence' },
+  ወለል_ዋጋ: { sig: 'ወለል_ዋጋ(ቁጥር)', am: 'ከሱ በታች ያለው ሙሉ ቁጥር', en: 'the whole number at or below' },
+  ጣሪያ_ዋጋ: { sig: 'ጣሪያ_ዋጋ(ቁጥር)', am: 'ከሱ በላይ ያለው ሙሉ ቁጥር', en: 'the whole number at or above' },
+  ቅርብ_ሙሉ_ቁጥር: {
+    sig: 'ቅርብ_ሙሉ_ቁጥር(ቁጥር)',
+    am: 'ወደ ቀረበው ሙሉ ቁጥር',
+    en: 'the nearest whole number; a half goes up',
+  },
+  ፍጹም_ዋጋ: { sig: 'ፍጹም_ዋጋ(ቁጥር)', am: 'ከዜሮ ያለው ርቀት', en: 'its distance from zero' },
+  ከፋፍል: { sig: 'ከፋፍል(ጽሁፍ[፣ መለያ])', am: 'ጽሁፉን ከፋፍሎ ስብስብ ይሰጣል', en: 'splits text into a list' },
+  ጽሁፍ_አድርግ: {
+    sig: 'ጽሁፍ_አድርግ(ስብስብ[፣ መለያ])',
+    am: 'የስብስቡን ዕቃዎች አገናኝቶ ጽሁፍ',
+    en: 'joins a list into text',
+  },
+  ከርክም: { sig: 'ከርክም(ጽሁፍ)', am: 'ከጫፎቹ ክፍተት ያስወግዳል', en: 'trims surrounding whitespace' },
+  ወደ_ግዕዝ: {
+    sig: 'ወደ_ግዕዝ(ቁጥር)',
+    am: 'ቁጥሩን በግዕዝ አኃዝ ይጽፋል',
+    en: 'writes the number in Ge’ez numerals',
+  },
+  ዛሬ: { sig: 'ዛሬ()', am: 'ዛሬ በኢትዮጵያ አቆጣጠር፦ [ዓመት፣ ወር፣ ቀን]', en: 'today in the Ethiopian calendar' },
+  ከግሪጎሪ: { sig: 'ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)', am: 'የግሪጎሪውን ቀን ወደ ኢትዮጵያው', en: 'converts a Gregorian date' },
+  ወር_መጠሪያ: {
+    sig: 'ወር_መጠሪያ(ቁጥር)',
+    am: 'የወሩ ስም — ዓመቱ አሥራ ሦስት ወር አለው',
+    en: 'the month’s name; the year has thirteen',
+  },
+
+  ደምር: { sig: 'ደምር(ስብስብ)', am: 'የዕቃዎቹ ድምር', en: 'the sum of the elements' },
+  ቁጠር: { sig: 'ቁጠር(ስብስብ፣ ዕቃ)', am: 'ዕቃው ስንት ጊዜ እንዳለ', en: 'how many elements equal it' },
+  ፈልግ: { sig: 'ፈልግ(ስብስብ፣ ዕቃ)', am: 'የመጀመሪያው ቦታ፤ ከሌለ ምንም', en: 'the first position, or ምንም' },
+  ከፍተኛው: { sig: 'ከፍተኛው(ስብስብ)', am: 'ትልቁ ዕቃ', en: 'the largest element' },
+  ዝቅተኛው: { sig: 'ዝቅተኛው(ስብስብ)', am: 'ትንሹ ዕቃ', en: 'the smallest element' },
+  ደርድር: { sig: 'ደርድር(ስብስብ)', am: 'ስብስቡን በቦታው ይደረድራል', en: 'sorts the list, in place' },
+  ገልብጥ: { sig: 'ገልብጥ(ስብስብ)', am: 'ስብስቡን በቦታው ይገለብጣል', en: 'reverses the list, in place' },
+  መዝገብ: { sig: 'መዝገብ()', am: 'የቁልፍ-ዋጋ ማኅደር (ክላስ)', en: 'a key–value map (a class)' },
+};
+
+/**
+ * The names a program actually finds pre-bound, read from a real interpreter
+ * with the standard library loaded — not retyped here.
+ */
+function preBound(): { builtins: string[]; library: string[] } {
+  const interpreter = withLibrary({ write: () => {}, readLine: () => '' });
+  const library = new Set<string>(LIBRARY_NAMES);
+  const all = interpreter.globals.ownNames();
+  return {
+    builtins: all.filter((name) => !library.has(name)),
+    library: all.filter((name) => library.has(name)),
+  };
+}
+
+function glossRows(names: readonly string[], s: Strings): string {
+  const missing = names.filter((name) => BUILTIN_GLOSS[name] === undefined);
+  if (missing.length > 0) {
+    throw new Error(`the reference has no meaning for: ${missing.join(', ')}`);
+  }
+  return names
+    .map((name) => {
+      const g = BUILTIN_GLOSS[name] as { sig: string; am: string; en: string };
+      return `<tr><td class="ref-word"><code>${escapeHtml(g.sig)}</code></td><td>${escapeHtml(
+        g[s.code],
+      )}</td></tr>`;
+    })
+    .join('\n');
+}
+
+export function builtinTable(s: Strings): string {
+  const { builtins, library } = preBound();
+  const head = `<thead><tr><th>${s.code === 'am' ? 'ተግባር' : 'Function'}</th><th>${
+    s.code === 'am' ? 'ምን እንደሚሠራ' : 'What it does'
+  }</th></tr></thead>`;
+
+  return `<p>${escapeHtml(
+    s.code === 'am'
+      ? 'እነዚህ ስሞች ቀድመው ተጭነዋል። ቁልፍ ቃላት አይደሉም፤ ስለዚህ በራስህ ኮድ ልትሸፍናቸው ትችላለህ — ያኔ ግን ስተቱ ይነግርሃል።'
+      : 'These names are pre-bound. They are not keywords, so your own code may shadow them — and the error says so when it does.',
+  )}</p>
+${wrapped(`<table class="ref">${head}
+  <tbody>
+${glossRows(builtins, s)}
+  </tbody>
+</table>`)}
+
+<h3>${escapeHtml(s.code === 'am' ? 'መደበኛው ቤተ-መጻሕፍት' : 'The standard library')}</h3>
+<p>${escapeHtml(
+    s.code === 'am'
+      ? 'እነዚህ በአሃዱ ራሱ ተጽፈዋል፤ ልክ እንደ ራስህ ፕሮግራም ማንበብ ትችላቸዋለህ።'
+      : 'These are written in Ahadu itself — you can read them as you would read your own program.',
+  )}</p>
+${wrapped(`<table class="ref">${head}
+  <tbody>
+${glossRows(library, s)}
+  </tbody>
+</table>`)}`;
+}
+
+/**
+ * The standard library's own source.
+ *
+ * LANGUAGE.md §8.5 says the library is written in Ahadu so that a learner can
+ * read it. That claim needs somewhere to point, and this is it: the actual
+ * constant the interpreter loads, highlighted by the same lexer that
+ * highlights every other snippet on the site. Nothing is retyped, so the page
+ * cannot show a library that is not the one running.
+ */
+export function librarySource(s: Strings): string {
+  const { tokens } = tokenize(LIBRARY_SOURCE);
+  return `<p>${escapeHtml(
+    s.code === 'am'
+      ? 'ከታች ያለው ኮድ ነው — መግለጫው አይደለም። ቋንቋው ራሱ የሚጭነው ይኸው ነው፤ ዑደቱና ሁኔታው አስቀድመህ የምታውቃቸው ናቸው።'
+      : 'Below is the code, not a description of it. This is what the language loads, and the loops and conditions in it are the ones you already know.',
+  )}</p>
+<div class="snip snip-fragment"><pre class="snip-code"><code>${highlight({
+    source: LIBRARY_SOURCE,
+    tokens,
+  })}</code></pre></div>`;
+}
+
 export function referenceBody(s: Strings): string {
   const t = (am: string, en: string): string => (s.code === 'am' ? am : en);
 
@@ -152,6 +336,14 @@ export function referenceBody(s: Strings): string {
 ## ${t('ቁልፍ ቃላት', 'Keywords')}
 
 ${keywordTable(s)}
+
+## ${t('ተግባራት', 'Functions')}
+
+${builtinTable(s)}
+
+## ${t('የቤተ-መጻሕፍቱ ኮድ', 'The library’s source')}
+
+${librarySource(s)}
 
 ## ${t('የስተት ኮዶች', 'Error codes')}
 

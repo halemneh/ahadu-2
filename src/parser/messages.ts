@@ -35,6 +35,10 @@ export const CONDITION_BEFORE_IF = 'ሁኔታው ከ"ከሆነ" በፊት መም
 
 export const CONDITION_BEFORE_WHILE = 'ሁኔታው ከ"እስከሆነ ድረስ" በፊት መምጣት አለበት። ለምሳሌ፦ ቆጣሪ < 5 እስከሆነ ድረስ፦';
 
+export const COLLECTION_BEFORE_FOREACH = 'ስብስቡ ከ"ለእያንዳንዱ" በፊት መምጣት አለበት። ለምሳሌ፦ ቤተሰብ ለእያንዳንዱ ስም፦';
+
+export const FOREACH_NEEDS_NAME = 'ከ"ለእያንዳንዱ" በኋላ የተለዋጭ ስም ያስፈልጋል። ለምሳሌ፦ ቤተሰብ ለእያንዳንዱ ስም፦';
+
 // ---------------------------------------------------------------------------
 // Conditionals
 // ---------------------------------------------------------------------------
@@ -91,7 +95,7 @@ export const CHAINED_ASSIGNMENT = 'ሰንሰለት ምደባ አይቻልም። 
 
 export const UNEXPECTED_AFTER_STATEMENT = 'ከትእዛዙ በኋላ ያልተጠበቀ ነገር አለ።';
 
-export const SLICE_ASSIGNMENT = 'ቁራጭ መቀየር አይቻልም። "አዋህድ" ወይም "ሰርዝ" ይጠቀሙ።';
+export const SLICE_ASSIGNMENT = 'ቁራጭ መቀየር አይቻልም። "ጨምር" ወይም "ሰርዝ" ይጠቀሙ።';
 
 export const INVALID_TARGET = 'ለዚህ ነገር ዋጋ መስጠት አይቻልም።';
 

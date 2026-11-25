@@ -191,12 +191,12 @@ string of length 1 **is** the character (§4.3): neither v1 ever had a distinct
 character value, and an annotation naming a type that `አይነት` can never report
 would be a concept with nothing behind it.
 
-### C13 — `አዋህድ` and `ሰርዝ` crash the interpreter · critical
+### C13 — `ጨምር` and `ሰርዝ` crash the interpreter · critical
 
 Both are in `BUILT_IN_FUNCS`, both lex and parse, and `visit_BuiltInFuncNode`
 dispatches via `getattr(self, f'built_in_{name}', self.unknown_func)`. Only
 `built_in_PRINT` exists. `unknown_func` is declared with four parameters but
-called with five, so calling `አዋህድ(…)` raises a Python `TypeError` — an
+called with five, so calling `ጨምር(…)` raises a Python `TypeError` — an
 uncaught crash, not an Ahadu error.
 
 **Resolution**: a defined set of six built-ins, all implemented, as ordinary
@@ -344,7 +344,7 @@ def add(self, x):
 `lt`, or `multiply`, so comparing two lists raises `AH3002`-equivalent errors,
 and `#TODO: at equals and not equals` is still in the file.
 
-**Resolution**: `+` concatenates into a new list; `አዋህድ` appends one element to
+**Resolution**: `+` concatenates into a new list; `ጨምር` appends one element to
 the list in place; `==` compares element-wise (§4.5, §6.2, §6.3, §8).
 
 ### C16 — Open-ended slice drops the last element · major
@@ -512,7 +512,7 @@ two names can refer to one list or one object was never decided.
 **Resolution**: stated outright instead of emerging from where a `deepcopy`
 happened to land. Strings are immutable (§4.3). Lists and objects are mutable
 references, so sharing is observable and `ለ = ሀ` gives one list two names
-(§4.5, §4.7); `ቅጂ` is the explicit opt-out. Nothing is copied implicitly —
+(§4.5, §4.7); `ቅጂ_አድርግ` is the explicit opt-out. Nothing is copied implicitly —
 not arguments, not return values, not an object's class context.
 
 ### C36 — Identifier character range, and Ge'ez numerals · minor
@@ -549,8 +549,8 @@ written against a hardcoded bound. Both shipped list examples do exactly that:
 `ቆጣሪ < 5 እስከሆነ ድረስ` over a five-element array. The language could not express
 "for each item in this list".
 
-**Resolution**: `ርዝመት` (§8), plus `ቅጂ`, `አይነት`, and `አንብብ` for the same
-reason — the smallest set that makes beginner exercises writable. `ቅጂ` is the
+**Resolution**: `ርዝመት` (§8), plus `ቅጂ_አድርግ`, `አይነት`, and `አንብብ` for the same
+reason — the smallest set that makes beginner exercises writable. `ቅጂ_አድርግ` is the
 one that comes with mutability: once `ለ = ሀ` shares a list, there has to be a
 way to say "give me my own".
 

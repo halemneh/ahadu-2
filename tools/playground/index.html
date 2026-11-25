@@ -11,6 +11,9 @@
         var t = localStorage.getItem('ahadu.theme');
         if (t) document.documentElement.dataset.theme = t;
       } catch (e) {}
+      // Says that scripting is on. The narrow navigation is a drawer only
+      // under this class; see tools/shared/menu.ts.
+      document.documentElement.className += ' js';
     </script>
   </head>
   <body>
@@ -28,10 +31,10 @@
     <header class="sitebar">
       <a class="brand" id="brand" href="/am/">
         <strong>አሃዱ</strong>
-        <span class="version">2.0</span>
       </a>
 
-      <nav class="nav">
+      <!-- Below 760px this is a drawer, opened by #menu (shared/menu.ts). -->
+      <nav class="nav" id="sitenav" data-i18n-label="navLabel">
         <a data-section="home" data-i18n="navHome"></a>
         <a data-section="learn" data-i18n="navLearn"></a>
         <a data-section="reference" data-i18n="navReference"></a>
@@ -43,7 +46,29 @@
 
       <button id="language" class="chip" type="button" data-i18n="languageToggle"></button>
       <button id="theme" class="chip" type="button" aria-live="off">◐</button>
+      <button
+        id="menu"
+        class="chip menu"
+        type="button"
+        aria-controls="sitenav"
+        aria-expanded="false"
+        data-i18n-label="navMenu"
+        hidden
+      >
+        <span aria-hidden="true">☰</span>
+      </button>
+
+      <!-- Closes the drawer when the page behind it is tapped. -->
+      <div class="scrim" id="nav-scrim" hidden></div>
     </header>
+
+    <!--
+      The page's heading. Not drawn — the header already says where you are
+      to anyone who can see it — but a page with no h1 gives a screen reader
+      nothing to announce and nothing to jump to, and this is the one page of
+      the site whose heading is not in its own prose.
+    -->
+    <h1 class="sr-only" data-i18n="pageTitle"></h1>
 
     <!-- The playground's own toolbar: the things only it has. -->
     <header class="bar">
@@ -101,6 +126,29 @@
         </div>
       </section>
     </main>
+
+    <!--
+      The footer, the same component every other page carries (shared/chrome.css).
+      The playground had none at all, because its styles lived in the site's own
+      stylesheet, which this page does not load.
+
+      The links resolve per language at runtime, like the header's: this page has
+      one URL and does not know which language it is being read in until the
+      script runs.
+
+      The site's footer also has a "contact" button, which opens a dialog. That
+      is not here: the dialog is a component of the site's own client, and
+      bringing it over is a bigger job than making the footer match. Report a
+      problem goes to the same place.
+    -->
+    <footer class="foot">
+      <span data-i18n="footer"></span>
+      <nav class="foot-acts" data-i18n-label="footerActions">
+        <a class="foot-act" id="report" href="https://github.com/halemneh/ahadu-2/issues/new" data-i18n="reportProblem"></a>
+        <a class="foot-act" data-section="privacy" data-i18n="privacyLink"></a>
+        <a class="foot-act" href="https://github.com/halemneh/ahadu-2">GitHub</a>
+      </nav>
+    </footer>
 
     <!-- Explains the error the pointer is over; positioned from script. -->
     <div id="tip" class="tip" role="status" hidden></div>

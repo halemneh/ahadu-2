@@ -33,7 +33,18 @@ import {
   AH3015,
   AH3017,
   AH3018,
+  AH3019,
+  AH3020,
+  AH3021,
+  AH3022,
 } from '../diagnostics.js';
+import { MAX_GEEZ, parseNumericText, trimText, writeGeezNumeral } from '../numeric.js';
+import {
+  ETHIOPIC_MONTHS,
+  ethiopicFromUnixMillis,
+  gregorianToEthiopic,
+  isRealGregorianDate,
+} from '../ethiopic.js';
 import type {
   AssignTarget,
   AttributeDeclaration,
@@ -83,6 +94,27 @@ export interface RunOptions {
   /** Evaluation-step budget before `AH3018`. Unlimited by default. */
   readonly maxSteps?: number;
   /**
+   * Starting seed for `ዘፈቀደ_ቁጥር` (§8).
+   *
+   * Fixed by default, so a program that draws random numbers prints the same
+   * thing every time unless a host asks for otherwise. That direction is
+   * deliberate: the website runs every snippet at build time and fails the
+   * build when the output is not what the page claims (SITE.md §2), so a host
+   * that forgets this option gets a verifiable program, not a flaky one. The
+   * playground and the CLI opt into variation explicitly.
+   */
+  readonly seed?: number;
+  /**
+   * The instant `ዛሬ` reports, in Unix milliseconds.
+   *
+   * Fixed by default, for the same reason `seed` is: the website runs every
+   * snippet at build time and fails the build when the output is not what the
+   * page claims (SITE.md §2), so a host that forgets this option gets a
+   * reproducible program rather than one whose output changes at midnight.
+   * The CLI and the playground pass the real clock.
+   */
+  readonly now?: number;
+  /**
    * Called for each statement worth showing, with its line, the value worth
    * showing for it, and how deep in calls it ran. This is what `ahadu trace`
    * prints, so a learner can watch a loop actually loop (TOOLING.md §1.1).
@@ -123,6 +155,55 @@ export const GLOBAL_SCOPE_NAME = 'ዋና ፕሮግራም';
  */
 const DEFAULT_MAX_DEPTH = 200;
 
+/**
+ * The seed `ዘፈቀደ_ቁጥር` starts from when no host supplies one.
+ *
+ * Any constant would do; 1 is the one the spec names so a second
+ * implementation can match it.
+ */
+const DEFAULT_SEED = 1;
+
+/**
+ * The instant `ዛሬ` reports when no host supplies one: the Unix epoch.
+ *
+ * Any constant would do, and this one has the advantage of being obviously
+ * not a real time — a program printing 1962 has clearly not been given a
+ * clock, which is easier to diagnose than a plausible-looking wrong date.
+ */
+const DEFAULT_NOW = 0;
+
+/**
+ * One step of the generator behind `ዘፈቀደ_ቁጥር` — mulberry32.
+ *
+ * Chosen because it is nine lines, has no dependencies, and is fully
+ * determined by a 32-bit state, so "the same seed gives the same sequence" is
+ * a property of the arithmetic rather than a promise about a library. Quality
+ * beyond that does not matter here: this draws dice rolls for a learner, and
+ * nothing in Ahadu should ever be used for anything that needs a real CSPRNG.
+ *
+ * Returns the next state and a fraction in [0, 1).
+ */
+function mulberry32(state: number): { readonly state: number; readonly fraction: number } {
+  const next = (state + 0x6d2b79f5) | 0;
+  let t = next;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return { state: next, fraction: ((t ^ (t >>> 14)) >>> 0) / 4294967296 };
+}
+
+/**
+ * Turns a seed into generator state.
+ *
+ * A seed is an ordinary Ahadu `ቁጥር`, so it can be negative, fractional or
+ * enormous; the state is 32 bits. Truncating toward zero and wrapping means
+ * every seed is usable and `ዘር(1)` matches the default. Two seeds can collide
+ * — `ዘር(1)` and `ዘር(1.5)` are the same run — which is a fair trade for never
+ * rejecting a number someone chose.
+ */
+function seedState(seed: number): number {
+  return Number.isFinite(seed) ? Math.trunc(seed) | 0 : 0;
+}
+
 /** Amharic names for the operations named in `AH3002` messages (§6.2). */
 const OPERATION_NAMES: Record<string, string> = {
   ADD: 'መደመር',
@@ -149,8 +230,38 @@ export class Interpreter {
   }
   private steps = 0;
   private readonly maxDepth: number;
-  private readonly maxSteps: number;
-  private readonly onStatement: RunOptions['onStatement'];
+  /*
+   * Not `readonly`: `runLibrary` lifts it while the prelude loads. §8.5 says
+   * the learner's step budget is theirs, and a budget the library has already
+   * spent part of is not.
+   */
+  private maxSteps: number;
+  /* Not `readonly`: `runLibrary` silences it. See there. */
+  private onStatement: RunOptions['onStatement'];
+  /** The generator's 32-bit state, which `ዘር` resets and `ዘፈቀደ_ቁጥር` advances. */
+  private randomState: number;
+  /**
+   * The names that were pre-bound as built-ins (§8).
+   *
+   * Kept so `AH3013` can tell a learner what actually happened. Built-ins are
+   * shadowable by design, and several of them are nouns — `ርዝመት`, `ቅጂ_አድርግ`,
+   * `አይነት`, `ዘር` — which are exactly the words someone reaches for as a
+   * variable name. Without this set, `ርዝመት = 5` followed by `ርዝመት("ሀ")`
+   * reports only "a number cannot be called", which is true and useless.
+   *
+   * The standard library's names join it through `notePreBound`, because a
+   * learner shadowing `ደምር` deserves the same answer as one shadowing `ርዝመት`
+   * — the fact that one is written in Ahadu and the other in TypeScript is
+   * not something they can see or should have to care about (§8.5).
+   */
+  private readonly preBoundNames = new Set<string>();
+  /**
+   * Set while the standard library's prelude is running, so the functions it
+   * declares are marked as library code (§8.5).
+   */
+  private loadingLibrary = false;
+  /** The instant `ዛሬ` reports, in Unix milliseconds (§8.8). */
+  private readonly now: number;
 
   constructor(
     readonly host: Host,
@@ -159,15 +270,109 @@ export class Interpreter {
     this.maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY;
     this.onStatement = options.onStatement;
-    for (const [name, value] of createBuiltins(this)) this.globals.define(name, value);
+    this.randomState = seedState(options.seed ?? DEFAULT_SEED);
+    this.now = options.now ?? DEFAULT_NOW;
+    for (const [name, value] of createBuiltins(this)) {
+      this.globals.define(name, value);
+      this.preBoundNames.add(name);
+    }
+  }
+
+  // =========================================================================
+  // Randomness (§8)
+  // =========================================================================
+
+  /**
+   * Records names that arrived pre-bound rather than from the learner's own
+   * program, so `AH3013` can say so (§8.2).
+   */
+  notePreBound(names: Iterable<string>): void {
+    for (const name of names) this.preBoundNames.add(name);
+  }
+
+  /**
+   * Runs the standard library's prelude, marking what it declares.
+   *
+   * Only `loadLibrary` calls this. It is a separate method rather than a flag
+   * a caller sets and clears because leaving the flag on would silently mark
+   * the learner's own functions as library code.
+   */
+  runLibrary(program: Program): RunResult {
+    this.loadingLibrary = true;
+    // The budget is lifted, not merely reset. `tryRun` zeroes the counter,
+    // but the prelude's own statements would still be charged against the
+    // learner's limit — and with a small one they exhaust it before the
+    // learner's first line runs. Verified: `ጻፍ(1)` under `maxSteps: 7` failed
+    // with "the standard library failed to run".
+    const budget = this.maxSteps;
+    const trace = this.onStatement;
+    this.maxSteps = Number.POSITIVE_INFINITY;
+    // And no tracing. `ahadu trace` renders each reported line by looking it
+    // up in the *learner's* source, so the prelude's lines came out as blank
+    // or unrelated statements before their program had run a step.
+    this.onStatement = undefined;
+    try {
+      return this.tryRun(program);
+    } finally {
+      this.loadingLibrary = false;
+      this.maxSteps = budget;
+      this.onStatement = trace;
+    }
+  }
+
+  /** Restarts the generator, which is what `ዘር` does. */
+  reseed(seed: number): void {
+    this.randomState = seedState(seed);
+  }
+
+  /**
+   * Draws an integer in `[low, high]`, both ends included.
+   *
+   * Inclusive because `ዘፈቀደ_ቁጥር(1፣ 6)` has to be a die. A half-open range is the
+   * right default for a library and the wrong one for a first program: every
+   * learner who writes `ዘፈቀደ_ቁጥር(1፣ 6)` means six faces, and an exclusive upper
+   * bound would hand them five and no error.
+   */
+  nextInt(low: number, high: number): number {
+    const { state, fraction } = mulberry32(this.randomState);
+    this.randomState = state;
+    return low + Math.floor(fraction * (high - low + 1));
+  }
+
+  /** The instant `ዛሬ` reports (§8.8). */
+  get instant(): number {
+    return this.now;
   }
 
   // =========================================================================
   // Failing
   // =========================================================================
 
-  /** Raises a runtime error. Always throws; the return type lets callers `return this.fail(...)`. */
+  /**
+   * Raises a runtime error. Always throws; the return type lets callers
+   * `return this.fail(...)`.
+   *
+   * A failure inside a standard-library function is reported at the line that
+   * **called** it, not at the line inside the library (§8.5). The library's
+   * line numbers belong to a file the learner cannot open: pointing at one
+   * makes the diagnostic frame a line of their program that has nothing to do
+   * with the error, or — if their program is shorter than the prelude — a
+   * blank line with carets under nothing. The library frame stays in the
+   * traceback, so the detail is not lost, and the message says which library
+   * function was running.
+   */
   fail(code: string, at: Site, message?: string): never {
+    const innermost = this.frames.at(-1);
+    if (innermost?.fromLibrary === true) {
+      // Not the frame's own line: `execute` keeps rewriting that to whichever
+      // statement is running, so by now it is a line *inside* the library.
+      // The learner's line is the deepest frame they wrote, and the global
+      // frame is always one of those, so this search always finds something.
+      const caller = [...this.frames].reverse().find((f) => f.fromLibrary !== true);
+      const site = { line: caller?.line ?? at.line, startCol: 1, endCol: 1 };
+      const inside = err.insideLibrary(innermost.name, message ?? '');
+      throw new AhaduError(runtimeDiagnostic(code, site, inside), [...this.frames]);
+    }
     throw new AhaduError(runtimeDiagnostic(code, at, message), [...this.frames]);
   }
 
@@ -251,9 +456,15 @@ export class Interpreter {
 
   private execute(statement: Statement, scope: Scope): Value {
     this.step(statement);
+    // Rebuilt rather than mutated, so `callStack` hands out frozen copies.
+    // Everything on the frame other than the line must be carried across:
+    // dropping `fromLibrary` here is what makes a library error point at a
+    // line the learner never wrote (§8.5).
+    const current = this.frames[this.frames.length - 1];
     this.frames[this.frames.length - 1] = {
-      name: this.frames[this.frames.length - 1]?.name ?? GLOBAL_SCOPE_NAME,
+      name: current?.name ?? GLOBAL_SCOPE_NAME,
       line: statement.line,
+      ...(current?.fromLibrary === true ? { fromLibrary: true as const } : {}),
     };
 
     switch (statement.type) {
@@ -305,6 +516,18 @@ export class Interpreter {
         return NOTHING;
       }
 
+      case 'ForEachStatement': {
+        const items = this.iterable(statement.collection, scope);
+        for (const item of items) {
+          // The enclosing scope, not a child: a block introduces no scope
+          // anywhere in Ahadu (§5.3), and making this one name the exception
+          // would be a special case a learner has to be told about.
+          scope.define(statement.name, item);
+          this.executeBlock(statement.body, scope);
+        }
+        return NOTHING;
+      }
+
       case 'FunctionDeclaration':
         scope.define(statement.name, this.makeFunction(statement, scope));
         this.trace(statement.line, NOTHING);
@@ -315,6 +538,27 @@ export class Interpreter {
         this.trace(statement.line, NOTHING);
         return NOTHING;
     }
+  }
+
+  /**
+   * Evaluates what `ለእያንዳንዱ` walks, as a fixed sequence of values (§7.4).
+   *
+   * Fixed — a copy, not the live list — on purpose. Walking by live index is
+   * the obvious implementation and it has two failure modes a beginner cannot
+   * debug: `ጨምር` in the body never terminates, and `ሰርዝ` in the body
+   * silently skips the next element. Both are easy to write by accident while
+   * filtering a list, and neither is a lesson worth teaching. The list stays
+   * mutable and shared (§4.5); only the iteration is fixed.
+   *
+   * A `ጽሁፍ` walks its code points, which is the breadth `ርዝመት` and `x[i]`
+   * already have: indexing a string but not being able to walk it would be
+   * arbitrary.
+   */
+  private iterable(expression: Expression, scope: Scope): readonly Value[] {
+    const value = this.evaluate(expression, scope);
+    if (value.kind === 'list') return [...value.items];
+    if (value.kind === 'string') return codePoints(value.value).map((ch) => str(ch));
+    return this.fail(AH3002, expression, err.illegalUnary('"ለእያንዳንዱ"', typeName(value)));
   }
 
   /** Evaluates a condition, which must be `እውነታ` — there is no truthiness (§4.4). */
@@ -479,7 +723,9 @@ export class Interpreter {
       case 'CallExpression': {
         const callee = this.evaluate(expression.callee, scope);
         const args = expression.args.map((argument) => this.evaluate(argument, scope));
-        return this.call(callee, args, expression);
+        const written =
+          expression.callee.type === 'Identifier' ? expression.callee.name : undefined;
+        return this.call(callee, args, expression, written);
       }
 
       case 'UnaryExpression':
@@ -714,16 +960,30 @@ export class Interpreter {
       body: declaration.body,
       closure: scope,
       boundTo: null,
+      ...(this.loadingLibrary ? { fromLibrary: true as const } : {}),
     };
   }
 
-  /** Calls a function, a built-in, or a class (which constructs). */
-  call(callee: Value, args: readonly Value[], at: Site): Value {
+  /**
+   * Calls a function, a built-in, or a class (which constructs).
+   *
+   * `name` is the source spelling the callee was written as, when there was
+   * one. It is only used to improve `AH3013`, so a host calling a function
+   * value it looked up may leave it out.
+   */
+  call(callee: Value, args: readonly Value[], at: Site, name?: string): Value {
     if (callee.kind === 'builtin') return callee.call(args, at);
     if (callee.kind === 'class') return this.construct(callee, args, at);
 
     if (callee.kind !== 'function') {
-      this.fail(AH3013, at, err.notCallable(typeName(callee)));
+      // A shadowed built-in is the one case where the plain message hides the
+      // cause rather than reporting it (§8).
+      const shadowed = name !== undefined && this.preBoundNames.has(name);
+      this.fail(
+        AH3013,
+        at,
+        shadowed ? err.shadowedBuiltin(name, typeName(callee)) : err.notCallable(typeName(callee)),
+      );
     }
 
     if (args.length !== callee.params.length) {
@@ -735,16 +995,20 @@ export class Interpreter {
       scope.define(param, args[i] as Value);
     });
 
-    return this.invoke(callee.name, callee.body, scope, at);
+    return this.invoke(callee.name, callee.body, scope, at, callee.fromLibrary === true);
   }
 
   /** Runs a body with a frame pushed, catching the `ተመላሽ` that leaves it. */
-  private invoke(name: string, body: Block, scope: Scope, at: Site): Value {
+  private invoke(name: string, body: Block, scope: Scope, at: Site, fromLibrary = false): Value {
     if (this.frames.length >= this.maxDepth) {
       this.fail(AH3017, at, err.callDepthExceeded(this.maxDepth));
     }
 
-    this.frames.push({ name, line: at.line });
+    this.frames.push({
+      name,
+      line: at.line,
+      ...(fromLibrary ? { fromLibrary: true as const } : {}),
+    });
     try {
       this.executeBlock(body, scope);
       // Falling off the end returns ምንም (§7.5).
@@ -776,6 +1040,9 @@ export class Interpreter {
 
     return {
       kind: 'class',
+      // Methods are built from the declaration on demand by `findMethod`,
+      // which never goes through `makeFunction`, so the class carries it.
+      ...(this.loadingLibrary ? { fromLibrary: true as const } : {}),
       name: declaration.name,
       parent,
       attributes: declaration.attributes,
@@ -837,7 +1104,7 @@ export class Interpreter {
       scope.define(param, args[i] as Value);
     });
 
-    this.invoke(`${cls.name}.ፍጠር`, declaration.body, scope, at);
+    this.invoke(`${cls.name}.ፍጠር`, declaration.body, scope, at, cls.fromLibrary === true);
     return object;
   }
 }
@@ -847,14 +1114,14 @@ export class Interpreter {
 // ===========================================================================
 
 /**
- * The seven globals.
+ * The twelve globals.
  *
  * They are ordinary bindings, not keywords, so user code may shadow them.
- * v1-py made `ጻፍ`, `አዋህድ` and `ሰርዝ` keywords and then implemented only the
+ * v1-py made `ጻፍ`, `ጨምር` and `ሰርዝ` keywords and then implemented only the
  * first, so calling either other one crashed the interpreter (CHANGES C13).
  *
- * `አዋህድ` and `ሰርዝ` are imperatives in Amharic, so they change the list they
- * are given and return `ምንም`: `ዝ = አዋህድ(ዝ፣ 4)` then leaves `ዝ` holding
+ * `ጨምር`, `ሰርዝ` and `ዘር` are imperatives in Amharic, so they change
+ * something and return `ምንም`: `ዝ = ጨምር(ዝ፣ 4)` then leaves `ዝ` holding
  * `ምንም`, which fails loudly instead of looking like it worked (§4.5).
  */
 function createBuiltins(interpreter: Interpreter): Map<string, Value> {
@@ -892,9 +1159,9 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     interpreter.fail(AH3002, at, err.illegalUnary('"ርዝመት"', typeName(value)));
   });
 
-  define('አዋህድ', (args, at) => {
-    arity('አዋህድ', args, 2, at);
-    expectList('አዋህድ', args, at).items.push(args[1] as Value);
+  define('ጨምር', (args, at) => {
+    arity('ጨምር', args, 2, at);
+    expectList('ጨምር', args, at).items.push(args[1] as Value);
     return NOTHING;
   });
 
@@ -913,10 +1180,10 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     return NOTHING;
   });
 
-  define('ቅጂ', (args, at) => {
-    arity('ቅጂ', args, 1, at);
+  define('ቅጂ_አድርግ', (args, at) => {
+    arity('ቅጂ_አድርግ', args, 1, at);
     // Shallow: a nested list is still shared (§4.5).
-    return list([...expectList('ቅጂ', args, at).items]);
+    return list([...expectList('ቅጂ_አድርግ', args, at).items]);
   });
 
   define('አይነት', (args, at) => {
@@ -930,6 +1197,246 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     }
     const prompt = args.length === 1 ? render(args[0] as Value) : null;
     return str(interpreter.host.readLine(prompt));
+  });
+
+  // -------------------------------------------------------------------------
+  // Conversion
+  //
+  // `አንብብ` hands back `ጽሁፍ`, and `+` refuses to mix a `ጽሁፍ` with a `ቁጥር`
+  // (§6.2). Without these three, nothing a learner types at a prompt can be
+  // counted, compared or added — a calculator cannot add its own inputs. The
+  // type keywords `ቁጥር` and `ጽሁፍ` are reserved (§3.3), so the conversions are
+  // named for the direction they go in.
+  // -------------------------------------------------------------------------
+
+  define('ወደ_ቁጥር', (args, at) => {
+    arity('ወደ_ቁጥር', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind === 'number') return value;
+    if (value.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደ_ቁጥር"', typeName(value)));
+    }
+    const parsed = parseNumericText(value.value);
+    // Loudly, not as `ምንም`: a calculator that quietly computed with nothing
+    // would print an answer, and the learner would believe it.
+    if (parsed === null) interpreter.fail(AH3019, at, err.notNumericText(value.value));
+    return num(parsed);
+  });
+
+  define('ወደ_ጽሁፍ', (args, at) => {
+    arity('ወደ_ጽሁፍ', args, 1, at);
+    // Exactly what `ጻፍ` would have printed, so there is one rendering to learn.
+    return str(render(args[0] as Value));
+  });
+
+  define('ቁጥር_ነው', (args, at) => {
+    arity('ቁጥር_ነው', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind === 'number') return bool(true);
+    if (value.kind !== 'string') return bool(false);
+    // Never fails, for anything: its whole job is to be the guard in front of
+    // `ወደ_ቁጥር`, and a guard that can itself raise is no guard.
+    return bool(parseNumericText(value.value) !== null);
+  });
+
+  // -------------------------------------------------------------------------
+  // Randomness
+  //
+  // Seeded, always. `ዘር` is the only way a program changes the sequence; the
+  // starting seed comes from the host and is fixed unless the host says
+  // otherwise, which is what lets the website run every snippet at build time
+  // and check its output (SITE.md §2).
+  // -------------------------------------------------------------------------
+
+  define('ዘፈቀደ_ቁጥር', (args, at) => {
+    arity('ዘፈቀደ_ቁጥር', args, 2, at);
+    const low = args[0] as Value;
+    const high = args[1] as Value;
+    if (low.kind !== 'number' || high.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalBinary('መምረጥ', typeName(low), typeName(high)));
+    }
+    if (!Number.isInteger(low.value) || !Number.isInteger(high.value) || low.value > high.value) {
+      interpreter.fail(AH3020, at, err.badRandomRange(render(low), render(high)));
+    }
+    return num(interpreter.nextInt(low.value, high.value));
+  });
+
+  // -------------------------------------------------------------------------
+  // Whole numbers
+  //
+  // Host built-ins rather than library source because the obvious Ahadu
+  // definition of a floor is `ቁ - (ቁ % 1)`, and `7.6 % 1` is
+  // `0.5999999999999996`. A learner reading that in the library would be
+  // reading a lie about arithmetic (§8.5).
+  // -------------------------------------------------------------------------
+
+  /** Shared shape for the one-number built-ins. */
+  const numeric = (name: string, apply: (value: number) => number): void => {
+    define(name, (args, at) => {
+      arity(name, args, 1, at);
+      const value = args[0] as Value;
+      if (value.kind !== 'number') {
+        interpreter.fail(AH3002, at, err.illegalUnary(`"${name}"`, typeName(value)));
+      }
+      return num(apply(value.value));
+    });
+  };
+
+  numeric('ወለል_ዋጋ', Math.floor);
+  numeric('ጣሪያ_ዋጋ', Math.ceil);
+  // Half goes up, toward positive infinity, so ቅርብ_ሙሉ_ቁጥር(2.5) is 3 and
+  // ቅርብ_ሙሉ_ቁጥር(0 - 2.5) is -2. Documented in §8.7 rather than left to be discovered.
+  numeric('ቅርብ_ሙሉ_ቁጥር', Math.round);
+  numeric('ፍጹም_ዋጋ', Math.abs);
+
+  // -------------------------------------------------------------------------
+  // Text
+  // -------------------------------------------------------------------------
+
+  define('ከፋፍል', (args, at) => {
+    if (args.length < 1 || args.length > 2) {
+      interpreter.fail(AH3010, at, err.argumentCount('ከፋፍል', 2, args.length));
+    }
+    const text = args[0] as Value;
+    if (text.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከፋፍል"', typeName(text)));
+    }
+
+    // One argument: split on runs of whitespace and drop the empties, which is
+    // what reading words off a line of input wants. Leading and trailing
+    // spaces then cost nothing, as they do for `ወደ_ቁጥር` (§8.3).
+    if (args.length === 1) {
+      const trimmed = trimText(text.value);
+      return list(
+        trimmed.length === 0 ? [] : trimmed.split(/[\s\u00a0]+/u).map((part) => str(part)),
+      );
+    }
+
+    const separator = args[1] as Value;
+    if (separator.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከፋፍል"', typeName(separator)));
+    }
+    // An empty separator gives the code points, matching how `ርዝመት` counts
+    // and how `ለእያንዳንዱ` walks a `ጽሁፍ` (§4.3).
+    if (separator.value.length === 0) {
+      return list(codePoints(text.value).map((ch) => str(ch)));
+    }
+    return list(text.value.split(separator.value).map((part) => str(part)));
+  });
+
+  define('ጽሁፍ_አድርግ', (args, at) => {
+    if (args.length < 1 || args.length > 2) {
+      interpreter.fail(AH3010, at, err.argumentCount('ጽሁፍ_አድርግ', 2, args.length));
+    }
+    const items = expectList('ጽሁፍ_አድርግ', args, at).items;
+
+    let separator = ' ';
+    if (args.length === 2) {
+      const given = args[1] as Value;
+      if (given.kind !== 'string') {
+        interpreter.fail(AH3002, at, err.illegalUnary('"ጽሁፍ_አድርግ"', typeName(given)));
+      }
+      separator = given.value;
+    }
+
+    // Elements are rendered as `ጻፍ` would print them, so a list of numbers
+    // joins without a conversion step and there is one rendering to learn
+    // (§8.1). The default separator is a space for the same reason: it is
+    // what `ጻፍ` puts between its arguments.
+    return str(items.map((item) => render(item)).join(separator));
+  });
+
+  define('ከርክም', (args, at) => {
+    arity('ከርክም', args, 1, at);
+    const text = args[0] as Value;
+    if (text.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከርክም"', typeName(text)));
+    }
+    return str(trimText(text.value));
+  });
+
+  define('ወደ_ግዕዝ', (args, at) => {
+    arity('ወደ_ግዕዝ', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደ_ግዕዝ"', typeName(value)));
+    }
+    const written = writeGeezNumeral(value.value);
+    // §3.4.1 reads Ge'ez numerals; this is the other direction, so the
+    // language can show a number in Amharic's own numerals and not only read
+    // them. The two are round-trip tested against each other.
+    if (written === null) {
+      interpreter.fail(AH3021, at, err.noGeezSpelling(render(value), MAX_GEEZ));
+    }
+    return str(written);
+  });
+
+  // -------------------------------------------------------------------------
+  // The Ethiopian calendar (§8.8)
+  //
+  // Thirteen months, and a year seven or eight behind the Gregorian one. A
+  // date is a three-element `ስብስብ` rather than a new value type, so nothing
+  // in §4.1 changes and `ለእያንዳንዱ`, indexing and `ጻፍ` all already work on it.
+  // -------------------------------------------------------------------------
+
+  /** Reads a date argument that must be a whole number. */
+  const whole = (name: string, args: readonly Value[], index: number, at: Site): number => {
+    const value = args[index] as Value;
+    if (value.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary(`"${name}"`, typeName(value)));
+    }
+    return value.value;
+  };
+
+  const dateList = (date: { year: number; month: number; day: number }): Value =>
+    list([num(date.year), num(date.month), num(date.day)]);
+
+  define('ዛሬ', (args, at) => {
+    arity('ዛሬ', args, 0, at);
+    // Read in UTC, so the same program prints the same date on every machine
+    // and a snippet's output can be checked at build time at all.
+    return dateList(ethiopicFromUnixMillis(interpreter.instant));
+  });
+
+  define('ከግሪጎሪ', (args, at) => {
+    arity('ከግሪጎሪ', args, 3, at);
+    const year = whole('ከግሪጎሪ', args, 0, at);
+    const month = whole('ከግሪጎሪ', args, 1, at);
+    const day = whole('ከግሪጎሪ', args, 2, at);
+
+    // Converted and converted back, which is the only honest check: the
+    // forward formula computes a day number for 31 February perfectly
+    // happily, and that number is a real day — 2 or 3 March. Returning the
+    // wrong date silently is worse than refusing.
+    if (!isRealGregorianDate({ year, month, day })) {
+      interpreter.fail(
+        AH3022,
+        at,
+        err.badGregorianDate(render(num(year)), render(num(month)), render(num(day))),
+      );
+    }
+    return dateList(gregorianToEthiopic({ year, month, day }));
+  });
+
+  define('ወር_መጠሪያ', (args, at) => {
+    arity('ወር_መጠሪያ', args, 1, at);
+    const month = whole('ወር_መጠሪያ', args, 0, at);
+    if (!Number.isInteger(month) || month < 1 || month > 13) {
+      interpreter.fail(AH3022, at, err.badMonthNumber(render(num(month))));
+    }
+    return str(ETHIOPIC_MONTHS[month - 1] as string);
+  });
+
+  define('ዘር', (args, at) => {
+    arity('ዘር', args, 1, at);
+    const seed = args[0] as Value;
+    if (seed.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ዘር"', typeName(seed)));
+    }
+    // An imperative, like `ጨምር` and `ሰርዝ`: it changes something and hands
+    // back `ምንም`, so `ሀ = ዘር(5)` fails loudly instead of looking useful.
+    interpreter.reseed(seed.value);
+    return NOTHING;
   });
 
   return builtins;

@@ -82,6 +82,18 @@ export class Scope {
     return this.values.has(name);
   }
 
+  /**
+   * The names this exact scope binds, in the order they were defined.
+   *
+   * Used to find out what the standard library's prelude added to the globals,
+   * so those names get the same shadowing error the host built-ins do (§8.2)
+   * and so a test can check the library's documented surface against what it
+   * actually defines.
+   */
+  ownNames(): readonly string[] {
+    return [...this.values.keys()];
+  }
+
   // -------------------------------------------------------------------------
   // Writing
   // -------------------------------------------------------------------------
@@ -145,6 +157,7 @@ export function findMethod(object: ObjectValue, name: string): Value | null {
         body: declaration.body,
         closure: cls.scope,
         boundTo: object,
+        ...(cls.fromLibrary === true ? { fromLibrary: true as const } : {}),
       };
     }
   }

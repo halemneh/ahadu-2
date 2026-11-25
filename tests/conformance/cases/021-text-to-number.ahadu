@@ -1,0 +1,14 @@
+# ወደ_ቁጥር accepts exactly what the language writes as a literal (§8.2).
+# Without it, nothing typed at a prompt could be counted or added.
+# expect: 8
+# expect: -3.5
+# expect: 321
+# expect: 0
+# expect: 7
+# expect: ቁጥር
+ጻፍ(ወደ_ቁጥር("7") + 1)
+ጻፍ(ወደ_ቁጥር(" -3.5 "))
+ጻፍ(ወደ_ቁጥር("፫፻፳፩"))
+ጻፍ(ወደ_ቁጥር("-0"))
+ጻፍ(ወደ_ቁጥር(7))
+ጻፍ(አይነት(ወደ_ቁጥር("7")))

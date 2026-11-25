@@ -1,4 +1,4 @@
-# Lists are mutable references; ቅጂ is the opt-out (§4.5).
+# Lists are mutable references; ቅጂ_አድርግ is the opt-out (§4.5).
 # expect: [9፣ 2፣ 3]
 # expect: [9፣ 2፣ 30]
 # expect: [9፣ 2፣ 30፣ 4]
@@ -14,7 +14,7 @@
 ሀ[-1] = 30
 ጻፍ(ሀ)
 
-አዋህድ(ሀ፣ 4)
+ጨምር(ሀ፣ 4)
 ጻፍ(ሀ)
 
 ሰርዝ(ሀ፣ 1)
@@ -24,7 +24,7 @@
 ጻፍ(ለ)
 ጻፍ(ለ == ሀ)
 
-መ = ቅጂ(ሀ)
+መ = ቅጂ_አድርግ(ሀ)
 መ[0] = 7
 ጻፍ(መ)
 ጻፍ(ሀ)

@@ -8,7 +8,10 @@
 
 import { tokenize } from '../lexer/index.js';
 import { parse, printAst } from '../parser/index.js';
-import { Interpreter, render } from '../interpreter/index.js';
+import { render } from '../interpreter/index.js';
+import type { Interpreter } from '../interpreter/index.js';
+// One long-lived interpreter across entries, with the library loaded once.
+import { withLibrary } from '../engine.js';
 import type { Host, RunOptions } from '../interpreter/index.js';
 import { describeToken } from '../lexer/index.js';
 import type { Palette } from './color.js';
@@ -168,7 +171,7 @@ export function runRepl(io: ReplIo, options: ReplOptions = {}): number {
     readLine: (prompt) => io.readLine(prompt ?? '') ?? '',
   };
 
-  let interpreter = new Interpreter(host, options);
+  let interpreter = withLibrary(host, options);
   const buffer: string[] = [];
   /** Set once a line has opened a block: the entry then runs on a blank line. */
   let inBlock = false;
@@ -204,7 +207,7 @@ export function runRepl(io: ReplIo, options: ReplOptions = {}): number {
     if (buffer.length === 0 && line.startsWith(':')) {
       if (
         !meta(line, io, colors, () => {
-          interpreter = new Interpreter(host, options);
+          interpreter = withLibrary(host, options);
         })
       ) {
         return 0;

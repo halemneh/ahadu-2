@@ -142,23 +142,26 @@ predictable.
 | type: boolean | `እውነታ` | `TYPE_BOOL` |
 | type: string | `ጽሁፍ` `ፅሁፍ` | `TYPE_STRING` |
 | type: list | `ስብስብ` | `TYPE_LIST` |
+| for each | `ለእያንዳንዱ` | `FOREACH` |
 
 Keyword matching is **whole-word**: `ከሆነነገር` is one identifier, not `ከሆነ`
 followed by `ነገር`. A keyword is recognized only when the maximal run of word
 characters equals a listed spelling exactly.
 
 Reserved for future use (recognized as keywords, no syntax in 2.0; using one is
-error `AH2010`): `አዲስ`, `ለእያንዳንዱ`, `አቁም`, `ቀጥል`, `ፊደል`.
+error `AH2010`): `አዲስ`, `አቁም`, `ቀጥል`, `ፊደል`.
 
 A reserved word has to be long enough to be worth the naming space it takes.
-`ለ` was the obvious candidate for a future `for`, and is wrong for exactly
-that reason: one of the commonest syllables in Amharic and the most natural
-short variable name there is. `ለእያንዳንዱ` ("for each one") reads better in
-Ahadu's condition-first order anyway — `ቤተሰብ ለእያንዳንዱ ስም፦`.
+`ለ` was the obvious candidate for `for`, and is wrong for exactly that reason:
+one of the commonest syllables in Amharic and the most natural short variable
+name there is. `ለእያንዳንዱ` ("for each one") reads better in Ahadu's
+collection-first order anyway — `ቤተሰብ ለእያንዳንዱ ስም፦` — and it is no longer
+reserved: it is the loop in §7.4.
 
-Built-in function names (`ጻፍ`, `አዋህድ`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
+Built-in function names (`ጻፍ`, `ጨምር`, `ሰርዝ`, `ርዝመት`, `አይነት`, `አንብብ`) are
 **not** keywords. They are ordinary identifiers pre-bound in the global scope
-(§8), and user code MAY shadow them.
+(§8), and user code MAY shadow them — but a call to a shadowed one MUST say
+so (§8.2).
 
 ### 3.3 The possessive prefix `የ`
 
@@ -420,22 +423,22 @@ annotations** (§7.2). There is no static type checker.
   ለ = ሀ
   ለ[0] = 9
   ጻፍ(ሀ)        # [9፣ 2፣ 3] — ሀ and ለ are the same list
-  መ = ቅጂ(ሀ)     # an independent copy (§8)
+  መ = ቅጂ_አድርግ(ሀ)     # an independent copy (§8)
   መ[0] = 1
   ጻፍ(ሀ)        # [9፣ 2፣ 3]
   ```
 
   This is how lists behave in every mainstream language, and sharing is a
-  thing a programmer has to understand rather than be shielded from. `ቅጂ` is
+  thing a programmer has to understand rather than be shielded from. `ቅጂ_አድርግ` is
   how you opt out of it.
 - Two kinds of operation, kept strictly apart so it is always obvious which
   one you are using:
   - **Operators build new lists.** `+` concatenates into a fresh list and
     `x[a:b]` slices into a fresh list; neither touches its operands (§6.2,
     §6.5).
-  - **Built-ins named as commands change the list.** `አዋህድ` ("merge!") and
+  - **Built-ins named as commands change the list.** `ጨምር` ("merge!") and
     `ሰርዝ` ("delete!") modify the list they are given and return `ምንም` (§8).
-- `ቅጂ` is a **shallow** copy: the new list has the same elements, so a nested
+- `ቅጂ_አድርግ` is a **shallow** copy: the new list has the same elements, so a nested
   list is still shared.
 
 ### 4.6 Nothing
@@ -568,7 +571,7 @@ Amharic.
 
 - `ስብስብ + ስብስብ` concatenates. v1-py's `+` appended the right operand as a
   single element, so `[1] + [2]` produced `[1, [2]]` (CHANGES §C15). To append
-  one element, use `አዋህድ(ዝርዝር፣ ዕቃ)`.
+  one element, use `ጨምር(ዝርዝር፣ ዕቃ)`.
 - `/` by zero is error `AH3003` (`በዘሮ ማካፈል አይቻልም`). `%` by zero likewise.
 - `%` follows the sign of the left operand: `-7 % 3` is `-1`.
 - `^` MUST NOT produce a complex or non-finite result: a negative base with a
@@ -629,7 +632,7 @@ Applies to `ጽሁፍ` and `ስብስብ`. Let *n* be the length.
 - Indexing a `ጽሁፍ` yields a `ጽሁፍ` of length 1. There is no distinct character
   value.
 - A slice always produces a new value and never aliases its source, so
-  `መ = ሀ[:]` is the slice spelling of `ቅጂ(ሀ)`.
+  `መ = ሀ[:]` is the slice spelling of `ቅጂ_አድርግ(ሀ)`.
 
 **Index assignment.** `x[i] = v` replaces the element at effective index `i`
 when `x` is a `ስብስብ`:
@@ -637,7 +640,7 @@ when `x` is a `ስብስብ`:
 - The index rules above apply unchanged, negatives included: `ዝ[-1] = 9`
   replaces the last element.
 - An out-of-range index is `AH3008`. Assignment **cannot** extend a list —
-  `ዝ[ርዝመት(ዝ)] = 1` is an error, not an append. Use `አዋህድ` (§8).
+  `ዝ[ርዝመት(ዝ)] = 1` is an error, not an append. Use `ጨምር` (§8).
 - Slice assignment (`x[a:b] = …`) is not in 2.0; it is refused at parse time
   as `AH2009`.
 - `x` must be a `ስብስብ`. A `ጽሁፍ` target is `AH3015` (§4.3); anything else is
@@ -730,7 +733,12 @@ branches may follow, then at most one `አለበለዚያ፦`.
 > `ከሆነ <condition>፦` — English order, keyword first. Every program in the
 > original repository fails to parse under it. See CHANGES §C01.
 
-### 7.4 Loop
+### 7.4 Loops
+
+There are two, and both put the thing being looped over **first**, as §7.3
+does with a condition.
+
+#### While — `<condition> እስከሆነ ድረስ፦`
 
 ```ahadu
 ቆጣሪ = 0
@@ -739,11 +747,43 @@ branches may follow, then at most one `አለበለዚያ፦`.
     ቆጣሪ = ቆጣሪ + 1
 ```
 
-Shape: `<condition> እስከሆነ ድረስ፦` — condition first again. The condition is
-re-evaluated before each iteration and MUST be `እውነታ`.
+The condition is re-evaluated before each iteration and MUST be `እውነታ`.
 
-There is no `for` loop, no `አቁም` (break), and no `ቀጥል` (continue) in 2.0; all
-three names are reserved.
+#### For each — `<collection> ለእያንዳንዱ <name>፦`
+
+```ahadu
+ቤተሰብ = ["አበበ"፣ "ከበደ"፣ "አስቴር"]
+ቤተሰብ ለእያንዳንዱ ስም፦
+    ጻፍ(ስም)
+```
+
+`<collection>` MUST be a `ስብስብ` or a `ጽሁፍ`; anything else is `AH3002`. A
+`ጽሁፍ` yields its code points as one-character strings, which is the same
+breadth `ርዝመት` and `x[i]` already have (§4.3, §8) — a language where you can
+index a string but not walk it would be arbitrary.
+
+`<name>` MUST be an identifier, and it is **defined in the enclosing scope**,
+not in a scope of its own. A block does not introduce a scope anywhere in
+Ahadu (§5.3), so the loop variable survives the loop and holds the last
+element visited, exactly as a `እስከሆነ ድረስ` counter does. Making this one name
+behave differently would be a special case a learner has to be told about.
+
+An empty collection runs the body zero times and leaves `<name>` untouched —
+undefined, if it did not already exist. Reading it afterwards is then the
+ordinary `AH3001`.
+
+**The loop visits the elements the collection had when the loop began.**
+Adding to or removing from the list inside the body does not change what the
+loop visits. This is a deliberate divergence from the obvious
+iterate-by-live-index implementation, and the reason is that the obvious one
+has two failure modes a beginner cannot debug: `ጨምር` in the body never
+terminates, and `ሰርዝ` in the body silently skips the next element. Neither is
+a lesson worth teaching, and both are easy to write by accident while
+filtering a list. The list itself is still mutable and still shared (§4.5) —
+it is only the iteration that is fixed.
+
+There is no `አቁም` (break) and no `ቀጥል` (continue) in 2.0; both names are
+reserved.
 
 ### 7.5 Function declaration
 
@@ -847,8 +887,8 @@ Semantics:
 
 ## 8. Built-in functions
 
-These seven names are pre-bound in the global scope. They are not keywords and
-MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
+These twenty-three names are pre-bound in the global scope, alongside the standard
+library's (§8.5). They are not keywords and MAY be shadowed by user code. v1-py declared `ጻፍ`, `ጨምር`, and `ሰርዝ` as
 keywords but implemented only `ጻፍ`; calling either other one crashed the
 interpreter with a Python exception (CHANGES §C13).
 
@@ -856,19 +896,42 @@ interpreter with a Python exception (CHANGES §C13).
 | --- | --- | --- |
 | `ጻፍ` | `ጻፍ(…)` any arity | prints each argument separated by one space, then a newline; returns `ምንም` |
 | `ርዝመት` | `ርዝመት(ጽሁፍ \| ስብስብ)` | `ቁጥር` length in code points / elements |
-| `አዋህድ` | `አዋህድ(ስብስብ፣ ዕቃ)` | **appends `ዕቃ` to the list in place**; returns `ምንም` |
+| `ጨምር` | `ጨምር(ስብስብ፣ ዕቃ)` | **appends `ዕቃ` to the list in place**; returns `ምንም` |
 | `ሰርዝ` | `ሰርዝ(ስብስብ፣ ኢንዴክስ)` | **removes that index from the list in place**; returns `ምንም`; index rules as §6.5 |
-| `ቅጂ` | `ቅጂ(ስብስብ)` | a new `ስብስብ` with the same elements — a shallow copy |
+| `ቅጂ_አድርግ` | `ቅጂ_አድርግ(ስብስብ)` | a new `ስብስብ` with the same elements — a shallow copy |
 | `አይነት` | `አይነት(any)` | `ጽሁፍ` naming the type (§4.1) |
 | `አንብብ` | `አንብብ()` or `አንብብ(ጽሁፍ)` | reads one line from standard input as `ጽሁፍ`; the optional argument is printed as a prompt first |
+| `ወደ_ቁጥር` | `ወደ_ቁጥር(ጽሁፍ \| ቁጥር)` | the number that text spells; `AH3019` when it spells none (§8.3) |
+| `ወደ_ጽሁፍ` | `ወደ_ጽሁፍ(any)` | `ጽሁፍ` — exactly what `ጻፍ` would have printed (§8.1) |
+| `ቁጥር_ነው` | `ቁጥር_ነው(any)` | `እውነታ` — whether `ወደ_ቁጥር` would succeed. Never fails |
+| `ዘፈቀደ_ቁጥር` | `ዘፈቀደ_ቁጥር(ቁጥር፣ ቁጥር)` | a `ቁጥር` drawn from the two bounds **inclusive**; `AH3020` on bounds it cannot use (§8.4) |
+| `ዘር` | `ዘር(ቁጥር)` | **restarts `ዘፈቀደ_ቁጥር` from that seed**; returns `ምንም` (§8.4) |
+| `ወለል_ዋጋ` | `ወለል_ዋጋ(ቁጥር)` | the whole number at or below it (§8.7) |
+| `ጣሪያ_ዋጋ` | `ጣሪያ_ዋጋ(ቁጥር)` | the whole number at or above it (§8.7) |
+| `ቅርብ_ሙሉ_ቁጥር` | `ቅርብ_ሙሉ_ቁጥር(ቁጥር)` | the nearest whole number; a half goes up (§8.7) |
+| `ፍጹም_ዋጋ` | `ፍጹም_ዋጋ(ቁጥር)` | its distance from zero |
+| `ከፋፍል` | `ከፋፍል(ጽሁፍ)` or `ከፋፍል(ጽሁፍ፣ ጽሁፍ)` | `ስብስብ` of pieces (§8.7) |
+| `ጽሁፍ_አድርግ` | `ጽሁፍ_አድርግ(ስብስብ)` or `ጽሁፍ_አድርግ(ስብስብ፣ ጽሁፍ)` | `ጽሁፍ` — the elements joined (§8.7) |
+| `ከርክም` | `ከርክም(ጽሁፍ)` | the text with surrounding whitespace removed |
+| `ወደ_ግዕዝ` | `ወደ_ግዕዝ(ቁጥር)` | `ጽሁፍ` in Ge'ez numerals; `AH3021` when it has no spelling (§8.7) |
+| `ዛሬ` | `ዛሬ()` | `ስብስብ` — today in the Ethiopian calendar as `[ዓመት፣ ወር፣ ቀን]` (§8.8) |
+| `ከግሪጎሪ` | `ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)` | `ስብስብ` — that Gregorian date in the Ethiopian calendar (§8.8) |
+| `ወር_መጠሪያ` | `ወር_መጠሪያ(ቁጥር)` | `ጽሁፍ` — the name of month 1–13; `AH3022` otherwise |
 
-`ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
+`ርዝመት`, `ቅጂ_አድርግ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
 example hardcodes `< 5`.
 
-`አዋህድ` and `ሰርዝ` are imperatives in Amharic — "merge!", "delete!" — so they
+`ወደ_ቁጥር`, `ወደ_ጽሁፍ`, `ቁጥር_ነው`, `ዘፈቀደ_ቁጥር` and `ዘር` were added after the website
+shipped, for a reason worth recording: `አንብብ` returns `ጽሁፍ` and `+` refuses
+to mix a `ጽሁፍ` with a `ቁጥር` (§6.2), so there was no way to add two numbers a
+learner had typed. A calculator was not a missing example — it was
+unwritable. `ወደ_ቁጥር` is named for its direction because `ቁጥር` and `ጽሁፍ` are
+reserved type keywords (§3.3) and cannot be reused as function names.
+
+`ጨምር` and `ሰርዝ` are imperatives in Amharic — "merge!", "delete!" — so they
 change the list rather than handing back a new one, and returning `ምንም` makes
-that unmistakable: `ዝ = አዋህድ(ዝ፣ 4)` leaves `ዝ` holding `ምንም`, which fails
+that unmistakable: `ዝ = ጨምር(ዝ፣ 4)` leaves `ዝ` holding `ምንም`, which fails
 loudly instead of looking like it worked. The operators `+` and `x[a:b]` are
 the non-mutating half of the pair (§4.5).
 
@@ -889,6 +952,360 @@ the non-mutating half of the pair (§4.5).
 
 Nesting is the only context where a string is quoted, so that `ጻፍ(["ሀ"])`
 shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
+
+`ወደ_ጽሁፍ` returns exactly this rendering, so there is one answer to "how does
+this value look" rather than two that could drift apart.
+
+### 8.2 Shadowing one, and being told
+
+Built-ins are ordinary bindings, so `ርዝመት = 5` is legal and `ርዝመት("ሀ")` then
+fails. When the callee was **written as a name that was pre-bound as a
+built-in**, `AH3013` MUST name it and say what happened, rather than only
+reporting that the value is not callable:
+
+```
+"ርዝመት" የአሃዱ ተግባር ነበር፤ ዋጋ ስለሰጡት አሁን ቁጥር ነው — ሊጠራ አይችልም።
+```
+
+This is required, not a nicety, because of how the mistake presents. Four of
+the built-ins are nouns — `ርዝመት`, `ቅጂ_አድርግ`, `አይነት`, `ዘር` — which are precisely
+the words someone reaches for as a variable name, and the consequence of
+assigning to one surfaces at the *next call*, on a different line, as a
+complaint about a type. "ቁጥር ሊጠራ አይችልም።" is true and tells a learner
+nothing.
+
+The rule is about the **spelling at the call site**, not the value: a host
+calling a function value it looked up has no name to report, and gets the
+plain message.
+
+A consequence worth stating for anyone adding a built-in: **prefer an
+imperative verb.** `ቀለም` ("colour") invites `ቀለም = "ቀይ"` in the very lesson
+that teaches it; `ቀባ` ("paint it!") does not. A name for a *property* rather
+than an action is the exception, and a noun is right there: `ርዝመት` and
+`አይነት` answer "what is its length" and "what is its type", not "do
+something". The error above is what makes the remaining nouns survivable.
+
+#### Multi-word names take an underscore
+
+`ወደ_ቁጥር`, `ቅርብ_ሙሉ_ቁጥር`, `ጽሁፍ_አድርግ`.
+
+Ge'ez is **unicase**, so the usual way of showing a word boundary inside an
+identifier is simply unavailable — there is no `toNumber` to contrast with
+`tonumber`. Run together, a three-word name is one unbroken run of syllables,
+and the longer and more descriptive a name is the worse that gets. The
+underscore is already an identifier character (§3.1), so this needs nothing
+from the language.
+
+The exception is a name that is one prepositional phrase rather than several
+words: `ከግሪጎሪ` ("from Gregorian") reads as a unit, the way `ከፍተኛው` does, and
+splitting it would separate a preposition from the word it governs.
+
+### 8.3 What text counts as a number
+
+`ወደ_ቁጥር` accepts exactly what the language itself accepts as a number
+literal, optionally signed, with surrounding whitespace ignored:
+
+- a run of ASCII digits, with at most one `.` that has digits on both sides
+  (§3.4) — so `5.` and `.5` are **not** numbers, the same rule the lexer
+  applies;
+- or a well-formed run of Ge'ez numerals (§3.4.1) — `፫፻፳፩` is 321.
+
+Nothing else. Not `1e3`, not `0x10`, not digits from another script. A leading
+`-` is accepted; a leading `+` is not, because the language has no unary plus.
+`ወደ_ቁጥር` given a `ቁጥር` returns it unchanged, so a program need not know
+whether a value has already been converted.
+
+One rule, two readers: the same function decides what a literal in a file
+means and what text from `አንብብ` means. A language that read `፫፻፳፩` from a file
+and refused the same digits typed at a prompt would be lying about its own
+numerals.
+
+Whitespace is ignored because someone typing at a prompt adds a space without
+meaning anything by it. The Ethiopic word space `፡` is punctuation and not
+whitespace, so `"7፡"` is `AH3019`.
+
+Failure is loud. `ወደ_ቁጥር` on text that is not a number raises `AH3019`; it does
+not return `ምንም`. A calculator that quietly computed with `ምንም` would print an
+answer and the learner would believe it. A program that wants to check first
+calls `ቁጥር_ነው`, which answers `እውነት` or `ሃሰት` for **any** value and never
+raises — a guard that can itself fail is no guard.
+
+### 8.4 Randomness is seeded
+
+`ዘፈቀደ_ቁጥር(ሀ፣ ለ)` draws an integer from `ሀ` to `ለ` with **both ends included**, so
+`ዘፈቀደ_ቁጥር(1፣ 6)` is a die. An exclusive upper bound is the right default for a
+library and the wrong one for a first program: everyone who writes
+`ዘፈቀደ_ቁጥር(1፣ 6)` means six faces, and an exclusive bound would hand them five and
+no error. Both bounds MUST be integers and `ሀ` MUST NOT exceed `ለ`; otherwise
+`AH3020`.
+
+The sequence is **fully determined by a seed**. A program sets it with `ዘር`,
+which is an imperative like `ጨምር` and `ሰርዝ` and returns `ምንም`. The same seed
+MUST produce the same sequence in a given implementation; implementations
+SHOULD document their generator, and this one documents mulberry32 in
+`src/interpreter/README.md`.
+
+Where the first seed comes from is **the host's decision**, and the default is
+fixed rather than clock-based. That direction is deliberate and it is not a
+detail: the website runs every snippet on it through the real interpreter at
+build time and fails the build when the output is not what the page claims
+(SITE.md §2). A clock-seeded default would mean a lesson could not show what
+`ዘፈቀደ_ቁጥር` prints, and the one mechanism that keeps the teaching material honest
+would have a hole in it exactly where a learner is most likely to be confused.
+
+So a host that says nothing gets a reproducible program; a host that wants
+dice asks for them. `ahadu` seeds from the clock and takes `--seed=<n>` to pin
+a run (TOOLING.md §1); the playground seeds from the clock; the conformance
+suite and the site's snippet checker take the fixed default.
+
+This is also why conformance cases for `ዘፈቀደ_ቁጥር` assert **properties** — that a
+draw is within its bounds, and that the same seed repeats — rather than
+particular numbers. The numbers are this implementation's; the properties are
+the language's.
+
+### 8.5 The standard library
+
+Beyond the built-ins, an implementation MUST pre-bind a **standard library**
+in the global scope. Its functions are listed in §8.6.
+
+The library is **written in Ahadu**, not in the host language, and runs as its
+own program through the same interpreter before the program being run. That is
+not an implementation detail; it is the point. A learner who wonders what
+`ደምር` does can read it, in Amharic, and find a loop they already understand.
+A site that teaches the language can publish the library's source as a page
+and it is the same kind of text as every lesson. Documentation that is
+*running code the reader can read* cannot drift from what the library does —
+which is the failure this whole project was started to avoid (CHANGES §C01).
+
+Three consequences are normative, because each one is a promise to the learner
+that an implementation could easily break:
+
+- **The learner's line numbers are their own.** A diagnostic from their
+  program MUST carry the line it is on in *their* source, with no offset for
+  the library. Running the prelude as a separate program achieves this for
+  free; prepending it to the source does not, and MUST NOT be done.
+- **The learner's step budget is their own.** Loading the library MUST NOT
+  consume any part of a step budget the host set for the program (§9.2,
+  `AH3018`). Resetting the counter is not enough — the prelude's own
+  statements must not be charged against the limit at all, or a small budget
+  is exhausted before the program runs a line.
+- **Loading the library MUST NOT reach the statement hook** that `ahadu trace`
+  uses (TOOLING.md §1.1). The hook reports a line number, and the renderer
+  looks that number up in the *learner's* source.
+- **A failure inside a library function is reported at the line that called
+  it**, with the library function named. A line number inside the library
+  belongs to a file the learner cannot open: pointing at one frames a line of
+  their program that has nothing to do with the error, or — if their program
+  is shorter than the prelude — a blank line with carets under nothing. The
+  library frame SHOULD remain in the traceback, so nothing is hidden from
+  someone who wants it. This applies to a library **class's methods** as much
+  as to its functions: an implementation that builds a method value from its
+  declaration on demand must carry the provenance on the class, or half the
+  library is exempt from the rule.
+
+Library names are pre-bound exactly as built-ins are: user code MAY shadow
+them, and a call to a shadowed one MUST name it (§8.2). Whether a pre-bound
+name is implemented in Ahadu or in the host language is not something a
+learner can see, and not something they should have to care about.
+
+#### What stays a built-in
+
+Not everything belongs in the library. A function MUST be a host built-in
+rather than Ahadu source when:
+
+- it needs something only the host has — input, time, randomness;
+- writing it in Ahadu would **leak an artifact of binary floating point**.
+  `ሙሉ` is the example: the obvious Ahadu definition is `ቁ - (ቁ % 1)`, and
+  `7.6 % 1` is `0.5999999999999996`. A learner reading that in the library
+  would be reading a lie about arithmetic, and one who stepped through it
+  would be owed an explanation of IEEE 754 in lesson four;
+- it must **fail usefully on bad input**. Ahadu has no way to raise an error
+  of its own (§9.3 — there is no exception handling, and nothing like
+  `throw`), so an Ahadu library function given the wrong type can only fail
+  wherever its own arithmetic happens to break. A built-in can check its
+  arguments and report precisely, the way `ርዝመት` does.
+
+That last point is a real limit on how much of a standard library can honestly
+be written in Ahadu, and it is worth stating plainly rather than discovering
+later. It is also the strongest argument the language has for eventually
+growing a way to raise an error.
+
+#### There is no import
+
+Every library function is in scope in every program, with no declaration. The
+language has no module system and no `import`, and that is a deliberate
+choice, not a gap waiting to be filled: a namespace is already expressible
+(an object's attributes are reached with `.`, §7.6), so an import statement
+would only control *visibility* — a question better answered when there is a
+second library that not every program wants.
+
+### 8.6 Library functions
+
+Names are **imperative verbs**, for the reason §8.2 gives: a pre-bound global
+named with a noun invites a learner to assign to it in the very lesson that
+teaches it.
+
+| Name | Signature | Result |
+| --- | --- | --- |
+| `ደምር` | `ደምር(ስብስብ)` | `ቁጥር` — the sum of the elements; `0` for an empty list |
+| `ቁጠር` | `ቁጠር(ስብስብ፣ ዕቃ)` | `ቁጥር` — how many elements equal `ዕቃ`, by §6.3 equality |
+| `ፈልግ` | `ፈልግ(ስብስብ፣ ዕቃ)` | the first position holding `ዕቃ`, or **`ምንም`** when absent |
+| `ከፍተኛው` | `ከፍተኛው(ስብስብ)` | the largest element, by `>` |
+| `ዝቅተኛው` | `ዝቅተኛው(ስብስብ)` | the smallest element, by `<` |
+| `ደርድር` | `ደርድር(ስብስብ)` | **sorts in place**; returns `ምንም` |
+| `ገልብጥ` | `ገልብጥ(ስብስብ)` | **reverses in place**; returns `ምንም` |
+| `መዝገብ` | `መዝገብ()` | a new key–value map — a `ክላስ`, not a function (below) |
+
+`ፈልግ` answers `ምንም` and not `-1`, because `-1` is a perfectly good index in
+Ahadu — it is the last element (§6.5) — so using it as "absent" would make
+`ዝ[ፈልግ(ዝ፣ ዘ)]` quietly return the wrong element instead of failing.
+
+`ደርድር` and `ገልብጥ` change the list they are given and return `ምንም`, because
+they are imperatives and §4.5 says that is what an imperative does here. A
+sorted copy is `ተደርድሯል = ቅጂ_አድርግ(ዝ)` then `ደርድር(ተደርድሯል)`, which is two lines and
+teaches the copy.
+
+`ከፍተኛው` and `ዝቅተኛው` carry the definite `-ው` for a reason worth recording:
+`ከፍተኛ` and `ዝቅተኛ` without it are what a learner writes as a variable — the
+number-guessing example in `examples/` uses both — and §8.2's rule is that a
+pre-bound name should not be the word someone reaches for. The definite form
+also reads as what the function returns: "the highest one".
+
+#### `መዝገብ`, the map
+
+Ahadu has no key–value type (§4.1), and adding one would mean literal syntax,
+key-equality rules, printing rules and a type keyword. `መዝገብ` is a `ክላስ` in
+the library instead, holding two lists:
+
+| Method | Result |
+| --- | --- |
+| `አስገባ(ቁልፍ፣ ዋጋ)` | stores it, replacing any existing value for that key; `ምንም` |
+| `አግኝ(ቁልፍ)` | the value, or `ምንም` when the key is absent |
+| `አለው(ቁልፍ)` | `እውነታ` — whether the key is present |
+| `አውጣ(ቁልፍ)` | removes the pair if present; `ምንም` |
+| `ብዛት()` | `ቁጥር` — how many pairs |
+| `ቁልፎቹ()` | `ስብስብ` — a **copy** of the keys, in insertion order |
+
+Lookup is a linear scan, so `መዝገብ` is for the tens of entries a teaching
+program has, not thousands.
+
+Method names here are nouns (`ብዛት`, `ቁልፎቹ`) and that is fine: §8.2's rule is
+about **global** names, and a method is reached through an object, so no
+variable can shadow it.
+
+This table is checked against the library's own source: a function the library
+defines and this table omits, or the reverse, fails the test suite.
+
+---
+
+### 8.7 Rounding, splitting, joining, and Ge'ez numerals
+
+These four are host built-ins and not library source, each for a reason §8.5
+names.
+
+**`ወለል_ዋጋ`, `ጣሪያ_ዋጋ`, `ቅርብ_ሙሉ_ቁጥር`** exist because **there is no integer division**:
+`7 / 2` is `3.5`, and `//` is not an operator. `ወለል_ዋጋ(7 / 2)` is how a program
+divides and keeps a whole number.
+
+They cannot be written in Ahadu. The obvious definition of a floor is
+`ቁ - (ቁ % 1)`, and `7.6 % 1` evaluates to `0.5999999999999996` — so a learner
+reading that in the library would be reading a lie about arithmetic, and one
+who stepped through it would be owed an explanation of binary floating point
+in lesson four.
+
+`ቅርብ_ሙሉ_ቁጥር` rounds a half **up**, toward positive infinity: `ቅርብ_ሙሉ_ቁጥር(2.5)` is `3` and
+`ቅርብ_ሙሉ_ቁጥር(-2.5)` is `-2`. Stated here because "round half up" and "round half away
+from zero" differ only on negatives, and a program that disagrees with its
+documentation about that is a bad day.
+
+**`ከፋፍል`** has two forms, and the difference is deliberate:
+
+- `ከፋፍል(ጽሁፍ)` splits on **runs of whitespace and drops empty pieces**, which
+  is what reading words off a line of input wants. Leading and trailing spaces
+  then cost nothing, exactly as they cost nothing for `ወደ_ቁጥር` (§8.3), because
+  someone typing at a prompt adds a space without meaning anything by it.
+- `ከፋፍል(ጽሁፍ፣ መለያ)` splits on that exact separator and **keeps** empty
+  pieces, so `ከፋፍል("ሀ,,ለ"፣ ",")` has three elements. A program that asked for
+  a specific separator is counting fields, and a missing field is information.
+- An empty separator gives the code points, matching how `ርዝመት` counts and
+  how `ለእያንዳንዱ` walks a `ጽሁፍ` (§4.3).
+
+**`ጽሁፍ_አድርግ`** renders each element as `ጻፍ` would print it (§8.1), so a list of
+numbers joins with no conversion step and there is one rendering to learn. Its
+default separator is a space, for the same reason: that is what `ጻፍ` puts
+between its arguments, and it makes `ጽሁፍ_አድርግ(ከፋፍል(ዐ))` give back what it was
+given.
+
+**`ወደ_ግዕዝ`** is the other direction of §3.4.1. The language has read Ge'ez
+numerals since 2.0; this lets it write them, so a program can show a number in
+Amharic's own numerals instead of only accepting them.
+
+It spells whole numbers from 1 to 99,999,999 — the range §3.4.1's grammar
+reaches, with at most one `፼` and one `፻` per part. Everything else is
+`AH3021`, and **zero is the interesting case**: the system is additive, built
+from symbols that each carry a value, with nothing standing for none. Zero
+having no Ge'ez numeral is a fact about the numerals, worth learning, so the
+message says it rather than reporting a range:
+
+```
+ዜሮ በግዕዝ ቁጥር አይጻፍም፤ የግዕዝ ቁጥሮች ከ፩ ይጀምራሉ።
+```
+
+A leading 1 before a separator is left out, because §3.4.1 reads an empty
+group before a separator as 1: a hundred is `፻`, not `፩፻`, and ten thousand is
+`፼`. `ወደ_ቁጥር(ወደ_ግዕዝ(ቁ))` MUST give back `ቁ` for every spellable `ቁ`.
+
+---
+
+### 8.8 The Ethiopian calendar
+
+Thirteen months: twelve of thirty days, then **ጳጉሜ** of five, or six when
+`ዓመት % 4 == 3`. The year begins on **መስከረም 1**, which is 11 September in the
+Gregorian calendar — or 12 September when the February that follows has 29
+days. An Ethiopian year runs seven or eight behind the Gregorian one,
+depending on which side of መስከረም 1 a date falls.
+
+| | |
+| --- | --- |
+| 1 `መስከረም` | 8 `ሚያዝያ` |
+| 2 `ጥቅምት` | 9 `ግንቦት` |
+| 3 `ኅዳር` | 10 `ሰኔ` |
+| 4 `ታኅሣሥ` | 11 `ሐምሌ` |
+| 5 `ጥር` | 12 `ነሐሴ` |
+| 6 `የካቲት` | 13 `ጳጉሜ` |
+| 7 `መጋቢት` | |
+
+**A date is a three-element `ስብስብ`**, `[ዓመት፣ ወር፣ ቀን]`, and not a new value
+type. Nothing in §4.1 changes, and indexing, `ለእያንዳንዱ` and `ጻፍ` all already
+work on it. A program reads the parts by position, which is one more reason
+`ወር_መጠሪያ` exists:
+
+```
+ቀኑ = ዛሬ()
+ጻፍ(ወር_መጠሪያ(ቀኑ[1]) + " " + ወደ_ግዕዝ(ቀኑ[2]) + " ቀን " + ወደ_ግዕዝ(ቀኑ[0]))
+```
+
+`ዛሬ` reads the instant in **UTC**, not in the host's local time zone. A local
+reading would make the same program print different dates on two machines, and
+the website runs every snippet at build time and checks its output (SITE.md
+§2) — so a date that depended on where the build ran could not be verified at
+all.
+
+For the same reason the instant is **the host's to supply, and fixed by
+default**, exactly as the random seed is (§8.4). A host that says nothing gets
+a reproducible program; `ahadu` and the playground pass the real clock. This
+does mean a page cannot both call `ዛሬ` and state its output — which is correct,
+because such a page would be wrong by tomorrow. `ከግሪጎሪ` is the one to teach
+with, since fixed input gives fixed output.
+
+`ከግሪጎሪ` validates by converting and converting back, rather than by checking
+month lengths. A formula that quietly accepts 31 February returns *a* date,
+just not the one it was asked for, and silently returning the wrong date is
+worse than refusing (`AH3022`).
+
+Both directions go through the Julian Day Number, a plain count of days that
+neither calendar owns, so each calendar is described once by itself and there
+is no correspondence table to get wrong.
 
 ---
 
@@ -967,11 +1384,15 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3010` | wrong argument count |
 | `AH3011` | unknown parent class |
 | `AH3012` | assignment to an undeclared attribute |
-| `AH3013` | call of a non-callable value |
+| `AH3013` | call of a non-callable value — names a shadowed built-in (§8.2) |
 | `AH3014` | member access on a non-object |
 | `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
 | `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` |
 | `AH3018` | step limit exceeded — `ፕሮግራሙ ከመጠን በላይ ረዘመ።` |
+| `AH3019` | `ወደ_ቁጥር` on text that is not a number — `ጽሁፉ ቁጥር አይደለም።` |
+| `AH3020` | `ዘፈቀደ_ቁጥር` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
+| `AH3021` | `ወደ_ግዕዝ` on a number with no Ge'ez spelling — `ይህ ቁጥር በግዕዝ አይጻፍም።` |
+| `AH3022` | a date or month number that does not exist — `ቀኑ አይሰራም።` |
 
 ### 9.3 Recovery
 

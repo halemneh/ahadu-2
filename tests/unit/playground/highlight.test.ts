@@ -109,6 +109,115 @@ describe('colours come from the lexer', () => {
   });
 });
 
+describe('Ahadu’s Ethiopic marks are told apart from each other', () => {
+  it('paints ፦ as the block opener it is', () => {
+    expect(paint('ዕድሜ > 18 ከሆነ፦')).toContain('class="tk-then"');
+  });
+
+  it('paints ። as the end of a statement', () => {
+    expect(paint('ሀ = 1።')).toContain('class="tk-stop"');
+  });
+
+  it('paints ፣ as a separator', () => {
+    expect(paint('ጻፍ("ሀ"፣ "ለ")')).toContain('class="tk-sep"');
+  });
+
+  it('leaves the ASCII , the same colour as the Ethiopic ፣', () => {
+    // They are one token type; a reader who types either should see no
+    // difference, because the language sees none.
+    expect(paint('ጻፍ("ሀ", "ለ")')).toContain('class="tk-sep"');
+  });
+
+  it('keeps a slice’s : quiet, since it is not structure', () => {
+    expect(paint('ዝ[1:2]')).toContain('class="tk-punct"');
+  });
+});
+
+describe('brackets are coloured by how deeply they nest', () => {
+  it('gives the outermost pair the first depth', () => {
+    const html = paint('ጻፍ("ሀ")');
+    expect(html).toContain('tk-br0');
+    expect(html).not.toContain('tk-br1');
+  });
+
+  it('steps the colour inwards and back out again', () => {
+    const html = paint('ጻፍ(ድምር(ሀ፣ ለ))');
+    expect(html).toContain('tk-br0');
+    expect(html).toContain('tk-br1');
+    // The two closers come back out through the same two depths.
+    expect(html.match(/tk-br0/g)).toHaveLength(2);
+    expect(html.match(/tk-br1/g)).toHaveLength(2);
+  });
+
+  it('counts ( and [ on one depth, as the lexer does', () => {
+    // A ( inside a [ is one level deeper, not a second first level.
+    const html = paint('ዝ[ድምር(1፣ 2)]');
+    expect(html).toContain('tk-br0');
+    expect(html).toContain('tk-br1');
+  });
+
+  it('cycles after three levels rather than running out', () => {
+    const html = paint('ሀ((((1))))');
+    expect(html).toContain('tk-br0');
+    expect(html).toContain('tk-br1');
+    expect(html).toContain('tk-br2');
+    // The fourth level is back to the first colour: two openers, two closers.
+    expect(html.match(/tk-br0/g)).toHaveLength(4);
+  });
+
+  it('does not throw on a stray closer, which a fragment may have', () => {
+    expect(() => paint('ሀ)')).not.toThrow();
+    expect(paint('ሀ)')).toContain('tk-br0');
+  });
+});
+
+describe('the bracket beside the caret lights up its partner', () => {
+  // `caret` is a UTF-16 offset, exactly what textarea.selectionStart gives.
+  const source = 'ጻፍ("ሀ")';
+
+  it('marks both brackets when the caret is just before the opener', () => {
+    const html = paint(source, { caret: source.indexOf('(') });
+    expect(html.match(/tk-match/g)).toHaveLength(2);
+  });
+
+  it('marks them when the caret is just after the closer', () => {
+    const html = paint(source, { caret: source.length });
+    expect(html.match(/tk-match/g)).toHaveLength(2);
+  });
+
+  it('marks nothing when the caret is not beside a bracket', () => {
+    expect(paint(source, { caret: 1 })).not.toContain('tk-match');
+  });
+
+  it('marks nothing when there is no caret at all', () => {
+    expect(paint(source)).not.toContain('tk-match');
+  });
+
+  it('matches the inner pair rather than the outer one', () => {
+    const nested = 'ጻፍ(ድምር(1))';
+    const html = paint(nested, { caret: nested.lastIndexOf('(') });
+    expect(html.match(/tk-match/g)).toHaveLength(2);
+    expect(html).toContain('tk-br1 tk-match');
+  });
+
+  it('keeps the depth colour under the match, which is a wash not a repaint', () => {
+    const html = paint(source, { caret: source.indexOf('(') });
+    expect(html).toContain('tk-br0 tk-match');
+  });
+
+  it('leaves an unmatched bracket alone', () => {
+    expect(paint('ሀ(', { caret: 2 })).not.toContain('tk-match');
+  });
+
+  it('counts the caret in UTF-16 units, as the DOM does', () => {
+    // Ge'ez is one UTF-16 unit per syllable, so a mix-up only shows with a
+    // character outside the BMP — here an emoji inside a string.
+    const withPair = 'ጻፍ("😀")';
+    const html = paint(withPair, { caret: withPair.length });
+    expect(html.match(/tk-match/g)).toHaveLength(2);
+  });
+});
+
 describe('comments, which produce no tokens at all', () => {
   it('colours a whole-line comment', () => {
     expect(paint('# አስተያየት')).toContain('class="tk-comment"');
