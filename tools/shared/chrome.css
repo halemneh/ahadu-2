@@ -19,6 +19,24 @@
   --bar-h: 3.4rem;
 }
 
+/*
+ * The base type, here rather than in the site's own stylesheet.
+ *
+ * It used to live in `site.css`, which the playground does not load — so the
+ * playground inherited the browser's default `line-height: normal` (~1.2)
+ * while every other page had 1.7. The shared header then rendered at two
+ * different sizes: measured, the brand was 31.3px on a lesson page and 25.6px
+ * on the playground, and the nav links 34.6px against 32px. The bar's total
+ * height happened to match because the chips pin it, so the symptom was not a
+ * different header but a header whose contents sat wrong.
+ *
+ * A component shared by two pages cannot inherit its type from one of them.
+ */
+body {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
 .sitebar {
   position: sticky;
   top: 0;
@@ -27,7 +45,8 @@
   align-items: center;
   gap: 1.2rem;
   padding: 0.65rem 1.4rem;
-  background: var(--surface-2);
+  background: var(--bar);
+  color: var(--bar-ink);
   font-family: var(--ui);
 }
 
@@ -37,7 +56,7 @@
   align-items: baseline;
   min-height: 1.6rem;
   gap: 0.35rem;
-  color: var(--ink);
+  color: var(--bar-ink);
   text-decoration: none;
   font-family: var(--code);
 }
@@ -47,7 +66,7 @@
 }
 
 .sitebar .version {
-  color: var(--muted);
+  color: var(--bar-muted);
   font-size: 0.78rem;
 }
 
@@ -68,19 +87,19 @@
   min-height: 2rem;
   padding: 0.3rem 0.7rem;
   border-radius: 6px;
-  color: var(--muted);
+  color: var(--bar-muted);
   text-decoration: none;
   font-size: 0.92rem;
 }
 
 .sitebar .nav a:hover {
   background: var(--layer);
-  color: var(--ink);
+  color: var(--bar-ink);
 }
 
 .sitebar .nav a[aria-current='page'] {
   background: var(--layer-strong);
-  color: var(--ink);
+  color: var(--bar-ink);
 }
 
 .sitebar .spacer {
@@ -97,7 +116,7 @@
   border: 0;
   border-radius: 6px;
   background: var(--layer-strong);
-  color: var(--ink);
+  color: var(--bar-ink);
   font: inherit;
   font-size: 0.85rem;
   line-height: 1;
@@ -168,7 +187,10 @@
     flex-wrap: nowrap;
     gap: 0.15rem;
     padding: 0.7rem;
-    background: var(--surface-3);
+    /* The drawer is the header, moved: it carries the chrome's own teal, so
+       the nav links keep the colour they were given for the bar. On a page
+       background they would be near-white on Platinum — 1.13:1. */
+    background: var(--bar);
     box-shadow: var(--shadow-lg);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -242,5 +264,84 @@
 @media (prefers-reduced-motion: reduce) {
   .js .sitebar .nav {
     transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The footer
+ *
+ * In this file and not in the site's own stylesheet, because the playground
+ * needs it too. It lived in `site.css` and so the playground had no footer at
+ * all — the same bug as the syntax colours, which the site emitted spans for
+ * and never styled. A component shared by two pages belongs in the sheet both
+ * of them load.
+ * ------------------------------------------------------------------------ */
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.2rem 1.4rem;
+  background: var(--bar);
+  color: var(--bar-muted);
+  font-family: var(--ui);
+  font-size: 0.86rem;
+}
+
+.foot a {
+  color: var(--bar-muted);
+}
+
+/*
+ * The footer's actions: report a problem, contact, the source.
+ *
+ * Four things of the same weight, so they look like one group rather than a
+ * sentence with a link in it. The contact button is a button because it opens
+ * a dialog; it is painted like its neighbours so that difference does not
+ * announce itself — which is also why `border: 0` is load-bearing here and not
+ * tidying. Without it a native button carries its own 2px border, and the
+ * contact action was measurably 4px taller than the links beside it.
+ */
+.foot-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.foot-act {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.3rem 0.7rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--layer);
+  color: var(--bar-muted);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.foot-act:hover {
+  background: var(--layer-strong);
+  color: var(--bar-ink);
+}
+
+.foot-act[hidden] {
+  display: none;
+}
+
+/* The same two breakpoints the rest of the chrome uses, so the footer changes
+   shape at the same width on the playground as on every other page. */
+@media (max-width: 760px) {
+  .foot {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .foot {
+    padding: 1.2rem 1rem;
   }
 }

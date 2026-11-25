@@ -128,6 +128,29 @@
       </section>
     </main>
 
+    <!--
+      The footer, the same component every other page carries (shared/chrome.css).
+      The playground had none at all, because its styles lived in the site's own
+      stylesheet, which this page does not load.
+
+      The links resolve per language at runtime, like the header's: this page has
+      one URL and does not know which language it is being read in until the
+      script runs.
+
+      The site's footer also has a "contact" button, which opens a dialog. That
+      is not here: the dialog is a component of the site's own client, and
+      bringing it over is a bigger job than making the footer match. Report a
+      problem goes to the same place.
+    -->
+    <footer class="foot">
+      <span data-i18n="footer"></span>
+      <nav class="foot-acts" data-i18n-label="footerActions">
+        <a class="foot-act" id="report" href="https://github.com/halemneh/ahadu-2/issues/new" data-i18n="reportProblem"></a>
+        <a class="foot-act" data-section="privacy" data-i18n="privacyLink"></a>
+        <a class="foot-act" href="https://github.com/halemneh/ahadu-2">GitHub</a>
+      </nav>
+    </footer>
+
     <!-- Explains the error the pointer is over; positioned from script. -->
     <div id="tip" class="tip" role="status" hidden></div>
 

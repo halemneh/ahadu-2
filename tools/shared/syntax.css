@@ -54,8 +54,21 @@
   text-underline-offset: 3px;
 }
 
+/*
+ * Identifiers get a colour of their own, and that is a departure worth
+ * explaining. Most themes leave them as body text because in most languages
+ * they are the commonest token and colouring them is noise. In Ahadu they are
+ * the commonest token *and* they are Amharic words the reader chose — so
+ * leaving them as plain ink meant nearly every snippet on the site read as
+ * undifferentiated prose with a few coloured marks in it.
+ *
+ * A low-saturation slate, not another bright hue: it has to look like "a name
+ * you wrote" beside the keywords, not compete with them. It is also the one
+ * word class that is **not** bold, which is what keeps it apart from the three
+ * that are, for a reader who cannot see the hue at all.
+ */
 .tk-id {
-  color: var(--ink);
+  color: var(--id);
 }
 
 /* ---- shapes nothing else on the page uses ---- */

@@ -59,13 +59,31 @@
 :root,
 :root[data-theme='dark'] {
   /* One scale of solid shades: the page's regions are told apart by these. */
-  --bg: #0a0f0f;
-  --surface-1: #111818;
-  --surface-2: #172020;
-  --surface-3: #1e2a29;
+  /*
+   * Onyx. A neutral near-black, not a teal-tinted one: tinting every shade
+   * with the accent made the whole page read as green-black, which is a lot
+   * of brand for a surface nobody is meant to look at.
+   */
+  --bg: #0a090c;
+  --surface-1: #141317;
+  --surface-2: #1b1a20;
+  --surface-3: #232229;
 
-  --ink: #e6efee;
-  --muted: #95b0ad;
+  --ink: #f0edee;
+  --muted: #a3a2ab;
+
+  /*
+   * Dark Teal, and it is the same in both themes.
+   *
+   * The header and the footer are the two bands that frame every page and
+   * never belong to the reader's content, so they are where the brand can
+   * live without colouring anything the reader wrote. Keeping them identical
+   * in light and dark makes the chrome a constant: the page inverts, the
+   * frame does not.
+   */
+  --bar: #07393c;
+  --bar-ink: #eaf4f4;
+  --bar-muted: #a9cbcb;
 
   /* Translucent, for things that sit on top of whatever shade they land on. */
   --layer: rgb(255 255 255 / 5%);
@@ -76,30 +94,32 @@
   --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 50%);
   --shadow-lg: 0 14px 40px -10px rgb(0 0 0 / 72%);
 
-  --accent: #03d1be;
+  /* Frosted Blue, which has the luminance to carry on Onyx. */
+  --accent: #90ddf0;
   /*
    * Solid, not translucent. A focus ring has to clear 3:1 against whatever it
    * lands on (WCAG 2.2 §1.4.11), and a translucent one cannot promise that:
    * it takes the colour of the surface beneath it.
    */
-  --ring: #03d1be;
+  --ring: #90ddf0;
   --bad: #ff7578;
   --good: #5cc26e;
 
   /* Syntax, on the ladder described above. */
-  --kw: #cc94ff;
-  --type: #08e4cf;
-  --lit: #eb5da2;
-  --num: #ffbb88;
-  --str: #6dd273;
-  --op: #7eceff;
-  --punct: #88a8a5;
-  --comment: #7a9290;
+  --id: #a8c6d6;
+  --kw: #d4a0ff;
+  --type: #90ddf0;
+  --lit: #ff7ab0;
+  --num: #ffc49a;
+  --str: #7ad980;
+  --op: #6fd3cb;
+  --punct: #95aab0;
+  --comment: #8ba0a4;
 
   /* Bracket nesting depth, cycling every three levels. */
-  --br0: #ffe38e;
-  --br1: #ed8ef3;
-  --br2: #039ea7;
+  --br0: #ffe6a0;
+  --br1: #f39ff8;
+  --br2: #4fb9c4;
 
   --bad-wash: rgb(255 117 120 / 16%);
   --hot: rgb(3 209 190 / 22%);
@@ -143,8 +163,9 @@
     --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
     --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-    --accent: #00695f;
-    --ring: #00695f;
+    /* Stormy Teal, dark enough to carry on Platinum. */
+  --accent: #2c666e;
+    --ring: #2c666e;
     --bad: #b8012f;
     --good: #006f29;
 
@@ -170,13 +191,19 @@
 }
 
 :root[data-theme='light'] {
-  --bg: #fbfdfc;
-  --surface-1: #eef3f2;
-  --surface-2: #e3eae9;
-  --surface-3: #d6e1df;
+  /* Platinum. */
+  --bg: #f0edee;
+  --surface-1: #e7e4e5;
+  --surface-2: #ddd9db;
+  --surface-3: #d3cfd1;
 
-  --ink: #0f1a1a;
-  --muted: #405957;
+  --ink: #0a090c;
+  --muted: #4c4b53;
+
+  /* The same Dark Teal band as the dark theme — see above. */
+  --bar: #07393c;
+  --bar-ink: #eaf4f4;
+  --bar-muted: #a9cbcb;
 
   --layer: rgb(13 26 26 / 5%);
   --layer-strong: rgb(13 26 26 / 8%);
@@ -186,23 +213,24 @@
   --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
   --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-  --accent: #00695f;
-  --ring: #00695f;
+  --accent: #2c666e;
+  --ring: #2c666e;
   --bad: #b8012f;
   --good: #006f29;
 
+  --id: #33455c;
   --kw: #4d1d81;
-  --type: #006157;
+  --type: #15575f;
   --lit: #4f002c;
-  --num: #9b4d00;
+  --num: #8a4400;
   --str: #005916;
-  --op: #004c6a;
-  --punct: #385754;
-  --comment: #536a67;
+  --op: #00555f;
+  --punct: #3f5558;
+  --comment: #4d6360;
 
-  --br0: #746100;
+  --br0: #6a5800;
   --br1: #6e1277;
-  --br2: #002a2d;
+  --br2: #07393c;
 
   --bad-wash: rgb(184 1 47 / 10%);
   --hot: rgb(0 105 95 / 16%);
