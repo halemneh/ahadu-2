@@ -1,0 +1,35 @@
+# Thirteen months, and a year seven or eight behind the Gregorian one (§8.8).
+# A date is a three-element ስብስብ, not a new value type, so indexing and ጻፍ
+# already work on it.
+#
+# ከግሪጎሪ is what a checked snippet can use: fixed input, fixed output. ዛሬ
+# cannot be, and correctly so — a page claiming today's date is wrong by
+# tomorrow.
+# expect: [2017፣ 1፣ 1]
+# expect: [2016፣ 1፣ 1]
+# expect: መስከረም ፩ ቀን ፳፻፲፯
+# expect: ጳጉሜ
+# expect: እውነት
+# expect: 13
+
+# Ethiopian New Year falls on 11 September — but on the 12th when the
+# February that follows has 29 days.
+ጻፍ(ከግሪጎሪ(2024፣ 9፣ 11))
+ጻፍ(ከግሪጎሪ(2023፣ 9፣ 12))
+
+አዲስዓመት = ከግሪጎሪ(2024፣ 9፣ 11)
+ጻፍ(ወርስም(አዲስዓመት[1]) + " " + ወደግዕዝ(አዲስዓመት[2]) + " ቀን " + ወደግዕዝ(አዲስዓመት[0]))
+
+# The thirteenth month is ጳጉሜ, of five days — six when ዓመት % 4 == 3.
+ጻፍ(ወርስም(13))
+
+# ዛሬ gives a date of three numbers, whatever instant the host supplied.
+ቀኑ = ዛሬ()
+ጻፍ(ርዝመት(ቀኑ) == 3 እና አይነት(ቀኑ[0]) == "ቁጥር")
+
+ወሮች = []
+ወር = 1
+ወር <= 13 እስከሆነ ድረስ፦
+    አዋህድ(ወሮች፣ ወርስም(ወር))
+    ወር = ወር + 1
+ጻፍ(ርዝመት(ወሮች))

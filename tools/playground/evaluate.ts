@@ -38,6 +38,8 @@ export interface RunRequest {
    * because a guessing game with one answer is not a game.
    */
   readonly seed?: number;
+  /** The instant `ዛሬ` reports, or omitted for the interpreter's fixed default. */
+  readonly now?: number;
 }
 
 export interface RunReply {
@@ -93,6 +95,7 @@ export function evaluate(request: RunRequest): RunReply {
     {
       maxSteps: request.maxSteps,
       ...(request.seed === undefined ? {} : { seed: request.seed }),
+      ...(request.now === undefined ? {} : { now: request.now }),
     },
   );
 

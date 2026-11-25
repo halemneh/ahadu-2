@@ -36,8 +36,15 @@ import {
   AH3019,
   AH3020,
   AH3021,
+  AH3022,
 } from '../diagnostics.js';
 import { MAX_GEEZ, parseNumericText, trimText, writeGeezNumeral } from '../numeric.js';
+import {
+  ETHIOPIC_MONTHS,
+  ethiopicFromUnixMillis,
+  gregorianToEthiopic,
+  isRealGregorianDate,
+} from '../ethiopic.js';
 import type {
   AssignTarget,
   AttributeDeclaration,
@@ -98,6 +105,16 @@ export interface RunOptions {
    */
   readonly seed?: number;
   /**
+   * The instant `ዛሬ` reports, in Unix milliseconds.
+   *
+   * Fixed by default, for the same reason `seed` is: the website runs every
+   * snippet at build time and fails the build when the output is not what the
+   * page claims (SITE.md §2), so a host that forgets this option gets a
+   * reproducible program rather than one whose output changes at midnight.
+   * The CLI and the playground pass the real clock.
+   */
+  readonly now?: number;
+  /**
    * Called for each statement worth showing, with its line, the value worth
    * showing for it, and how deep in calls it ran. This is what `ahadu trace`
    * prints, so a learner can watch a loop actually loop (TOOLING.md §1.1).
@@ -145,6 +162,15 @@ const DEFAULT_MAX_DEPTH = 200;
  * implementation can match it.
  */
 const DEFAULT_SEED = 1;
+
+/**
+ * The instant `ዛሬ` reports when no host supplies one: the Unix epoch.
+ *
+ * Any constant would do, and this one has the advantage of being obviously
+ * not a real time — a program printing 1962 has clearly not been given a
+ * clock, which is easier to diagnose than a plausible-looking wrong date.
+ */
+const DEFAULT_NOW = 0;
 
 /**
  * One step of the generator behind `አጋጣሚ` — mulberry32.
@@ -228,6 +254,8 @@ export class Interpreter {
    * declares are marked as library code (§8.5).
    */
   private loadingLibrary = false;
+  /** The instant `ዛሬ` reports, in Unix milliseconds (§8.8). */
+  private readonly now: number;
 
   constructor(
     readonly host: Host,
@@ -237,6 +265,7 @@ export class Interpreter {
     this.maxSteps = options.maxSteps ?? Number.POSITIVE_INFINITY;
     this.onStatement = options.onStatement;
     this.randomState = seedState(options.seed ?? DEFAULT_SEED);
+    this.now = options.now ?? DEFAULT_NOW;
     for (const [name, value] of createBuiltins(this)) {
       this.globals.define(name, value);
       this.preBoundNames.add(name);
@@ -288,6 +317,11 @@ export class Interpreter {
     const { state, fraction } = mulberry32(this.randomState);
     this.randomState = state;
     return low + Math.floor(fraction * (high - low + 1));
+  }
+
+  /** The instant `ዛሬ` reports (§8.8). */
+  get instant(): number {
+    return this.now;
   }
 
   // =========================================================================
@@ -1312,6 +1346,62 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
       interpreter.fail(AH3021, at, err.noGeezSpelling(render(value), MAX_GEEZ));
     }
     return str(written);
+  });
+
+  // -------------------------------------------------------------------------
+  // The Ethiopian calendar (§8.8)
+  //
+  // Thirteen months, and a year seven or eight behind the Gregorian one. A
+  // date is a three-element `ስብስብ` rather than a new value type, so nothing
+  // in §4.1 changes and `ለእያንዳንዱ`, indexing and `ጻፍ` all already work on it.
+  // -------------------------------------------------------------------------
+
+  /** Reads a date argument that must be a whole number. */
+  const whole = (name: string, args: readonly Value[], index: number, at: Site): number => {
+    const value = args[index] as Value;
+    if (value.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary(`"${name}"`, typeName(value)));
+    }
+    return value.value;
+  };
+
+  const dateList = (date: { year: number; month: number; day: number }): Value =>
+    list([num(date.year), num(date.month), num(date.day)]);
+
+  define('ዛሬ', (args, at) => {
+    arity('ዛሬ', args, 0, at);
+    // Read in UTC, so the same program prints the same date on every machine
+    // and a snippet's output can be checked at build time at all.
+    return dateList(ethiopicFromUnixMillis(interpreter.instant));
+  });
+
+  define('ከግሪጎሪ', (args, at) => {
+    arity('ከግሪጎሪ', args, 3, at);
+    const year = whole('ከግሪጎሪ', args, 0, at);
+    const month = whole('ከግሪጎሪ', args, 1, at);
+    const day = whole('ከግሪጎሪ', args, 2, at);
+
+    // Converted and converted back, which is the only honest check: the
+    // forward formula computes a day number for 31 February perfectly
+    // happily, and that number is a real day — 2 or 3 March. Returning the
+    // wrong date silently is worse than refusing.
+    if (!isRealGregorianDate({ year, month, day })) {
+      interpreter.fail(
+        AH3022,
+        at,
+        err.badGregorianDate(render(num(year)), render(num(month)), render(num(day))),
+      );
+    }
+    return dateList(gregorianToEthiopic({ year, month, day }));
+  });
+
+  define('ወርስም', (args, at) => {
+    arity('ወርስም', args, 1, at);
+    const month = whole('ወርስም', args, 0, at);
+    if (!Number.isInteger(month) || month < 1 || month > 13) {
+      interpreter.fail(AH3022, at, err.badMonthNumber(render(num(month))));
+    }
+    return str(ETHIOPIC_MONTHS[month - 1] as string);
   });
 
   define('ዘር', (args, at) => {

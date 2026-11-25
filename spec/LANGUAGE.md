@@ -887,7 +887,7 @@ Semantics:
 
 ## 8. Built-in functions
 
-These twenty names are pre-bound in the global scope, alongside the standard
+These twenty-three names are pre-bound in the global scope, alongside the standard
 library's (§8.5). They are not keywords and MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
 keywords but implemented only `ጻፍ`; calling either other one crashed the
 interpreter with a Python exception (CHANGES §C13).
@@ -914,6 +914,9 @@ interpreter with a Python exception (CHANGES §C13).
 | `አገናኝ` | `አገናኝ(ስብስብ)` or `አገናኝ(ስብስብ፣ ጽሁፍ)` | `ጽሁፍ` — the elements joined (§8.7) |
 | `ከርክም` | `ከርክም(ጽሁፍ)` | the text with surrounding whitespace removed |
 | `ወደግዕዝ` | `ወደግዕዝ(ቁጥር)` | `ጽሁፍ` in Ge'ez numerals; `AH3021` when it has no spelling (§8.7) |
+| `ዛሬ` | `ዛሬ()` | `ስብስብ` — today in the Ethiopian calendar as `[ዓመት፣ ወር፣ ቀን]` (§8.8) |
+| `ከግሪጎሪ` | `ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)` | `ስብስብ` — that Gregorian date in the Ethiopian calendar (§8.8) |
+| `ወርስም` | `ወርስም(ቁጥር)` | `ጽሁፍ` — the name of month 1–13; `AH3022` otherwise |
 
 `ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
@@ -1229,6 +1232,58 @@ group before a separator as 1: a hundred is `፻`, not `፩፻`, and ten thousan
 
 ---
 
+### 8.8 The Ethiopian calendar
+
+Thirteen months: twelve of thirty days, then **ጳጉሜ** of five, or six when
+`ዓመት % 4 == 3`. The year begins on **መስከረም 1**, which is 11 September in the
+Gregorian calendar — or 12 September when the February that follows has 29
+days. An Ethiopian year runs seven or eight behind the Gregorian one,
+depending on which side of መስከረም 1 a date falls.
+
+| | |
+| --- | --- |
+| 1 `መስከረም` | 8 `ሚያዝያ` |
+| 2 `ጥቅምት` | 9 `ግንቦት` |
+| 3 `ኅዳር` | 10 `ሰኔ` |
+| 4 `ታኅሣሥ` | 11 `ሐምሌ` |
+| 5 `ጥር` | 12 `ነሐሴ` |
+| 6 `የካቲት` | 13 `ጳጉሜ` |
+| 7 `መጋቢት` | |
+
+**A date is a three-element `ስብስብ`**, `[ዓመት፣ ወር፣ ቀን]`, and not a new value
+type. Nothing in §4.1 changes, and indexing, `ለእያንዳንዱ` and `ጻፍ` all already
+work on it. A program reads the parts by position, which is one more reason
+`ወርስም` exists:
+
+```
+ቀኑ = ዛሬ()
+ጻፍ(ወርስም(ቀኑ[1]) + " " + ወደግዕዝ(ቀኑ[2]) + " ቀን " + ወደግዕዝ(ቀኑ[0]))
+```
+
+`ዛሬ` reads the instant in **UTC**, not in the host's local time zone. A local
+reading would make the same program print different dates on two machines, and
+the website runs every snippet at build time and checks its output (SITE.md
+§2) — so a date that depended on where the build ran could not be verified at
+all.
+
+For the same reason the instant is **the host's to supply, and fixed by
+default**, exactly as the random seed is (§8.4). A host that says nothing gets
+a reproducible program; `ahadu` and the playground pass the real clock. This
+does mean a page cannot both call `ዛሬ` and state its output — which is correct,
+because such a page would be wrong by tomorrow. `ከግሪጎሪ` is the one to teach
+with, since fixed input gives fixed output.
+
+`ከግሪጎሪ` validates by converting and converting back, rather than by checking
+month lengths. A formula that quietly accepts 31 February returns *a* date,
+just not the one it was asked for, and silently returning the wrong date is
+worse than refusing (`AH3022`).
+
+Both directions go through the Julian Day Number, a plain count of days that
+neither calendar owns, so each calendar is described once by itself and there
+is no correspondence table to get wrong.
+
+---
+
 ## 9. Errors
 
 ### 9.1 Shape
@@ -1312,6 +1367,7 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3019` | `ወደቁጥር` on text that is not a number — `ጽሁፉ ቁጥር አይደለም።` |
 | `AH3020` | `አጋጣሚ` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
 | `AH3021` | `ወደግዕዝ` on a number with no Ge'ez spelling — `ይህ ቁጥር በግዕዝ አይጻፍም።` |
+| `AH3022` | a date or month number that does not exist — `ቀኑ አይሰራም።` |
 
 ### 9.3 Recovery
 

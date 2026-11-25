@@ -531,6 +531,8 @@ function launch(input: readonly string[]): void {
     // default is fixed, which is what the site's build-time checker wants;
     // a guessing game that picks the same number every time is not one.
     seed: Date.now(),
+    // Likewise the clock, so `ዛሬ` is actually today here.
+    now: Date.now(),
   };
   worker.postMessage(request);
 }

@@ -189,3 +189,13 @@ export function noGeezSpelling(value: string, limit: number): string {
   if (value === '0') return 'ዜሮ በግዕዝ ቁጥር አይጻፍም፤ የግዕዝ ቁጥሮች ከ፩ ይጀምራሉ።';
   return `${value} በግዕዝ አይጻፍም፤ ከ1 እስከ ${limit} ያለ ሙሉ ቁጥር ያስፈልጋል።`;
 }
+
+/** The message for a month number outside 1–13 (§8.8). */
+export function badMonthNumber(found: string): string {
+  return `${found} የወር ቁጥር አይደለም፤ ከ1 እስከ 13 ያስፈልጋል። የኢትዮጵያ ዓመት አሥራ ሦስት ወር አለው።`;
+}
+
+/** The message for a Gregorian date that does not exist (§8.8). */
+export function badGregorianDate(year: string, month: string, day: string): string {
+  return `${year}/${month}/${day} የሚባል የግሪጎሪ ቀን የለም።`;
+}

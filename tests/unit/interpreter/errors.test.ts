@@ -35,6 +35,7 @@ const triggers: Record<string, string> = {
   AH3019: 'ጻፍ(ወደቁጥር("ሰላም"))',
   AH3020: 'ጻፍ(አጋጣሚ(6፣ 1))',
   AH3021: 'ጻፍ(ወደግዕዝ(0))',
+  AH3022: 'ጻፍ(ወርስም(14))',
 };
 
 describe('the whole runtime catalogue is reachable (§9.2)', () => {

@@ -59,6 +59,8 @@ interface Flags {
    * site's snippet checker — want the opposite (LANGUAGE.md §8).
    */
   readonly seed: number;
+  /** The instant `ዛሬ` reports. The real clock here; fixed in the interpreter. */
+  readonly now: number;
 }
 
 function reportDiagnostics(source: string, diagnostics: readonly Diagnostic[], flags: Flags): void {
@@ -204,7 +206,7 @@ function execute(source: string, flags: Flags, options: RunOptions = {}): number
     return 1;
   }
 
-  const result = run(parsed.program, cliHost(), { seed: flags.seed, ...options });
+  const result = run(parsed.program, cliHost(), { seed: flags.seed, now: flags.now, ...options });
 
   if (result.diagnostic !== null) {
     if (flags.json) {
@@ -288,6 +290,7 @@ function main(args: string[]): number {
     colors: palette(colorEnabled(stdout, wantsColor)),
     errorColors: palette(colorEnabled(stderr, wantsColor)),
     seed: readSeed(args),
+    now: Date.now(),
   };
 
   if (args.includes('--help') || (operands.length === 0 && args.length > 0 && !json)) {

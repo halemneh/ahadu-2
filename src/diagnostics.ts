@@ -76,6 +76,7 @@ export const AH3018 = 'AH3018';
 export const AH3019 = 'AH3019';
 export const AH3020 = 'AH3020';
 export const AH3021 = 'AH3021';
+export const AH3022 = 'AH3022';
 
 /**
  * Default Amharic text, keyed by code.
@@ -128,6 +129,7 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH3019]: 'ጽሁፉ ቁጥር አይደለም።',
   [AH3020]: 'የአጋጣሚው ክልል አይሰራም።',
   [AH3021]: 'ይህ ቁጥር በግዕዝ አይጻፍም።',
+  [AH3022]: 'ቀኑ አይሰራም።',
 };
 
 export function diagnostic(
