@@ -180,6 +180,18 @@ snippet inside a panel takes its own level without a shade of its own. Shadows
 are kept for what genuinely floats: the tooltip, the input dialog, a control
 under the pointer.
 
+The rule has exactly one exception, and it is deliberately not a border: the
+**focus ring** is an `outline`. A focus indicator has to be a line, because
+its whole job is to say which single control out of many has the keyboard,
+and a shade cannot say "this one" against a surface it might itself be
+painted on. It is solid rather than translucent for the same reason it has to
+exist at all — WCAG 2.2 §1.4.11 asks for 3:1 against what surrounds it, and a
+translucent ring takes the colour of whatever it lands on. An outline also
+takes no space in the layout, so nothing moves when it appears. Every
+interactive thing on the page has one, which is a change: the nav links, the
+lesson list, the contents, the prev/next cards and the editor itself used to
+have none.
+
 - A **line-number gutter** runs down the editor, and a **position readout**
   sits under it. The readout's column counts code points, so it agrees with
   the column in every diagnostic (LANGUAGE.md §2.2) — counting UTF-16 units
@@ -223,6 +235,61 @@ under the pointer.
 - **Tokens** — the live token table; hovering a row highlights its source span,
   and hovering source highlights the row.
 - **AST** — the collapsible tree; selecting a node highlights its span.
+
+### 2.1.1 On a phone
+
+Below 760px the five sections of the site header move into a **drawer**,
+opened by a button at the end of the bar, and the bar stays one row. Across a
+390px screen they wrapped onto three, which spent a third of the screen on
+chrome before the reader saw a line of code.
+
+The drawer is a dialog and behaves like one: focus moves into it when it
+opens and back to the button when it closes, Escape closes it, Tab stays
+inside it, and a tap on the page behind closes it. It carries its own shade
+and a shadow, because it genuinely floats.
+
+It appears **only when scripting is on**, and the page says so by putting a
+class on `<html>` before first paint. With scripting off the sections stay
+the plain wrapped list they were: two rows of links is a worse header, and a
+hamburger that cannot open is no site at all. The drawer is shared with the
+site's pages (`tools/shared/menu.ts`), as the header it hangs from is.
+
+The playground's own toolbar keeps its single row down to 320px by giving
+ground in this order: the example menu narrows, then the status line stops
+being **drawn** — but keeps being rendered, because it is the `aria-live`
+region that announces "3 errors" and "finished". What a sighted reader loses
+is the count, and the count is on the ስተቶች tab beside it.
+
+### 2.1.2 Highlighting
+
+The colours come from the lexer's own tokens (`tools/playground/highlight.ts`),
+never from a second set of patterns — that is what makes it impossible for the
+editor to colour something the language does not read that way. They live in
+`tools/shared/syntax.css` so the site's snippets and this editor cannot
+disagree; the palette and the reasoning behind each colour are in
+`tools/shared/tokens.css`.
+
+Three things beyond one colour per token type:
+
+- **Brackets are coloured by nesting depth**, cycling every three levels, and
+  `(` and `[` are counted on one counter — the way the lexer counts them
+  (§3.5 of LANGUAGE.md) — so a `(` inside a `[` is a level deeper rather
+  than a second first level. The three depths differ by lightness as well as
+  hue, which is what makes depth legible with no colour vision at all.
+
+- **The pair beside the caret is marked**, in the editor and in a lesson's
+  snippet. Beside, not under: the caret is a gap between characters, so a
+  bracket counts when the caret is on either side of it, and an editor that
+  only lit the bracket to the right would go dark the moment you typed `)`.
+  It is a wash and a weight rather than a colour, because the depth colour is
+  information the reader may be using.
+
+- **Ahadu's three Ethiopic marks are told apart.** `፦` opens a block and is
+  painted like the keyword that leads up to it — it does the job a keyword
+  does in an English-based language, so it should look like one. `።` ends a
+  statement, and is weighted. `፣` separates, and is quieter, because it
+  divides rather than ends. The ASCII `:` and `.` stay quiet: they are
+  spellings that already read as punctuation to everyone.
 
 ### 2.2 Behavior
 
