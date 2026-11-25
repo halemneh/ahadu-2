@@ -63,7 +63,7 @@ export function page(view: PageView): string {
   const steps =
     view.prev === null && view.next === null
       ? ''
-      : `<nav class="steps">
+      : `<nav class="steps" aria-label="${escapeHtml(s.navSteps)}">
           ${
             view.prev === null
               ? '<span></span>'
@@ -94,6 +94,14 @@ export function page(view: PageView): string {
         // Before first paint, so a reader who chose dark never sees a flash.
         var t = localStorage.getItem('${STORAGE.theme}');
         if (t) document.documentElement.dataset.theme = t;
+        /*
+         * Says that scripting is on, before anything is drawn. The narrow
+         * navigation is a drawer only under this class: without it the nav
+         * stays as a plain wrapped list, which works with no JavaScript at
+         * all — and a hamburger that cannot open is worse than two lines of
+         * links.
+         */
+        document.documentElement.className += ' js';
         // This page's language is in its URL. Record it, so the playground —
         // which has one URL for both — opens in the language being read.
         localStorage.setItem('${STORAGE.language}', '${s.code}');
@@ -101,7 +109,12 @@ export function page(view: PageView): string {
     </script>
   </head>
   <body data-section="${view.section}">
-    <a class="skip" href="#main">${escapeHtml(view.title)}</a>
+    <!--
+      "Skip to content", not the page's title: a skip link is read out of
+      context, as the first thing on the page, and a title there says nothing
+      about what the link does.
+    -->
+    <a class="skip" href="#main">${escapeHtml(s.skipToContent)}</a>
 
     <header class="sitebar">
       <a class="brand" href="${home}">
@@ -109,7 +122,12 @@ export function page(view: PageView): string {
         <span class="version">2.0</span>
       </a>
 
-      <nav class="nav">
+      <!--
+        The sections. Below 760px this becomes a drawer, opened by #menu —
+        but only when scripting is on (see the js class set above), because
+        a drawer that cannot open would hide the whole site.
+      -->
+      <nav class="nav" id="sitenav" aria-label="${escapeHtml(s.navLabel)}">
         ${nav}
       </nav>
 
@@ -117,11 +135,29 @@ export function page(view: PageView): string {
 
       <a class="chip" href="${view.counterpart}" rel="alternate">${escapeHtml(s.languageToggle)}</a>
       <button class="chip" type="button" id="theme" aria-label="${escapeHtml(s.themeToggle)}">◐</button>
+      <button
+        class="chip menu"
+        type="button"
+        id="menu"
+        aria-controls="sitenav"
+        aria-expanded="false"
+        aria-label="${escapeHtml(s.navMenu)}"
+        hidden
+      ><span aria-hidden="true">☰</span></button>
     </header>
 
-    <div class="shell${view.sidebar === '' ? ' shell-plain' : ''}">
-      ${view.sidebar === '' ? '' : `<aside class="side">${view.sidebar}</aside>`}
+    <!-- Closes the drawer when the page behind it is tapped. -->
+    <div class="scrim" id="nav-scrim" hidden></div>
 
+    <!--
+      The document comes before the lesson list in the markup and is put back
+      on the left by the grid. Two reasons, and they are the same reason: a
+      page whose first heading is an h2 in the margin has its outline upside
+      down, and on a phone — where the grid collapses to one column and
+      source order *is* reading order — a reader met eight lesson links
+      before the lesson they had opened.
+    -->
+    <div class="shell${view.sidebar === '' ? ' shell-plain' : ''}">
       <main id="main" class="doc">
         <article>
           <h1>${escapeHtml(view.title)}</h1>
@@ -130,6 +166,12 @@ export function page(view: PageView): string {
         </article>
         ${steps}
       </main>
+
+      ${
+        view.sidebar === ''
+          ? ''
+          : `<nav class="side" aria-label="${escapeHtml(s.lessonsTitle)}">${view.sidebar}</nav>`
+      }
 
       ${contents}
     </div>

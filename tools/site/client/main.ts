@@ -23,6 +23,7 @@ import { evaluate } from '../../playground/evaluate.js';
 import { escapeHtml } from '../../playground/view.js';
 import { formatDiagnostic } from '../../../src/diagnostics.js';
 import { encodeProgram } from '../../shared/share.js';
+import { setUpMenu } from '../../shared/menu.js';
 import { problemAttribute, validateContact } from '../build/contact.js';
 
 /** Smaller than the playground's: a lesson's program should be quick. */
@@ -351,6 +352,7 @@ function setUpContact(): void {
 }
 
 setUpTheme();
+setUpMenu();
 setUpContact();
 for (const snippet of document.querySelectorAll('.snip')) {
   if (snippet instanceof HTMLElement) setUpSnippet(snippet);

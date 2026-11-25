@@ -35,6 +35,9 @@ export interface Strings {
   readonly navReference: string;
   readonly navExamples: string;
   readonly navPlayground: string;
+  /** Names the nav landmark, and the button that opens it on a phone. */
+  readonly navLabel: string;
+  readonly navMenu: string;
 
   // Editor
   readonly editorLabel: string;
@@ -94,6 +97,8 @@ const amharic: Strings = {
   navReference: 'ማጣቀሻ',
   navExamples: 'ምሳሌዎች',
   navPlayground: 'ሜዳ',
+  navLabel: 'ክፍሎች',
+  navMenu: 'ዝርዝር',
 
   editorLabel: 'የአሃዱ ኮድ',
   inputLabel: 'ግቤት',
@@ -143,6 +148,8 @@ const english: Strings = {
   navReference: 'Reference',
   navExamples: 'Examples',
   navPlayground: 'Playground',
+  navLabel: 'Sections',
+  navMenu: 'Menu',
 
   editorLabel: 'Ahadu code',
   inputLabel: 'Input',

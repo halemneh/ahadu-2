@@ -102,14 +102,33 @@ export function keywordTable(s: Strings): string {
     })
     .join('\n');
 
-  return `<table class="ref">
+  return wrapped(
+    `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ቃል' : 'Keyword'}</th><th>${
     s.code === 'am' ? 'ትርጉም' : 'Meaning'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+    s,
+  );
+}
+
+/**
+ * Puts a table in a box that can scroll sideways on a narrow screen.
+ *
+ * Two columns of Ge'ez do not fit across a phone, and the alternative —
+ * shrinking the type — is the one thing a syllabary cannot take. The
+ * wrapper is focusable and labelled because a scrolling region that cannot
+ * be reached with a keyboard is a region some readers simply cannot read
+ * (WCAG 2.2 §2.1.1); `role="region"` is what makes the name be announced.
+ */
+function wrapped(table: string, s: Strings): string {
+  const label = escapeHtml(s.referenceTitle);
+  return `<div class="table-wrap" role="region" aria-label="${label}" tabindex="0">
+${table}
+</div>`;
 }
 
 /** The error catalogue, one section per stage. */
@@ -131,14 +150,17 @@ export function errorTable(s: Strings): string {
 
       return `<h3>${escapeHtml(STAGE_TITLE[stage]?.[s.code] ?? stage)}</h3>
 <p>${escapeHtml(STAGE_NOTE[stage]?.[s.code] ?? '')}</p>
-<table class="ref">
+${wrapped(
+  `<table class="ref">
   <thead><tr><th>${s.code === 'am' ? 'ኮድ' : 'Code'}</th><th>${
     s.code === 'am' ? 'መልእክት' : 'Message'
   }</th></tr></thead>
   <tbody>
 ${rows}
   </tbody>
-</table>`;
+</table>`,
+  s,
+)}`;
     })
     .join('\n\n');
 }

@@ -10,6 +10,15 @@
  * menu, the run button and the status line.
  */
 
+:root {
+  /*
+   * The header's height on a narrow screen. The drawer hangs from it and the
+   * scrim starts at it, so both have to agree with the bar itself — which is
+   * what keeps the bar's own controls reachable while the drawer is open.
+   */
+  --bar-h: 3.4rem;
+}
+
 .sitebar {
   position: sticky;
   top: 0;
@@ -46,7 +55,15 @@
   flex-wrap: wrap;
 }
 
+/*
+ * A nav link is a touch target, so it clears 24px in both directions before
+ * its text is measured (WCAG 2.2 §2.5.8) — and gets a good deal more than
+ * that on a phone, where the drawer gives each one a row of its own.
+ */
 .sitebar .nav a {
+  display: flex;
+  align-items: center;
+  min-height: 2rem;
   padding: 0.3rem 0.7rem;
   border-radius: 6px;
   color: var(--muted);
@@ -69,6 +86,11 @@
 }
 
 .sitebar .chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  min-height: 2.2rem;
   padding: 0.28rem 0.65rem;
   border: 0;
   border-radius: 6px;
@@ -76,6 +98,8 @@
   color: var(--ink);
   font: inherit;
   font-size: 0.85rem;
+  line-height: 1;
+  white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
@@ -84,14 +108,122 @@
   background: var(--layer-hover);
 }
 
-.sitebar .chip:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--ring);
+/*
+ * The ring is on every control in the bar rather than only the chips: a link
+ * with no visible focus is a link a keyboard reader cannot find, and the
+ * brand and the nav had none. Solid rather than translucent, so it keeps its
+ * 3:1 against whatever it lands on, and `:focus-visible` so it never shows
+ * under a mouse.
+ */
+.sitebar a:focus-visible,
+.sitebar button:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
+/* The hamburger exists only where the sections do not fit across the bar. */
+.sitebar .menu {
+  display: none;
+  font-size: 1.1rem;
+}
+
+/* ---- narrow: the sections become a drawer ---- */
+
+/*
+ * Scoped to `.js`, which the page puts on `<html>` before first paint. With
+ * scripting off the nav stays the wrapped list it always was and the
+ * hamburger stays hidden: two lines of links is a worse header, and a drawer
+ * nothing can open would be no site at all.
+ */
 @media (max-width: 760px) {
   .sitebar {
+    min-height: var(--bar-h);
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
     flex-wrap: wrap;
-    gap: 0.6rem;
+  }
+
+  .js .sitebar {
+    flex-wrap: nowrap;
+  }
+
+  .js .sitebar .menu {
+    display: inline-flex;
+  }
+
+  /*
+   * Its own shade rather than a line down its edge, and a shadow because it
+   * genuinely floats. It hangs below the bar, so the button that closes it
+   * stays visible and reachable the whole time it is open.
+   */
+  .js .sitebar .nav {
+    position: fixed;
+    inset: var(--bar-h) 0 0 auto;
+    z-index: 2;
+    width: min(16rem, 78vw);
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.15rem;
+    padding: 0.7rem;
+    background: var(--surface-3);
+    box-shadow: var(--shadow-lg);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transform: translateX(100%);
+    /*
+     * `visibility`, not only the transform: an element pushed off-screen is
+     * still in the tab order, and a reader on a keyboard would tab into a
+     * drawer they cannot see. The delay is the trick that makes both work —
+     * hiding waits for the slide to finish, showing happens at once. A
+     * plain `transition: visibility 200ms` would interpolate it, and then
+     * nothing inside can take focus during the slide.
+     */
+    visibility: hidden;
+    transition:
+      transform 200ms ease,
+      visibility 0s linear 200ms;
+  }
+
+  .js .sitebar[data-nav='open'] .nav {
+    transform: none;
+    visibility: visible;
+    transition:
+      transform 200ms ease,
+      visibility 0s;
+  }
+
+  /* A row each: a 44px target, and room for Ge'ez at full reading size. */
+  .js .sitebar .nav a {
+    min-height: 2.75rem;
+    padding: 0.5rem 0.8rem;
+    font-size: 1rem;
+  }
+}
+
+/*
+ * The page behind the drawer. Inside the header on purpose: the header is a
+ * stacking context of its own, so a scrim outside it would paint over the
+ * drawer whatever its z-index said.
+ */
+.scrim {
+  position: fixed;
+  inset: var(--bar-h) 0 0 0;
+  z-index: 1;
+  background: rgb(0 0 0 / 45%);
+}
+
+.scrim[hidden] {
+  display: none;
+}
+
+/*
+ * Reduced motion: the drawer still appears and disappears, it just stops
+ * sliding in. It becomes a step, which is what someone who asked for less
+ * motion is asking for.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .js .sitebar .nav {
+    transition: none;
   }
 }

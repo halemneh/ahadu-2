@@ -34,6 +34,7 @@ import { diagnosticAt, positionAt } from './locate.js';
 import type { EditorMetrics } from './locate.js';
 import { otherLanguage, strings } from './strings.js';
 import { decodeProgram } from '../shared/share.js';
+import { setUpMenu } from '../shared/menu.js';
 import { STORAGE, sectionUrl } from '../shared/nav.js';
 import type { Section } from '../shared/nav.js';
 import type { Language, Strings } from './strings.js';
@@ -714,4 +715,6 @@ editor.value = shared ?? recall(STORAGE_SOURCE) ?? STARTER;
 askInput.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
 applyLanguage();
+// After applyLanguage, which is what gives the hamburger its label.
+setUpMenu();
 panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
