@@ -17,45 +17,12 @@ import { KEYWORDS } from '../../../src/lexer/constants.js';
 import { MESSAGES } from '../../../src/diagnostics.js';
 import { withLibrary } from '../../../src/engine.js';
 import { LIBRARY_NAMES, LIBRARY_SOURCE } from '../../../src/library/index.js';
+import { FN_ENTRIES, GLOSS } from './functions.js';
+import type { FnEntry } from './functions.js';
 import { tokenize } from '../../../src/lexer/index.js';
 import { highlight } from '../../playground/highlight.js';
 import { escapeHtml } from '../../playground/view.js';
 import type { Strings } from './strings.js';
-
-/**
- * What each keyword group means, in both languages.
- *
- * Every type the lexer knows must appear here; `keywordTable` fails the build
- * on one that does not. Falling back to the internal type name would put
- * `func` and `init` in a reference meant for someone learning their first
- * language — a quiet wrong answer, which is the kind this project tries not
- * to ship.
- */
-const GLOSS: Record<string, { am: string; en: string }> = {
-  IF: { am: 'ሁኔታ', en: 'if' },
-  ELIF: { am: 'ሌላ ሁኔታ ማስገቢያ', en: 'else-if lead-in' },
-  ELSE: { am: 'አለበለዚያ', en: 'otherwise' },
-  WHILE: { am: 'ድግግሞሽ', en: 'repeat while' },
-  FOREACH: { am: 'ለእያንዳንዱ ዕቃ', en: 'repeat for each item' },
-  RETURN: { am: 'ዋጋ መመለሻ', en: 'return a value' },
-  FUNC: { am: 'ተግባር መግለጫ', en: 'define a function' },
-  CLASS: { am: 'ክላስ መግለጫ', en: 'define a class' },
-  INIT: { am: 'የክላስ መነሻ ተግባር', en: "a class's set-up method" },
-  AND: { am: 'እና', en: 'and' },
-  OR: { am: 'ወይም', en: 'or' },
-  NOT: { am: 'አይደለም', en: 'not' },
-  TRUE: { am: 'እውነት', en: 'true' },
-  FALSE: { am: 'ሐሰት', en: 'false' },
-  NOTHING: { am: 'ምንም', en: 'nothing' },
-  TYPE_NUM: { am: 'የቁጥር አይነት', en: 'the number type' },
-  TYPE_BOOL: { am: 'የእውነታ አይነት', en: 'the truth type' },
-  TYPE_STRING: { am: 'የጽሁፍ አይነት', en: 'the text type' },
-  TYPE_LIST: { am: 'የስብስብ አይነት', en: 'the collection type' },
-  RESERVED_NEW: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_BREAK: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_CONTINUE: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-  RESERVED_CHAR: { am: 'ለወደፊት የተያዘ', en: 'reserved for a future version' },
-};
 
 const STAGE_TITLE: Record<string, { am: string; en: string }> = {
   AH1: { am: 'የቃላት ስተቶች', en: 'Lexical errors' },
@@ -184,69 +151,6 @@ ${rows}
  * documentation was written beside the language and described a language the
  * implementation did not have.
  */
-const BUILTIN_GLOSS: Record<string, { sig: string; am: string; en: string }> = {
-  ጻፍ: {
-    sig: 'ጻፍ(…)',
-    am: 'እያንዳንዱን ግቤት በክፍተት ለያይቶ ይጽፋል',
-    en: 'prints its arguments, space-separated',
-  },
-  ርዝመት: {
-    sig: 'ርዝመት(ጽሁፍ | ስብስብ)',
-    am: 'የፊደል ወይም የዕቃ ብዛት',
-    en: 'length, in code points or elements',
-  },
-  ጨምር: { sig: 'ጨምር(ስብስብ፣ ዕቃ)', am: 'ዕቃውን በስብስቡ ላይ ይጨምራል', en: 'appends to the list, in place' },
-  ሰርዝ: { sig: 'ሰርዝ(ስብስብ፣ ቦታ)', am: 'ከስብስቡ ያንን ቦታ ያስወግዳል', en: 'removes that position, in place' },
-  ቅጂ_አድርግ: { sig: 'ቅጂ_አድርግ(ስብስብ)', am: 'ራሱን የቻለ አዲስ ስብስብ', en: 'a shallow copy' },
-  አይነት: { sig: 'አይነት(ማንኛውም)', am: 'የዋጋውን አይነት ስም', en: 'the name of the value’s type' },
-  አንብብ: { sig: 'አንብብ() | አንብብ(ጽሁፍ)', am: 'አንድ መስመር ግቤት ያነባል', en: 'reads one line of input' },
-  ወደ_ቁጥር: { sig: 'ወደ_ቁጥር(ጽሁፍ | ቁጥር)', am: 'ጽሁፉ የሚወክለውን ቁጥር', en: 'the number the text spells' },
-  ወደ_ጽሁፍ: { sig: 'ወደ_ጽሁፍ(ማንኛውም)', am: 'ጻፍ የሚጽፈው ጽሁፍ', en: 'what ጻፍ would have printed' },
-  ቁጥር_ነው: { sig: 'ቁጥር_ነው(ማንኛውም)', am: 'ወደ_ቁጥር ይሠራ አይሠራ', en: 'whether ወደ_ቁጥር would succeed' },
-  ዘፈቀደ_ቁጥር: {
-    sig: 'ዘፈቀደ_ቁጥር(ሀ፣ ለ)',
-    am: 'ከሁለቱ ጫፎች ጨምሮ የአጋጣሚ ሙሉ ቁጥር',
-    en: 'a random integer, both ends included',
-  },
-  ዘር: { sig: 'ዘር(ቁጥር)', am: 'የአጋጣሚውን ቅደም ተከተል ያስጀምራል', en: 'restarts the random sequence' },
-  ወለል_ዋጋ: { sig: 'ወለል_ዋጋ(ቁጥር)', am: 'ከሱ በታች ያለው ሙሉ ቁጥር', en: 'the whole number at or below' },
-  ጣሪያ_ዋጋ: { sig: 'ጣሪያ_ዋጋ(ቁጥር)', am: 'ከሱ በላይ ያለው ሙሉ ቁጥር', en: 'the whole number at or above' },
-  ቅርብ_ሙሉ_ቁጥር: {
-    sig: 'ቅርብ_ሙሉ_ቁጥር(ቁጥር)',
-    am: 'ወደ ቀረበው ሙሉ ቁጥር',
-    en: 'the nearest whole number; a half goes up',
-  },
-  ፍጹም_ዋጋ: { sig: 'ፍጹም_ዋጋ(ቁጥር)', am: 'ከዜሮ ያለው ርቀት', en: 'its distance from zero' },
-  ከፋፍል: { sig: 'ከፋፍል(ጽሁፍ[፣ መለያ])', am: 'ጽሁፉን ከፋፍሎ ስብስብ ይሰጣል', en: 'splits text into a list' },
-  ጽሁፍ_አድርግ: {
-    sig: 'ጽሁፍ_አድርግ(ስብስብ[፣ መለያ])',
-    am: 'የስብስቡን ዕቃዎች አገናኝቶ ጽሁፍ',
-    en: 'joins a list into text',
-  },
-  ከርክም: { sig: 'ከርክም(ጽሁፍ)', am: 'ከጫፎቹ ክፍተት ያስወግዳል', en: 'trims surrounding whitespace' },
-  ወደ_ግዕዝ: {
-    sig: 'ወደ_ግዕዝ(ቁጥር)',
-    am: 'ቁጥሩን በግዕዝ አኃዝ ይጽፋል',
-    en: 'writes the number in Ge’ez numerals',
-  },
-  ዛሬ: { sig: 'ዛሬ()', am: 'ዛሬ በኢትዮጵያ አቆጣጠር፦ [ዓመት፣ ወር፣ ቀን]', en: 'today in the Ethiopian calendar' },
-  ከግሪጎሪ: { sig: 'ከግሪጎሪ(ዓመት፣ ወር፣ ቀን)', am: 'የግሪጎሪውን ቀን ወደ ኢትዮጵያው', en: 'converts a Gregorian date' },
-  ወር_መጠሪያ: {
-    sig: 'ወር_መጠሪያ(ቁጥር)',
-    am: 'የወሩ ስም — ዓመቱ አሥራ ሦስት ወር አለው',
-    en: 'the month’s name; the year has thirteen',
-  },
-
-  ደምር: { sig: 'ደምር(ስብስብ)', am: 'የዕቃዎቹ ድምር', en: 'the sum of the elements' },
-  ቁጠር: { sig: 'ቁጠር(ስብስብ፣ ዕቃ)', am: 'ዕቃው ስንት ጊዜ እንዳለ', en: 'how many elements equal it' },
-  ፈልግ: { sig: 'ፈልግ(ስብስብ፣ ዕቃ)', am: 'የመጀመሪያው ቦታ፤ ከሌለ ምንም', en: 'the first position, or ምንም' },
-  ከፍተኛው: { sig: 'ከፍተኛው(ስብስብ)', am: 'ትልቁ ዕቃ', en: 'the largest element' },
-  ዝቅተኛው: { sig: 'ዝቅተኛው(ስብስብ)', am: 'ትንሹ ዕቃ', en: 'the smallest element' },
-  ደርድር: { sig: 'ደርድር(ስብስብ)', am: 'ስብስቡን በቦታው ይደረድራል', en: 'sorts the list, in place' },
-  ገልብጥ: { sig: 'ገልብጥ(ስብስብ)', am: 'ስብስቡን በቦታው ይገለብጣል', en: 'reverses the list, in place' },
-  መዝገብ: { sig: 'መዝገብ()', am: 'የቁልፍ-ዋጋ ማኅደር (ክላስ)', en: 'a key–value map (a class)' },
-};
-
 /**
  * The names a program actually finds pre-bound, read from a real interpreter
  * with the standard library loaded — not retyped here.
@@ -261,60 +165,98 @@ function preBound(): { builtins: string[]; library: string[] } {
   };
 }
 
-function glossRows(names: readonly string[], s: Strings): string {
-  const missing = names.filter((name) => BUILTIN_GLOSS[name] === undefined);
+/**
+ * The functions, as cards rather than table rows.
+ *
+ * A table forced each entry into a line, and these entries have four things
+ * to say: what it takes, what it gives back, why it behaves as it does, and
+ * what an example prints. They are given the room.
+ */
+function card(entry: FnEntry, s: Strings): string {
+  const { tokens } = tokenize(entry.eg);
+  const code = highlight({ source: entry.eg, tokens }).replace(/\n/g, '&#10;');
+  const takesLabel = s.code === 'am' ? 'ይቀበላል' : 'Takes';
+  const givesLabel = s.code === 'am' ? 'ይመልሳል' : 'Gives back';
+  const noneLabel = s.code === 'am' ? 'ምንም ግቤት የለውም' : 'nothing';
+
+  const params =
+    entry.takes.length === 0
+      ? `<p class="fn-none">${escapeHtml(noneLabel)}</p>`
+      : `<dl class="fn-params">${entry.takes
+          .map(
+            (t) => `<dt><code>${escapeHtml(t.n)}</code> <span>${escapeHtml(t.t)}</span></dt>
+<dd>${escapeHtml(t[s.code])}</dd>`,
+          )
+          .join('\n')}</dl>`;
+
+  return `<section class="fn" id="fn-${encodeURIComponent(entry.sig)}">
+  <h3 class="fn-sig"><code>${escapeHtml(entry.sig)}</code></h3>
+  <p class="fn-lead">${escapeHtml(entry[s.code])}</p>
+
+  <div class="fn-io">
+    <div>
+      <h4>${escapeHtml(takesLabel)}</h4>
+      ${params}
+    </div>
+    <div>
+      <h4>${escapeHtml(givesLabel)}</h4>
+      <dl class="fn-params">
+        <dt><code>${escapeHtml(entry.gives[s.code])}</code></dt>
+        <dd>${escapeHtml(s.code === 'am' ? entry.givesAm : entry.givesEn)}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <pre class="fn-eg"><code>${code}</code></pre>
+  <p class="fn-out"><span aria-hidden="true">→</span> <code>${escapeHtml(entry.out)}</code></p>
+</section>`;
+}
+
+function cards(names: readonly string[], s: Strings): string {
+  const known = new Set(FN_ENTRIES.map((entry) => entry.name));
+  const missing = names.filter((name) => !known.has(name));
   if (missing.length > 0) {
     throw new Error(`the reference has no meaning for: ${missing.join(', ')}`);
   }
-  return names
-    .map((name) => {
-      const g = BUILTIN_GLOSS[name] as { sig: string; am: string; en: string };
-      return `<tr><td class="ref-word"><code>${escapeHtml(g.sig)}</code></td><td>${escapeHtml(
-        g[s.code],
-      )}</td></tr>`;
-    })
-    .join('\n');
+  const wanted = new Set(names);
+  return FN_ENTRIES.filter((entry) => wanted.has(entry.name))
+    .map((entry) => card(entry, s))
+    .join('\n\n');
 }
 
 export function builtinTable(s: Strings): string {
   const { builtins, library } = preBound();
-  const head = `<thead><tr><th>${s.code === 'am' ? 'ተግባር' : 'Function'}</th><th>${
-    s.code === 'am' ? 'ምን እንደሚሠራ' : 'What it does'
-  }</th></tr></thead>`;
+
+  // Every entry must name something that is actually pre-bound, or the page
+  // documents a function nobody can call.
+  const bound = new Set([...builtins, ...library]);
+  const ghosts = FN_ENTRIES.filter((entry) => !bound.has(entry.name)).map((entry) => entry.name);
+  if (ghosts.length > 0) {
+    throw new Error(`the reference documents names that are not pre-bound: ${ghosts.join(', ')}`);
+  }
 
   return `<p>${escapeHtml(
     s.code === 'am'
       ? 'እነዚህ ስሞች ቀድመው ተጭነዋል። ቁልፍ ቃላት አይደሉም፤ ስለዚህ በራስህ ኮድ ልትሸፍናቸው ትችላለህ — ያኔ ግን ስተቱ ይነግርሃል።'
       : 'These names are pre-bound. They are not keywords, so your own code may shadow them — and the error says so when it does.',
   )}</p>
-${wrapped(`<table class="ref">${head}
-  <tbody>
-${glossRows(builtins, s)}
-  </tbody>
-</table>`)}
 
-<h3>${escapeHtml(s.code === 'am' ? 'መደበኛው ቤተ-መጻሕፍት' : 'The standard library')}</h3>
+<div class="fns">
+${cards(builtins, s)}
+</div>
+
+<h3 class="fns-head">${escapeHtml(s.code === 'am' ? 'መደበኛው ቤተ-መጻሕፍት' : 'The standard library')}</h3>
 <p>${escapeHtml(
     s.code === 'am'
-      ? 'እነዚህ በአሃዱ ራሱ ተጽፈዋል፤ ልክ እንደ ራስህ ፕሮግራም ማንበብ ትችላቸዋለህ።'
-      : 'These are written in Ahadu itself — you can read them as you would read your own program.',
+      ? 'እነዚህ በአሃዱ ራሱ ተጽፈዋል፤ ልክ እንደ ራስህ ፕሮግራም ማንበብ ትችላቸዋለህ። ኮዱ ከታች አለ።'
+      : 'These are written in Ahadu itself — you can read them as you would read your own program. The source is below.',
   )}</p>
-${wrapped(`<table class="ref">${head}
-  <tbody>
-${glossRows(library, s)}
-  </tbody>
-</table>`)}`;
+
+<div class="fns">
+${cards(library, s)}
+</div>`;
 }
 
-/**
- * The standard library's own source.
- *
- * LANGUAGE.md §8.5 says the library is written in Ahadu so that a learner can
- * read it. That claim needs somewhere to point, and this is it: the actual
- * constant the interpreter loads, highlighted by the same lexer that
- * highlights every other snippet on the site. Nothing is retyped, so the page
- * cannot show a library that is not the one running.
- */
 export function librarySource(s: Strings): string {
   const { tokens } = tokenize(LIBRARY_SOURCE);
   return `<p>${escapeHtml(
@@ -325,7 +267,7 @@ export function librarySource(s: Strings): string {
 <div class="snip snip-fragment"><pre class="snip-code"><code>${highlight({
     source: LIBRARY_SOURCE,
     tokens,
-  })}</code></pre></div>`;
+  }).replace(/\n/g, '&#10;')}</code></pre></div>`;
 }
 
 export function referenceBody(s: Strings): string {

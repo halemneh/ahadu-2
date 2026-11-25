@@ -310,6 +310,71 @@ export function needsInput(tokens: readonly Token[]): boolean {
   return tokens.some((token) => token.type === 'IDENTIFIER' && token.value === READ_LINE);
 }
 
+/**
+ * The prompt each `አንብብ` in the program will print, in order.
+ *
+ * The dialog opens before the run, so the reader is asked for every line at
+ * once — and without this they are asked for them blind. The program knows
+ * what each one is for; the box in front of them did not say.
+ *
+ * An entry is `null` where the call has no prompt, because position matters:
+ * the third box is the third `አንብብ` whether or not the first two were
+ * labelled. Only a literal is reported — a prompt built at runtime is not
+ * knowable before the program runs, which is the same limit `needsInput`
+ * works under.
+ */
+export function inputPrompts(tokens: readonly Token[]): (string | null)[] {
+  const prompts: (string | null)[] = [];
+  tokens.forEach((token, i) => {
+    if (token.type !== 'IDENTIFIER' || token.value !== READ_LINE) return;
+    const open = tokens[i + 1];
+    const first = tokens[i + 2];
+    const after = tokens[i + 3];
+    if (open?.type !== 'LPAREN') return;
+    // Only when the literal is the *whole* argument. `አንብብ("ስም" + "፦ ")`
+    // would otherwise be reported as `ስም`, which is not what it prints —
+    // a half-right prompt is worse than admitting there is none.
+    const literal = first?.type === 'STRING' && after?.type === 'RPAREN';
+    prompts.push(literal ? String(first.value) : null);
+  });
+  return prompts;
+}
+
+/**
+ * Whether a read sits inside a loop, and so will happen more than once.
+ *
+ * This matters because the dialog collects every answer before the program
+ * starts. A read in a loop has **one** call in the source and many at run
+ * time, so listing the prompts alone tells a reader they need one line when
+ * they may need five — which is exactly how a guessing game ends after the
+ * first guess, the rest of its reads having been handed the empty string.
+ *
+ * A loop keyword earlier in the file and an indented `አንብብ` after it. Not a
+ * parse: the question is only whether to warn, and the cost of warning when
+ * the loop runs once is a sentence, while the cost of staying quiet is the
+ * reader's program not working.
+ */
+export function readsRepeatedly(tokens: readonly Token[]): boolean {
+  const indented = new Set<number>();
+  for (const token of tokens) if (token.type === 'INDENT') indented.add(token.line);
+
+  let sawLoop = false;
+  for (const token of tokens) {
+    if (token.type === 'KEYWORD' && (token.value === 'WHILE' || token.value === 'FOREACH')) {
+      sawLoop = true;
+    }
+    if (
+      sawLoop &&
+      token.type === 'IDENTIFIER' &&
+      token.value === READ_LINE &&
+      indented.has(token.line)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /** The example name shown in the menu, from its path. */
 export function exampleName(path: string): string {
   return (

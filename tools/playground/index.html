@@ -44,6 +44,13 @@
 
       <div class="spacer"></div>
 
+      <div class="find">
+        <input id="find" class="find-box" type="search" autocomplete="off" role="combobox"
+          aria-expanded="false" aria-controls="find-results" data-i18n-label="findLabel"
+          data-i18n-placeholder="findLabel" />
+        <ul id="find-results" class="find-results" role="listbox" hidden></ul>
+      </div>
+
       <button id="language" class="chip" type="button" data-i18n="languageToggle"></button>
       <button id="theme" class="chip" type="button" aria-live="off">◐</button>
       <button
@@ -145,6 +152,7 @@
       <span data-i18n="footer"></span>
       <nav class="foot-acts" data-i18n-label="footerActions">
         <a class="foot-act" id="report" href="https://github.com/halemneh/ahadu-2/issues/new" data-i18n="reportProblem"></a>
+        <button class="foot-act" type="button" id="contact-open" data-i18n="contact" hidden></button>
         <a class="foot-act" data-section="privacy" data-i18n="privacyLink"></a>
         <a class="foot-act" href="https://github.com/halemneh/ahadu-2">GitHub</a>
       </nav>
@@ -161,11 +169,61 @@
       <div class="ask-box" role="dialog" aria-modal="true" aria-labelledby="ask-title">
         <h2 id="ask-title" data-i18n="inputLabel"></h2>
         <p class="ask-why"><span data-i18n="inputWhy"></span> <span data-i18n="inputHint"></span></p>
+        <!-- Filled from the program's own `አንብብ` prompts before the dialog opens. -->
+        <ol id="ask-prompts" class="ask-prompts" hidden></ol>
+        <p id="ask-repeat" class="ask-repeat" data-i18n="inputRepeats" hidden></p>
         <textarea id="ask-input" spellcheck="false" data-i18n-label="inputLabel"></textarea>
         <div class="ask-actions">
           <button id="ask-cancel" type="button" data-i18n="cancel"></button>
           <button id="ask-run" class="run" type="button" data-i18n="run"></button>
         </div>
+      </div>
+    </div>
+
+
+    <!--
+      The contact dialog, the same component every other page carries
+      (shared/contact-dialog.ts). The messages it shows are per language and
+      this page does not know its language until the script runs, so they are
+      set as `data-` attributes by `fill()` rather than written in here.
+    -->
+    <div id="contact" class="modal" hidden data-endpoint="https://contact.ahaducode.com/">
+      <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="contact-title">
+        <h2 id="contact-title" data-i18n="contactTitle"></h2>
+        <p class="modal-why" data-i18n="contactLead"></p>
+
+        <form id="contact-form" novalidate>
+          <label class="field" for="contact-message">
+            <span data-i18n="contactMessage"></span>
+          </label>
+          <textarea id="contact-message" name="message" required spellcheck="false" maxlength="4000"></textarea>
+
+          <label class="field" for="contact-email">
+            <span data-i18n="contactEmail"></span>
+            <em data-i18n="contactEmailOptional"></em>
+          </label>
+          <input id="contact-email" name="email" type="email" autocomplete="email" maxlength="254"
+            data-i18n-placeholder="contactEmailHint" />
+
+          <!-- The honeypot, as on every other page. -->
+          <div class="trap" aria-hidden="true">
+            <label for="contact-website">Website</label>
+            <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div id="contact-turnstile"></div>
+
+          <p class="modal-note" data-i18n="contactPrivacy"></p>
+          <p id="contact-status" class="modal-status" role="status" tabindex="-1" hidden></p>
+          <p id="contact-fallback" class="modal-note" hidden>
+            <a href="https://github.com/halemneh/ahadu-2/issues/new" data-i18n="reportProblem"></a>
+          </p>
+
+          <div class="modal-actions">
+            <button id="contact-cancel" class="foot-act" type="button" data-i18n="cancel"></button>
+            <button id="contact-send" class="button" type="submit" data-i18n="contactSend"></button>
+          </div>
+        </form>
       </div>
     </div>
 

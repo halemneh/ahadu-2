@@ -708,3 +708,36 @@ button:focus-visible {
     transition: none;
   }
 }
+
+/*
+ * What the program is about to ask for.
+ *
+ * The dialog collects every answer before the run (view.ts explains why), so
+ * without this the reader is asked for three lines with nothing to say which
+ * is which. Numbered, because position is the only thing tying an answer to
+ * its question.
+ */
+.ask-prompts {
+  margin: 0 0 0.7rem;
+  padding-left: 1.4rem;
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.ask-prompts li {
+  font-family: var(--code);
+}
+
+.ask-prompts .ask-plain {
+  color: var(--muted);
+  font-family: var(--ui);
+  font-style: italic;
+}
+
+/* A read inside a loop asks more than once; the dialog has to say so. */
+.ask-repeat {
+  margin: 0 0 0.7rem;
+  color: var(--ink);
+  font-size: 0.88rem;
+}

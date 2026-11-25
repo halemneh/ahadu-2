@@ -1,7 +1,7 @@
 ---
 id: reference-index
 title: Language reference
-summary: Keywords and error codes
+summary: Keywords, functions and error codes
 order: 2
 ---
 

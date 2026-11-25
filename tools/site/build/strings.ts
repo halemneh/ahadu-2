@@ -45,6 +45,8 @@ export interface Strings {
   readonly skipToContent: string;
 
   readonly languageToggle: string;
+  /** The header search box. */
+  readonly findLabel: string;
   readonly themeToggle: string;
 
   // Snippets
@@ -122,6 +124,7 @@ const am: Strings = {
   skipToContent: 'ወደ ይዘቱ ዝለል',
 
   languageToggle: 'English',
+  findLabel: 'ማጣቀሻውን ፈልግ',
   themeToggle: 'ብርሃን ቀይር',
 
   run: '▸ አሂድ',
@@ -194,6 +197,7 @@ const en: Strings = {
   skipToContent: 'Skip to content',
 
   languageToggle: 'አማርኛ',
+  findLabel: 'Search the reference',
   themeToggle: 'Toggle theme',
 
   run: '▸ Run',

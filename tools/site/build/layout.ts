@@ -166,6 +166,25 @@ export function page(view: PageView): string {
 
       <div class="spacer"></div>
 
+      <!--
+        Searches the reference, from any page. The index is built in the
+        browser on the first keystroke, so this costs nothing until used.
+      -->
+      <div class="find">
+        <input
+          id="find"
+          class="find-box"
+          type="search"
+          autocomplete="off"
+          role="combobox"
+          aria-expanded="false"
+          aria-controls="find-results"
+          aria-label="${escapeHtml(s.findLabel)}"
+          placeholder="${escapeHtml(s.findLabel)}"
+        />
+        <ul id="find-results" class="find-results" role="listbox" hidden></ul>
+      </div>
+
       <a class="chip" href="${view.counterpart}" rel="alternate">${escapeHtml(s.languageToggle)}</a>
       <button class="chip" type="button" id="theme" aria-label="${escapeHtml(s.themeToggle)}">◐</button>
       <button

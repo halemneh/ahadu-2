@@ -405,12 +405,38 @@ a {
   line-height: 1.75;
   tab-size: 4;
   white-space: pre;
-  overflow-x: auto;
+}
+
+/*
+ * The painted copy does not scroll; the textarea over it does.
+ *
+ * They were the other way round, and the result was a scrollbar drawn across
+ * the code that could not be used: it belonged to the layer underneath, while
+ * the textarea on top swallowed the pointer and never scrolled. The textarea
+ * is the one with the caret and the keyboard, so it is the one that scrolls,
+ * and `client/main.ts` mirrors its `scrollLeft` onto the backdrop — which it
+ * always did, but never ran, because a `hidden` textarea emits no scroll
+ * event.
+ */
+/*
+ * A `<code>` inside a `<pre>` takes the `<pre>`'s font.
+ *
+ * It does not by default: the browser's own stylesheet gives `code` a
+ * `monospace` family, which beats inheritance. In the snippet editor that
+ * put the painted copy in one font and the textarea over it in another —
+ * measured, 371.5px against 300.7px for the same line. The caret therefore
+ * advanced in steps that did not match the letters under it, and the error
+ * grew along the line. The two layers must be set in one font or the overlay
+ * cannot work at all.
+ */
+pre code {
+  font: inherit;
 }
 
 .snip-backdrop {
   color: var(--ink);
   pointer-events: none;
+  overflow: hidden;
 }
 
 /* The textarea sits exactly over its painted copy, as in the playground. */
@@ -423,7 +449,8 @@ a {
   color: transparent;
   caret-color: var(--ink);
   outline: none;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .snip-input::selection {
@@ -992,9 +1019,18 @@ details.answer[open] summary {
  * short of the right margin by a different amount, which reads as a mistake
  * rather than as texture.
  */
+/*
+ * A grid of equal columns, not a flex row spread with `space-between`.
+ *
+ * `space-between` equalises the *gaps*, and Ethiopic glyphs are not all the
+ * same width — so every row started and ended flush but no column lined up
+ * with the one above it. Fourteen equal tracks put glyph N at the same place
+ * on every row, which is what makes it read as a chart.
+ */
 .fidel span {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(14, minmax(0, 1fr));
+  justify-items: center;
   overflow: hidden;
 }
 
@@ -1149,5 +1185,124 @@ body:has(.fidel) .foot {
   .fidel {
     font-size: 1.8rem;
     letter-spacing: 0.9rem;
+  }
+}
+
+/* ---- the reference's functions ---- */
+
+/*
+ * One card per form, not one row per name.
+ *
+ * `ርዝመት(ጽሁፍ)` and `ርዝመት(ስብስብ)` are different questions with different
+ * answers, and a table row gave each of them one line to answer in. Each
+ * card has room for what it takes, what it gives back, why it behaves as it
+ * does, and a worked example.
+ */
+.fns {
+  display: grid;
+  gap: 1rem;
+  margin: 1.4rem 0 2.5rem;
+}
+
+.fns-head {
+  margin-top: 2.5rem;
+}
+
+.fn {
+  padding: 1.4rem 1.5rem;
+  border-radius: 18px;
+  background: var(--surface-1);
+}
+
+.fn-sig {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+}
+
+.fn-sig code {
+  background: none;
+  padding: 0;
+  font-weight: 700;
+}
+
+.fn-lead {
+  margin: 0 0 1.1rem;
+  max-width: 44rem;
+}
+
+.fn-io {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  margin-bottom: 1.1rem;
+}
+
+.fn-io h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fn-params {
+  margin: 0;
+}
+
+.fn-params dt {
+  margin-bottom: 0.1rem;
+}
+
+.fn-params dt span {
+  margin-left: 0.4rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.fn-params dd {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.fn-params dd:last-child {
+  margin-bottom: 0;
+}
+
+.fn-none {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-style: italic;
+}
+
+.fn-eg {
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: var(--bg);
+  font-family: var(--code);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  overflow-x: auto;
+}
+
+.fn-out {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.fn-out code {
+  color: var(--ink);
+  font-family: var(--code);
+}
+
+@media (max-width: 640px) {
+  .fn-io {
+    grid-template-columns: 1fr;
   }
 }
