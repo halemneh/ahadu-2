@@ -111,22 +111,26 @@ export function keywordTable(s: Strings): string {
 ${rows}
   </tbody>
 </table>`,
-    s,
   );
 }
 
 /**
- * Puts a table in a box that can scroll sideways on a narrow screen.
+ * Puts a table in a box that can scroll sideways rather than overflow the
+ * page.
  *
- * Two columns of Ge'ez do not fit across a phone, and the alternative —
- * shrinking the type — is the one thing a syllabary cannot take. The
- * wrapper is focusable and labelled because a scrolling region that cannot
- * be reached with a keyboard is a region some readers simply cannot read
- * (WCAG 2.2 §2.1.1); `role="region"` is what makes the name be announced.
+ * It is insurance, not the plan: the table is sized to fit at any width,
+ * because two columns that wrap read better than two columns you have to
+ * drag. The alternative — shrinking the type until it fits — is the one
+ * thing a syllabary cannot take.
+ *
+ * No `tabindex` or `role` on the wrapper. A scrolling region does need to be
+ * reachable from a keyboard, but this one does not scroll at any width the
+ * audit measures, and a tab stop that does nothing is worse than none;
+ * browsers make a container that genuinely overflows focusable by
+ * themselves. The tables are already announced by the headings above them.
  */
-function wrapped(table: string, s: Strings): string {
-  const label = escapeHtml(s.referenceTitle);
-  return `<div class="table-wrap" role="region" aria-label="${label}" tabindex="0">
+function wrapped(table: string): string {
+  return `<div class="table-wrap">
 ${table}
 </div>`;
 }
@@ -159,7 +163,6 @@ ${wrapped(
 ${rows}
   </tbody>
 </table>`,
-  s,
 )}`;
     })
     .join('\n\n');

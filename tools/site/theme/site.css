@@ -272,9 +272,10 @@ a {
 /*
  * The reference tables are two columns of Ge'ez and they are wide. Rather
  * than shrink the type — which for a syllabary is where legibility goes
- * first — they scroll sideways inside their own box on a narrow screen, and
- * `tabindex` on the wrapper makes that scroll reachable from the keyboard,
- * which an overflow container does not get on its own.
+ * first — the cells wrap, and `min-width` stops at the width available so
+ * that nothing is ever cut off the right-hand edge. The box can still
+ * scroll if some future row refuses to wrap, but at every width the audit
+ * measures it does not have to.
  */
 .table-wrap {
   margin: 0 0 1.4rem;
@@ -283,7 +284,7 @@ a {
 
 .doc table.ref {
   width: 100%;
-  min-width: 22rem;
+  min-width: min(22rem, 100%);
   margin: 0;
   border-collapse: collapse;
   font-size: 1rem;
