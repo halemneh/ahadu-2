@@ -100,7 +100,8 @@ describe('LIBRARY_NAMES matches what the prelude defines', () => {
     const { host } = capture();
     const interpreter = withLibrary(host);
     for (const name of LIBRARY_NAMES) {
-      expect(interpreter.globals.get(name)?.kind, name).toBe('function');
+      // `ካርታ` is a `ክላስ`; both kinds are callable (§8.6).
+      expect(['function', 'class'], name).toContain(interpreter.globals.get(name)?.kind);
     }
   });
 });
@@ -113,7 +114,10 @@ describe('the spec table matches the library (§8.6)', () => {
     expect(start).toBeGreaterThan(0);
     // Bounded at the section's end, or the slice runs on into §9's catalogue.
     const rest = spec.slice(start);
-    const table = rest.slice(0, rest.indexOf('\n---'));
+    // Bounded at the first subsection too: `ካርታ`'s own method table sits
+    // below it and its rows look identical to a function row.
+    const end = Math.min(...[rest.indexOf('\n---'), rest.indexOf('\n#### ')].filter((i) => i > 0));
+    const table = rest.slice(0, end);
     const listed = [...table.matchAll(/^\| `([^`]+)` \| `/gm)].map((m) => m[1] as string);
     expect(listed.sort()).toEqual([...LIBRARY_NAMES].sort());
   });

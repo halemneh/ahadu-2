@@ -1,0 +1,26 @@
+# ካርታ gives key–value storage without the language having a key–value type
+# (§8.6). It is a ክላስ in the library, holding two lists.
+# expect: 23
+# expect: እውነት ሃሰት
+# expect: 2
+# expect: ["አበበ"፣ "ከበደ"]
+# expect: 1 ምንም
+# expect: 0
+ዕድሜ = ካርታ()
+ዕድሜ.አስገባ("አበበ"፣ 22)
+ዕድሜ.አስገባ("ከበደ"፣ 30)
+
+# A second አስገባ on the same key replaces the value.
+ዕድሜ.አስገባ("አበበ"፣ 23)
+ጻፍ(ዕድሜ.አግኝ("አበበ"))
+
+ጻፍ(ዕድሜ.አለው("ከበደ")፣ ዕድሜ.አለው("ዘለቀ"))
+ጻፍ(ዕድሜ.ብዛት())
+ጻፍ(ዕድሜ.ቁልፎቹ())
+
+ዕድሜ.አውጣ("ከበደ")
+ጻፍ(ዕድሜ.ብዛት()፣ ዕድሜ.አግኝ("ከበደ"))
+
+# Each ካርታ has its own lists; an attribute default is per instance.
+ሁለተኛ = ካርታ()
+ጻፍ(ሁለተኛ.ብዛት())

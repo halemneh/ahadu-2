@@ -1,0 +1,25 @@
+# There is no integer division — `7 / 2` is 3.5 and `//` is not an operator —
+# so ወደታች is how a program divides and keeps a whole number (§8.7).
+# expect: 3 4 3 2
+# expect: 7 0
+# expect: ["አበበ"፣ "ከበደ"]
+# expect: ["ሀ"፣ ""፣ "ለ"]
+# expect: ["ሰ"፣ "ላ"፣ "ም"]
+# expect: አበበ ከበደ
+# expect: 1-2-3
+# expect: [ሰላም]
+ጻፍ(ወደታች(7 / 2)፣ ወደላይ(7 / 2)፣ አቅርብ(2.5)፣ አቅርብ(2.4))
+ጻፍ(ፍጹም(0 - 7)፣ ፍጹም(0))
+
+# One argument splits on runs of whitespace and drops the empties.
+ጻፍ(ከፋፍል("  አበበ   ከበደ  "))
+
+# A named separator keeps them: a program counting fields wants to know.
+ጻፍ(ከፋፍል("ሀ,,ለ"፣ ","))
+
+# An empty separator gives the code points, as ርዝመት counts them (§4.3).
+ጻፍ(ከፋፍል("ሰላም"፣ ""))
+
+ጻፍ(አገናኝ(["አበበ"፣ "ከበደ"]))
+ጻፍ(አገናኝ([1፣ 2፣ 3]፣ "-"))
+ጻፍ("[" + ከርክም("   ሰላም   ") + "]")

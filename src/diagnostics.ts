@@ -75,6 +75,7 @@ export const AH3017 = 'AH3017';
 export const AH3018 = 'AH3018';
 export const AH3019 = 'AH3019';
 export const AH3020 = 'AH3020';
+export const AH3021 = 'AH3021';
 
 /**
  * Default Amharic text, keyed by code.
@@ -126,6 +127,7 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH3018]: 'ፕሮግራሙ ከመጠን በላይ ረዘመ።',
   [AH3019]: 'ጽሁፉ ቁጥር አይደለም።',
   [AH3020]: 'የአጋጣሚው ክልል አይሰራም።',
+  [AH3021]: 'ይህ ቁጥር በግዕዝ አይጻፍም።',
 };
 
 export function diagnostic(

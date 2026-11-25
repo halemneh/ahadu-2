@@ -35,8 +35,9 @@ import {
   AH3018,
   AH3019,
   AH3020,
+  AH3021,
 } from '../diagnostics.js';
-import { parseNumericText } from '../numeric.js';
+import { MAX_GEEZ, parseNumericText, trimText, writeGeezNumeral } from '../numeric.js';
 import type {
   AssignTarget,
   AttributeDeclaration,
@@ -1201,6 +1202,116 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
       interpreter.fail(AH3020, at, err.badRandomRange(render(low), render(high)));
     }
     return num(interpreter.nextInt(low.value, high.value));
+  });
+
+  // -------------------------------------------------------------------------
+  // Whole numbers
+  //
+  // Host built-ins rather than library source because the obvious Ahadu
+  // definition of a floor is `ቁ - (ቁ % 1)`, and `7.6 % 1` is
+  // `0.5999999999999996`. A learner reading that in the library would be
+  // reading a lie about arithmetic (§8.5).
+  // -------------------------------------------------------------------------
+
+  /** Shared shape for the one-number built-ins. */
+  const numeric = (name: string, apply: (value: number) => number): void => {
+    define(name, (args, at) => {
+      arity(name, args, 1, at);
+      const value = args[0] as Value;
+      if (value.kind !== 'number') {
+        interpreter.fail(AH3002, at, err.illegalUnary(`"${name}"`, typeName(value)));
+      }
+      return num(apply(value.value));
+    });
+  };
+
+  numeric('ወደታች', Math.floor);
+  numeric('ወደላይ', Math.ceil);
+  // Half goes up, toward positive infinity, so አቅርብ(2.5) is 3 and
+  // አቅርብ(0 - 2.5) is -2. Documented in §8.7 rather than left to be discovered.
+  numeric('አቅርብ', Math.round);
+  numeric('ፍጹም', Math.abs);
+
+  // -------------------------------------------------------------------------
+  // Text
+  // -------------------------------------------------------------------------
+
+  define('ከፋፍል', (args, at) => {
+    if (args.length < 1 || args.length > 2) {
+      interpreter.fail(AH3010, at, err.argumentCount('ከፋፍል', 2, args.length));
+    }
+    const text = args[0] as Value;
+    if (text.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከፋፍል"', typeName(text)));
+    }
+
+    // One argument: split on runs of whitespace and drop the empties, which is
+    // what reading words off a line of input wants. Leading and trailing
+    // spaces then cost nothing, as they do for `ወደቁጥር` (§8.3).
+    if (args.length === 1) {
+      const trimmed = trimText(text.value);
+      return list(
+        trimmed.length === 0 ? [] : trimmed.split(/[\s\u00a0]+/u).map((part) => str(part)),
+      );
+    }
+
+    const separator = args[1] as Value;
+    if (separator.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከፋፍል"', typeName(separator)));
+    }
+    // An empty separator gives the code points, matching how `ርዝመት` counts
+    // and how `ለእያንዳንዱ` walks a `ጽሁፍ` (§4.3).
+    if (separator.value.length === 0) {
+      return list(codePoints(text.value).map((ch) => str(ch)));
+    }
+    return list(text.value.split(separator.value).map((part) => str(part)));
+  });
+
+  define('አገናኝ', (args, at) => {
+    if (args.length < 1 || args.length > 2) {
+      interpreter.fail(AH3010, at, err.argumentCount('አገናኝ', 2, args.length));
+    }
+    const items = expectList('አገናኝ', args, at).items;
+
+    let separator = ' ';
+    if (args.length === 2) {
+      const given = args[1] as Value;
+      if (given.kind !== 'string') {
+        interpreter.fail(AH3002, at, err.illegalUnary('"አገናኝ"', typeName(given)));
+      }
+      separator = given.value;
+    }
+
+    // Elements are rendered as `ጻፍ` would print them, so a list of numbers
+    // joins without a conversion step and there is one rendering to learn
+    // (§8.1). The default separator is a space for the same reason: it is
+    // what `ጻፍ` puts between its arguments.
+    return str(items.map((item) => render(item)).join(separator));
+  });
+
+  define('ከርክም', (args, at) => {
+    arity('ከርክም', args, 1, at);
+    const text = args[0] as Value;
+    if (text.kind !== 'string') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ከርክም"', typeName(text)));
+    }
+    return str(trimText(text.value));
+  });
+
+  define('ወደግዕዝ', (args, at) => {
+    arity('ወደግዕዝ', args, 1, at);
+    const value = args[0] as Value;
+    if (value.kind !== 'number') {
+      interpreter.fail(AH3002, at, err.illegalUnary('"ወደግዕዝ"', typeName(value)));
+    }
+    const written = writeGeezNumeral(value.value);
+    // §3.4.1 reads Ge'ez numerals; this is the other direction, so the
+    // language can show a number in Amharic's own numerals and not only read
+    // them. The two are round-trip tested against each other.
+    if (written === null) {
+      interpreter.fail(AH3021, at, err.noGeezSpelling(render(value), MAX_GEEZ));
+    }
+    return str(written);
   });
 
   define('ዘር', (args, at) => {

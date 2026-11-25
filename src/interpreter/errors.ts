@@ -176,3 +176,16 @@ export function insideLibrary(name: string, message: string): string {
   const what = message.length > 0 ? `${message} ` : '';
   return `${what}(በ"${name}" ውስጥ ተከሰተ።)`;
 }
+
+/**
+ * The message for `ወደግዕዝ` on a number with no Ge'ez spelling (§8.7).
+ *
+ * Says *why* rather than only that it failed. Zero is the interesting case:
+ * the system is additive, built from symbols that each carry a value, with
+ * nothing standing for none — so the absence of a spelling for zero is a fact
+ * about Ge'ez numerals and worth learning, not a gap in the implementation.
+ */
+export function noGeezSpelling(value: string, limit: number): string {
+  if (value === '0') return 'ዜሮ በግዕዝ ቁጥር አይጻፍም፤ የግዕዝ ቁጥሮች ከ፩ ይጀምራሉ።';
+  return `${value} በግዕዝ አይጻፍም፤ ከ1 እስከ ${limit} ያለ ሙሉ ቁጥር ያስፈልጋል።`;
+}

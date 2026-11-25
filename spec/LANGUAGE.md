@@ -887,8 +887,8 @@ Semantics:
 
 ## 8. Built-in functions
 
-These twelve names are pre-bound in the global scope. They are not keywords
-and MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
+These twenty names are pre-bound in the global scope, alongside the standard
+library's (§8.5). They are not keywords and MAY be shadowed by user code. v1-py declared `ጻፍ`, `አዋህድ`, and `ሰርዝ` as
 keywords but implemented only `ጻፍ`; calling either other one crashed the
 interpreter with a Python exception (CHANGES §C13).
 
@@ -906,6 +906,14 @@ interpreter with a Python exception (CHANGES §C13).
 | `ቁጥርነው` | `ቁጥርነው(any)` | `እውነታ` — whether `ወደቁጥር` would succeed. Never fails |
 | `አጋጣሚ` | `አጋጣሚ(ቁጥር፣ ቁጥር)` | a `ቁጥር` drawn from the two bounds **inclusive**; `AH3020` on bounds it cannot use (§8.4) |
 | `ዘር` | `ዘር(ቁጥር)` | **restarts `አጋጣሚ` from that seed**; returns `ምንም` (§8.4) |
+| `ወደታች` | `ወደታች(ቁጥር)` | the whole number at or below it (§8.7) |
+| `ወደላይ` | `ወደላይ(ቁጥር)` | the whole number at or above it (§8.7) |
+| `አቅርብ` | `አቅርብ(ቁጥር)` | the nearest whole number; a half goes up (§8.7) |
+| `ፍጹም` | `ፍጹም(ቁጥር)` | its distance from zero |
+| `ከፋፍል` | `ከፋፍል(ጽሁፍ)` or `ከፋፍል(ጽሁፍ፣ ጽሁፍ)` | `ስብስብ` of pieces (§8.7) |
+| `አገናኝ` | `አገናኝ(ስብስብ)` or `አገናኝ(ስብስብ፣ ጽሁፍ)` | `ጽሁፍ` — the elements joined (§8.7) |
+| `ከርክም` | `ከርክም(ጽሁፍ)` | the text with surrounding whitespace removed |
+| `ወደግዕዝ` | `ወደግዕዝ(ቁጥር)` | `ጽሁፍ` in Ge'ez numerals; `AH3021` when it has no spelling (§8.7) |
 
 `ርዝመት`, `ቅጂ`, `አይነት`, and `አንብብ` are new in 2.0. Without `ርዝመት` there is no
 way to walk a list whose length is not already known, which is why every v1
@@ -1113,9 +1121,111 @@ teaches it.
 | --- | --- | --- |
 | `ደምር` | `ደምር(ስብስብ)` | `ቁጥር` — the sum of the elements; `0` for an empty list |
 | `ቁጠር` | `ቁጠር(ስብስብ፣ ዕቃ)` | `ቁጥር` — how many elements equal `ዕቃ`, by §6.3 equality |
+| `ፈልግ` | `ፈልግ(ስብስብ፣ ዕቃ)` | the first position holding `ዕቃ`, or **`ምንም`** when absent |
+| `ከፍተኛው` | `ከፍተኛው(ስብስብ)` | the largest element, by `>` |
+| `ዝቅተኛው` | `ዝቅተኛው(ስብስብ)` | the smallest element, by `<` |
+| `ደርድር` | `ደርድር(ስብስብ)` | **sorts in place**; returns `ምንም` |
+| `ገልብጥ` | `ገልብጥ(ስብስብ)` | **reverses in place**; returns `ምንም` |
+| `ካርታ` | `ካርታ()` | a new key–value map — a `ክላስ`, not a function (below) |
+
+`ፈልግ` answers `ምንም` and not `-1`, because `-1` is a perfectly good index in
+Ahadu — it is the last element (§6.5) — so using it as "absent" would make
+`ዝ[ፈልግ(ዝ፣ ዘ)]` quietly return the wrong element instead of failing.
+
+`ደርድር` and `ገልብጥ` change the list they are given and return `ምንም`, because
+they are imperatives and §4.5 says that is what an imperative does here. A
+sorted copy is `ተደርድሯል = ቅጂ(ዝ)` then `ደርድር(ተደርድሯል)`, which is two lines and
+teaches the copy.
+
+`ከፍተኛው` and `ዝቅተኛው` carry the definite `-ው` for a reason worth recording:
+`ከፍተኛ` and `ዝቅተኛ` without it are what a learner writes as a variable — the
+number-guessing example in `examples/` uses both — and §8.2's rule is that a
+pre-bound name should not be the word someone reaches for. The definite form
+also reads as what the function returns: "the highest one".
+
+#### `ካርታ`, the map
+
+Ahadu has no key–value type (§4.1), and adding one would mean literal syntax,
+key-equality rules, printing rules and a type keyword. `ካርታ` is a `ክላስ` in
+the library instead, holding two lists:
+
+| Method | Result |
+| --- | --- |
+| `አስገባ(ቁልፍ፣ ዋጋ)` | stores it, replacing any existing value for that key; `ምንም` |
+| `አግኝ(ቁልፍ)` | the value, or `ምንም` when the key is absent |
+| `አለው(ቁልፍ)` | `እውነታ` — whether the key is present |
+| `አውጣ(ቁልፍ)` | removes the pair if present; `ምንም` |
+| `ብዛት()` | `ቁጥር` — how many pairs |
+| `ቁልፎቹ()` | `ስብስብ` — a **copy** of the keys, in insertion order |
+
+Lookup is a linear scan, so `ካርታ` is for the tens of entries a teaching
+program has, not thousands.
+
+Method names here are nouns (`ብዛት`, `ቁልፎቹ`) and that is fine: §8.2's rule is
+about **global** names, and a method is reached through an object, so no
+variable can shadow it.
 
 This table is checked against the library's own source: a function the library
 defines and this table omits, or the reverse, fails the test suite.
+
+---
+
+### 8.7 Rounding, splitting, joining, and Ge'ez numerals
+
+These four are host built-ins and not library source, each for a reason §8.5
+names.
+
+**`ወደታች`, `ወደላይ`, `አቅርብ`** exist because **there is no integer division**:
+`7 / 2` is `3.5`, and `//` is not an operator. `ወደታች(7 / 2)` is how a program
+divides and keeps a whole number.
+
+They cannot be written in Ahadu. The obvious definition of a floor is
+`ቁ - (ቁ % 1)`, and `7.6 % 1` evaluates to `0.5999999999999996` — so a learner
+reading that in the library would be reading a lie about arithmetic, and one
+who stepped through it would be owed an explanation of binary floating point
+in lesson four.
+
+`አቅርብ` rounds a half **up**, toward positive infinity: `አቅርብ(2.5)` is `3` and
+`አቅርብ(-2.5)` is `-2`. Stated here because "round half up" and "round half away
+from zero" differ only on negatives, and a program that disagrees with its
+documentation about that is a bad day.
+
+**`ከፋፍል`** has two forms, and the difference is deliberate:
+
+- `ከፋፍል(ጽሁፍ)` splits on **runs of whitespace and drops empty pieces**, which
+  is what reading words off a line of input wants. Leading and trailing spaces
+  then cost nothing, exactly as they cost nothing for `ወደቁጥር` (§8.3), because
+  someone typing at a prompt adds a space without meaning anything by it.
+- `ከፋፍል(ጽሁፍ፣ መለያ)` splits on that exact separator and **keeps** empty
+  pieces, so `ከፋፍል("ሀ,,ለ"፣ ",")` has three elements. A program that asked for
+  a specific separator is counting fields, and a missing field is information.
+- An empty separator gives the code points, matching how `ርዝመት` counts and
+  how `ለእያንዳንዱ` walks a `ጽሁፍ` (§4.3).
+
+**`አገናኝ`** renders each element as `ጻፍ` would print it (§8.1), so a list of
+numbers joins with no conversion step and there is one rendering to learn. Its
+default separator is a space, for the same reason: that is what `ጻፍ` puts
+between its arguments, and it makes `አገናኝ(ከፋፍል(ዐ))` give back what it was
+given.
+
+**`ወደግዕዝ`** is the other direction of §3.4.1. The language has read Ge'ez
+numerals since 2.0; this lets it write them, so a program can show a number in
+Amharic's own numerals instead of only accepting them.
+
+It spells whole numbers from 1 to 99,999,999 — the range §3.4.1's grammar
+reaches, with at most one `፼` and one `፻` per part. Everything else is
+`AH3021`, and **zero is the interesting case**: the system is additive, built
+from symbols that each carry a value, with nothing standing for none. Zero
+having no Ge'ez numeral is a fact about the numerals, worth learning, so the
+message says it rather than reporting a range:
+
+```
+ዜሮ በግዕዝ ቁጥር አይጻፍም፤ የግዕዝ ቁጥሮች ከ፩ ይጀምራሉ።
+```
+
+A leading 1 before a separator is left out, because §3.4.1 reads an empty
+group before a separator as 1: a hundred is `፻`, not `፩፻`, and ten thousand is
+`፼`. `ወደቁጥር(ወደግዕዝ(ቁ))` MUST give back `ቁ` for every spellable `ቁ`.
 
 ---
 
@@ -1201,6 +1311,7 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3018` | step limit exceeded — `ፕሮግራሙ ከመጠን በላይ ረዘመ።` |
 | `AH3019` | `ወደቁጥር` on text that is not a number — `ጽሁፉ ቁጥር አይደለም።` |
 | `AH3020` | `አጋጣሚ` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
+| `AH3021` | `ወደግዕዝ` on a number with no Ge'ez spelling — `ይህ ቁጥር በግዕዝ አይጻፍም።` |
 
 ### 9.3 Recovery
 

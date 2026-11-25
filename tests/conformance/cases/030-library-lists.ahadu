@@ -1,0 +1,26 @@
+# The standard library, written in Ahadu itself (§8.5, §8.6).
+# expect: 10
+# expect: 2
+# expect: 2
+# expect: ምንም
+# expect: 9 1
+# expect: [1፣ 3፣ 4፣ 9]
+# expect: [3፣ 9፣ 1፣ 4]
+# expect: [9፣ 4፣ 3፣ 1]
+ጻፍ(ደምር([1፣ 2፣ 3፣ 4]))
+ጻፍ(ቁጠር([1፣ 2፣ 1]፣ 1))
+
+ዝ = [3፣ 9፣ 1፣ 4]
+ጻፍ(ፈልግ(ዝ፣ 1))
+ጻፍ(ፈልግ(ዝ፣ 99))
+ጻፍ(ከፍተኛው(ዝ)፣ ዝቅተኛው(ዝ))
+
+# ደርድር and ገልብጥ are imperatives, so they change the list and return ምንም
+# (§4.5). A sorted copy takes ቅጂ first.
+ተደርድሯል = ቅጂ(ዝ)
+ደርድር(ተደርድሯል)
+ጻፍ(ተደርድሯል)
+ጻፍ(ዝ)
+
+ገልብጥ(ተደርድሯል)
+ጻፍ(ተደርድሯል)
