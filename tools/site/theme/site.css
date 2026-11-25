@@ -418,6 +418,21 @@ a {
  * always did, but never ran, because a `hidden` textarea emits no scroll
  * event.
  */
+/*
+ * A `<code>` inside a `<pre>` takes the `<pre>`'s font.
+ *
+ * It does not by default: the browser's own stylesheet gives `code` a
+ * `monospace` family, which beats inheritance. In the snippet editor that
+ * put the painted copy in one font and the textarea over it in another —
+ * measured, 371.5px against 300.7px for the same line. The caret therefore
+ * advanced in steps that did not match the letters under it, and the error
+ * grew along the line. The two layers must be set in one font or the overlay
+ * cannot work at all.
+ */
+pre code {
+  font: inherit;
+}
+
 .snip-backdrop {
   color: var(--ink);
   pointer-events: none;
@@ -1173,68 +1188,121 @@ body:has(.fidel) .foot {
   }
 }
 
-/* ---- the reference's function tables ---- */
+/* ---- the reference's functions ---- */
 
 /*
- * Each row is a small article: the signature and what it gives back, then a
- * sentence, then an example you could paste into the playground with the
- * result it prints. The old table said only what a function was *called* —
- * which is the one thing a reader could already see from the name.
+ * One card per form, not one row per name.
+ *
+ * `ርዝመት(ጽሁፍ)` and `ርዝመት(ስብስብ)` are different questions with different
+ * answers, and a table row gave each of them one line to answer in. Each
+ * card has room for what it takes, what it gives back, why it behaves as it
+ * does, and a worked example.
  */
-.ref-fns td {
-  vertical-align: top;
+.fns {
+  display: grid;
+  gap: 1rem;
+  margin: 1.4rem 0 2.5rem;
 }
 
-.ref-fn {
-  white-space: nowrap;
+.fns-head {
+  margin-top: 2.5rem;
 }
 
-/* `inline-block`, so the code background hugs the signature instead of
-   stretching across the column as a bar. */
-.ref-sig {
-  display: inline-block;
+.fn {
+  padding: 1.4rem 1.5rem;
+  border-radius: 18px;
+  background: var(--surface-1);
+}
+
+.fn-sig {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+}
+
+.fn-sig code {
+  background: none;
+  padding: 0;
   font-weight: 700;
 }
 
-.ref-gives {
-  display: block;
-  margin-top: 0.25rem;
+.fn-lead {
+  margin: 0 0 1.1rem;
+  max-width: 44rem;
+}
+
+.fn-io {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  margin-bottom: 1.1rem;
+}
+
+.fn-io h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.fn-params {
+  margin: 0;
+}
+
+.fn-params dt {
+  margin-bottom: 0.1rem;
+}
+
+.fn-params dt span {
+  margin-left: 0.4rem;
   color: var(--muted);
   font-size: 0.82rem;
 }
 
-.ref-fns td p {
+.fn-params dd {
   margin: 0 0 0.6rem;
-  max-width: 34rem;
+  color: var(--muted);
+  font-size: 0.92rem;
 }
 
-.ref-eg {
+.fn-params dd:last-child {
+  margin-bottom: 0;
+}
+
+.fn-none {
   margin: 0;
-  padding: 0.6rem 0.8rem;
-  border-radius: 12px;
-  background: var(--surface-1);
-  font-family: var(--code);
+  color: var(--muted);
   font-size: 0.92rem;
-  line-height: 1.7;
+  font-style: italic;
+}
+
+.fn-eg {
+  margin: 0;
+  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  background: var(--bg);
+  font-family: var(--code);
+  font-size: 0.95rem;
+  line-height: 1.8;
   overflow-x: auto;
 }
 
-.ref-out {
+.fn-out {
   display: flex;
   gap: 0.5rem;
   align-items: baseline;
-  margin: 0.45rem 0 0 !important;
+  margin: 0.6rem 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
 
-.ref-out code {
-  font-family: var(--code);
+.fn-out code {
   color: var(--ink);
+  font-family: var(--code);
 }
 
 @media (max-width: 640px) {
-  .ref-fn {
-    white-space: normal;
+  .fn-io {
+    grid-template-columns: 1fr;
   }
 }
