@@ -949,7 +949,12 @@ details.answer[open] summary {
  */
 .fidel {
   position: absolute;
-  top: 0;
+  /*
+   * Below the header, not behind it. The bar is a solid surface, so a row
+   * that starts at the top of the document is simply hidden by it — the
+   * texture appeared to begin a row late.
+   */
+  top: 3.5rem;
   left: 0;
   width: 100%;
   /*
@@ -957,28 +962,31 @@ details.answer[open] summary {
    * that runs the length of the page stops being texture and becomes a
    * pattern the reader has to look past to read the prose below it.
    */
-  height: 42rem;
+  height: 40rem;
   z-index: 0;
   overflow: hidden;
   mask-image: linear-gradient(to bottom, #000 58%, transparent 100%);
   display: grid;
-  /* Each row is one `nowrap` line wider than any phone, so the column is
-     pinned to the container rather than sized to its contents. */
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  gap: 1.1rem;
-  padding: 2.5rem 0 0 1.5rem;
+  gap: 1.3rem;
+  padding: 2rem 1.4rem 0;
   color: var(--ink);
   opacity: 0.055;
   font-size: 2.4rem;
   line-height: 1;
-  letter-spacing: 1.3rem;
-  white-space: nowrap;
   pointer-events: none;
   user-select: none;
 }
 
+/*
+ * Spread, not spaced. A fixed letter-spacing leaves every row flush left and
+ * short of the right margin by a different amount, which reads as a mistake
+ * rather than as texture.
+ */
 .fidel span {
+  display: flex;
+  justify-content: space-between;
   overflow: hidden;
 }
 

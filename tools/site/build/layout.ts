@@ -29,17 +29,21 @@ import type { Section } from './content.js';
  * because those are the part of the script a programmer is least likely to
  * have seen and the part Ahadu actually computes with.
  *
- * `aria-hidden`: a screen reader announcing eighty-four syllables before the
+ * Each glyph is its own element so a row can be spread edge to edge rather
+ * than running off one side: the rows are different widths in the font, and
+ * a block of text could only ever be flush on one margin.
+ *
+ * `aria-hidden`: a screen reader announcing ninety-eight syllables before the
  * heading would be worse than no texture at all.
  */
 const FIDEL_GRID = `<div class="fidel" aria-hidden="true">
-      <span>ሀ ሁ ሂ ሃ ሄ ህ ሆ ለ ሉ ሊ ላ ሌ ል ሎ</span>
-      <span>ሐ ሑ ሒ ሓ ሔ ሕ ሖ መ ሙ ሚ ማ ሜ ም ሞ</span>
-      <span>ሠ ሡ ሢ ሣ ሤ ሥ ሦ ረ ሩ ሪ ራ ሬ ር ሮ</span>
-      <span>ሰ ሱ ሲ ሳ ሴ ስ ሶ ሸ ሹ ሺ ሻ ሼ ሽ ሾ</span>
-      <span>ቀ ቁ ቂ ቃ ቄ ቅ ቆ በ ቡ ቢ ባ ቤ ብ ቦ</span>
-      <span>ተ ቱ ቲ ታ ቴ ት ቶ ቸ ቹ ቺ ቻ ቼ ች ቾ</span>
-      <span>፩ ፪ ፫ ፬ ፭ ፮ ፯ ፰ ፱ ፲ ፳ ፴ ፻ ፼</span>
+      <span><i>ሀ</i><i>ሁ</i><i>ሂ</i><i>ሃ</i><i>ሄ</i><i>ህ</i><i>ሆ</i><i>ለ</i><i>ሉ</i><i>ሊ</i><i>ላ</i><i>ሌ</i><i>ል</i><i>ሎ</i></span>
+      <span><i>ሐ</i><i>ሑ</i><i>ሒ</i><i>ሓ</i><i>ሔ</i><i>ሕ</i><i>ሖ</i><i>መ</i><i>ሙ</i><i>ሚ</i><i>ማ</i><i>ሜ</i><i>ም</i><i>ሞ</i></span>
+      <span><i>ሠ</i><i>ሡ</i><i>ሢ</i><i>ሣ</i><i>ሤ</i><i>ሥ</i><i>ሦ</i><i>ረ</i><i>ሩ</i><i>ሪ</i><i>ራ</i><i>ሬ</i><i>ር</i><i>ሮ</i></span>
+      <span><i>ሰ</i><i>ሱ</i><i>ሲ</i><i>ሳ</i><i>ሴ</i><i>ስ</i><i>ሶ</i><i>ሸ</i><i>ሹ</i><i>ሺ</i><i>ሻ</i><i>ሼ</i><i>ሽ</i><i>ሾ</i></span>
+      <span><i>ቀ</i><i>ቁ</i><i>ቂ</i><i>ቃ</i><i>ቄ</i><i>ቅ</i><i>ቆ</i><i>በ</i><i>ቡ</i><i>ቢ</i><i>ባ</i><i>ቤ</i><i>ብ</i><i>ቦ</i></span>
+      <span><i>ተ</i><i>ቱ</i><i>ቲ</i><i>ታ</i><i>ቴ</i><i>ት</i><i>ቶ</i><i>ቸ</i><i>ቹ</i><i>ቺ</i><i>ቻ</i><i>ቼ</i><i>ች</i><i>ቾ</i></span>
+      <span><i>፩</i><i>፪</i><i>፫</i><i>፬</i><i>፭</i><i>፮</i><i>፯</i><i>፰</i><i>፱</i><i>፲</i><i>፳</i><i>፴</i><i>፻</i><i>፼</i></span>
     </div>`;
 
 export interface PageView {
