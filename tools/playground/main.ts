@@ -111,6 +111,15 @@ const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')];
 
 let current: Analysis = { tokens: [], diagnostics: [], rows: [] };
 /**
+ * The source `current` was produced from.
+ *
+ * Lexing is debounced, so between a keystroke and the debounce the tokens
+ * describe the program as it was. Anything that wants to repaint off-cycle —
+ * the caret's bracket match — checks this first, rather than painting the old
+ * token spans over the new text.
+ */
+let analysedSource = '';
+/**
  * The runtime error from the last run, if any.
  *
  * Kept apart from the live analysis so it can be shown *after* it rather than
@@ -119,6 +128,10 @@ let current: Analysis = { tokens: [], diagnostics: [], rows: [] };
  */
 let runtimeError: Reported | null = null;
 let hovered: Region | null = null;
+/** Where the caret is, so the bracket beside it can light up its partner. */
+let caret: number | null = null;
+/** Whether the caret had a bracket on either side of it a moment ago. */
+let caretWasOnBracket = false;
 let worker: Worker | null = null;
 /** The pending re-analysis, so a run can cancel it and do the work itself. */
 let timer: number | undefined;
@@ -230,6 +243,7 @@ function paintEditor(): void {
     tokens: current.tokens,
     diagnostics: current.diagnostics,
     hovered,
+    caret,
   });
   syncScroll();
 }
@@ -240,6 +254,34 @@ function syncScroll(): void {
   gutter.scrollTop = editor.scrollTop;
 }
 
+/* ---- bracket matching under the caret ---- */
+
+const BRACKET_CHARS = '()[]';
+
+function besideBracket(value: string, at: number): boolean {
+  return BRACKET_CHARS.includes(value[at - 1] ?? '') || BRACKET_CHARS.includes(value[at] ?? '');
+}
+
+/**
+ * Keeps the matched pair in step with the caret.
+ *
+ * Repainting the backdrop is an `innerHTML` write over the whole program, so
+ * it does not happen on every arrow key: only when a bracket is beside the
+ * caret now, or was a moment ago — which are exactly the moves that can
+ * change which pair is lit. Moving around inside a long body repaints
+ * nothing.
+ *
+ * It also waits for the debounce. Painting mid-keystroke would lay the
+ * previous program's token spans over the current text, which is worse than
+ * a match that arrives 150 ms late.
+ */
+function trackCaret(): void {
+  caret = editor.selectionStart;
+  const now = besideBracket(editor.value, caret);
+  if ((now || caretWasOnBracket) && editor.value === analysedSource) paintEditor();
+  caretWasOnBracket = now;
+}
+
 function updatePosition(): void {
   editorStatus.textContent = positionLabel(
     editor.value,
@@ -247,6 +289,7 @@ function updatePosition(): void {
     editor.selectionEnd,
     s,
   );
+  trackCaret();
 }
 
 /**
@@ -269,6 +312,7 @@ function paintErrors(): void {
 
 function refresh(): void {
   current = analyse(editor.value);
+  analysedSource = editor.value;
 
   gutter.textContent = gutterHtml(editor.value);
   paintEditor();
@@ -368,6 +412,14 @@ editor.addEventListener('mousemove', showTipAt);
 editor.addEventListener('mouseleave', hideTip);
 editor.addEventListener('scroll', hideTip);
 editor.addEventListener('blur', hideTip);
+
+// There is no caret when the editor does not have focus, so the matched pair
+// goes out with it rather than being left lit over code nobody is editing.
+editor.addEventListener('blur', () => {
+  caret = null;
+  if (caretWasOnBracket) paintEditor();
+  caretWasOnBracket = false;
+});
 
 // ---------------------------------------------------------------------------
 // Hover in a panel: a row lights up the source it covers (§2.1)
@@ -609,7 +661,7 @@ editor.addEventListener('input', () => {
   timer = window.setTimeout(refresh, DEBOUNCE_MS);
 });
 
-for (const event of ['click', 'keyup', 'select'] as const) {
+for (const event of ['click', 'keyup', 'select', 'focus'] as const) {
   editor.addEventListener(event, updatePosition);
 }
 

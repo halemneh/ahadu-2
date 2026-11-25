@@ -1,0 +1,159 @@
+/*
+ * Token colours, shared by the playground's editor and the site's snippets.
+ *
+ * These used to live in `tools/playground/styles.css`, which the site does
+ * not import — so every code sample on the site was emitted with `tk-*`
+ * classes and then rendered in one flat colour. The markup was right and
+ * nothing styled it. Here, both import the same file and the same lexer, so a
+ * sample in a lesson cannot be coloured differently from the same program in
+ * the editor.
+ *
+ * Every class here is painted from a `TokenType` the lexer actually emits
+ * (see `tools/playground/highlight.ts`), never from a regular expression. The
+ * colours themselves, and why they sit where they do on a luminance ladder,
+ * are in `tokens.css`.
+ *
+ * **Colour is never the only cue.** Each class that a reader has to tell from
+ * a neighbour also differs in weight, in style, or in the shape of what it
+ * paints, so the code is still readable with no colour vision at all:
+ *
+ *   keyword / type / literal   bold, against a plain identifier
+ *   reserved word              a dotted underline — it lexes but has no syntax
+ *   comment                    italic, and the quietest thing on the page
+ *   ፦ and ።                    bold: they are where a statement turns
+ *   bracket depth              three luminance steps, not three hues
+ *   the matched pair           a wash and full weight, not a tint alone
+ */
+
+/* ---- Ge'ez words: told apart by weight first, then by colour ---- */
+
+.tk-kw {
+  color: var(--kw);
+  font-weight: 700;
+}
+
+.tk-type {
+  color: var(--type);
+  font-weight: 700;
+}
+
+.tk-lit {
+  color: var(--lit);
+  font-weight: 700;
+}
+
+/*
+ * A reserved word lexes as a keyword but has no syntax in 2.0 — the parser
+ * answers AH2010. The dotted underline says "this is a word Ahadu knows and
+ * will not run", which no colour on its own could say.
+ */
+.tk-reserved {
+  color: var(--lit);
+  font-weight: 700;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+
+.tk-id {
+  color: var(--ink);
+}
+
+/* ---- shapes nothing else on the page uses ---- */
+
+.tk-str {
+  color: var(--str);
+}
+
+.tk-num {
+  color: var(--num);
+}
+
+.tk-op {
+  color: var(--op);
+}
+
+.tk-comment {
+  color: var(--comment);
+  font-style: italic;
+}
+
+/* ---- Ahadu's Ethiopic structure marks ---- */
+
+/*
+ * `፦` opens a block. In an English-based language that job is done by the
+ * keyword, which is already coloured; here it is done by a single mark, so
+ * the mark is given the keyword's own colour and weight. A learner scanning
+ * for "where does the body start" is scanning for this.
+ */
+.tk-then {
+  color: var(--kw);
+  font-weight: 700;
+}
+
+/* `።` ends a statement: bold, so the end of a thought is visible at a glance. */
+.tk-stop {
+  color: var(--punct);
+  font-weight: 700;
+}
+
+/* `፣` separates items. Quieter than `።`, since it divides rather than ends. */
+.tk-sep {
+  color: var(--punct);
+}
+
+/* `:` in a slice, and `.`: ASCII spellings that already read as punctuation. */
+.tk-punct {
+  color: var(--punct);
+}
+
+/* ---- brackets, coloured by nesting depth ---- */
+
+/*
+ * Three steps, repeating. The three differ by about 13:1, 8:1 and 5:1 against
+ * the surface they sit on, so the depth of a bracket is legible from its
+ * lightness alone — which is what makes this useful to a reader who sees no
+ * colour, and what keeps a deeply nested call readable in a photocopy.
+ */
+.tk-br0 {
+  color: var(--br0);
+}
+
+.tk-br1 {
+  color: var(--br1);
+}
+
+.tk-br2 {
+  color: var(--br2);
+}
+
+/*
+ * The pair the caret is sitting beside. A wash and full weight rather than a
+ * colour change: the depth colour is information the reader may be using, and
+ * replacing it to say "these two go together" would take that away.
+ */
+.tk-match {
+  background: var(--match);
+  border-radius: 2px;
+  font-weight: 700;
+}
+
+/* ---- marks laid over the colours ---- */
+
+/*
+ * An error: a wavy underline and a faint wash behind it. The underline alone
+ * was easy to miss against coloured code, and the wash is kept weak so it
+ * reads as a mark on the text rather than as a selection.
+ */
+.tk-bad {
+  background: var(--bad-wash);
+  border-radius: 2px;
+  text-decoration: underline wavy var(--bad);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+/* The span under the pointer in the tokens or tree panel. */
+.tk-hot {
+  background: var(--hot);
+  border-radius: 2px;
+}

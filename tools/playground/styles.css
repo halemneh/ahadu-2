@@ -1,4 +1,5 @@
 @import '../shared/tokens.css';
+@import '../shared/syntax.css';
 @import '../shared/chrome.css';
 
 /*
@@ -130,8 +131,9 @@ button:focus-visible {
   color: var(--bad);
 }
 
+/* `--good`, not the type keyword's colour: this is chrome, not code. */
 .status[data-state='good'] {
-  color: var(--type);
+  color: var(--good);
 }
 
 /* ---- layout ---- */
@@ -228,73 +230,11 @@ button:focus-visible {
   background: var(--select);
 }
 
-/* ---- token colours, set from the lexer's own spans ---- */
-
-.tk-kw {
-  color: var(--kw);
-  font-weight: 600;
-}
-
-.tk-type {
-  color: var(--type);
-}
-
-.tk-lit {
-  color: var(--lit);
-}
-
-.tk-reserved {
-  color: var(--lit);
-  text-decoration: underline dotted;
-}
-
-.tk-str {
-  color: var(--str);
-}
-
-.tk-num {
-  color: var(--num);
-}
-
-.tk-id {
-  color: var(--ink);
-}
-
-.tk-op {
-  color: var(--accent);
-}
-
-.tk-then {
-  color: var(--kw);
-  font-weight: 600;
-}
-
-.tk-punct {
-  color: var(--muted);
-}
-
-.tk-comment {
-  color: var(--comment);
-  font-style: italic;
-}
-
 /*
- * An error in the editor: a wavy underline and a faint wash behind it. The
- * underline alone was easy to miss against coloured code, and the wash is kept
- * weak so it reads as a mark on the text rather than as a selection.
+ * Token colours are in `shared/syntax.css`. They were here, which meant the
+ * site — which does not import this file — shipped highlighted markup with
+ * nothing to colour it.
  */
-.tk-bad {
-  background: var(--bad-wash);
-  border-radius: 2px;
-  text-decoration: underline wavy var(--bad);
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-}
-
-.tk-hot {
-  background: var(--hot);
-  border-radius: 2px;
-}
 
 /* ---- the position readout, under the editor (§2.1) ---- */
 

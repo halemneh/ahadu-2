@@ -51,11 +51,18 @@ function setUpTheme(): void {
 }
 
 /** Re-paints the backdrop under a snippet's textarea. */
-function repaint(snippet: HTMLElement, source: string): void {
+function repaint(snippet: HTMLElement, source: string, caret: number | null = null): void {
   const backdrop = snippet.querySelector('.snip-backdrop code');
   if (!(backdrop instanceof HTMLElement)) return;
   const { tokens, diagnostics } = tokenize(source);
-  backdrop.innerHTML = highlight({ source, tokens, diagnostics });
+  backdrop.innerHTML = highlight({ source, tokens, diagnostics, caret });
+}
+
+/** Brackets, whose pairs light up when the caret is beside one. */
+const BRACKET_CHARS = '()[]';
+
+function besideBracket(value: string, at: number): boolean {
+  return BRACKET_CHARS.includes(value[at - 1] ?? '') || BRACKET_CHARS.includes(value[at] ?? '');
 }
 
 function runSnippet(snippet: HTMLElement, source: string): void {
@@ -89,9 +96,35 @@ function setUpSnippet(snippet: HTMLElement): void {
     area.style.height = `${area.scrollHeight}px`;
   };
 
+  /*
+   * The matched bracket pair, kept in step with the caret.
+   *
+   * Unlike the playground this is not debounced — a lesson's snippet is a few
+   * lines, so re-lexing it costs nothing — but it still repaints only when a
+   * bracket is beside the caret now or was a moment ago, so arrowing through
+   * prose-shaped code does no work.
+   */
+  let wasOnBracket = false;
+  const track = (): void => {
+    const caret = area.selectionStart;
+    const now = besideBracket(area.value, caret);
+    if (now || wasOnBracket) repaint(snippet, area.value, caret);
+    wasOnBracket = now;
+  };
+
   area.addEventListener('input', () => {
-    repaint(snippet, area.value);
+    repaint(snippet, area.value, area.selectionStart);
+    wasOnBracket = besideBracket(area.value, area.selectionStart);
     grow();
+  });
+
+  for (const event of ['click', 'keyup', 'select', 'focus'] as const) {
+    area.addEventListener(event, track);
+  }
+
+  area.addEventListener('blur', () => {
+    if (wasOnBracket) repaint(snippet, area.value, null);
+    wasOnBracket = false;
   });
 
   // Keep the two layers aligned when a long line scrolls sideways.

@@ -30,9 +30,21 @@ export interface HighlightInput {
   readonly diagnostics?: readonly Diagnostic[];
   /** Highlighted because the pointer is over its row in a panel. */
   readonly hovered?: Region | null;
+  /**
+   * Where the caret is, as `textarea.selectionStart` gives it — a UTF-16
+   * offset, which is what the DOM speaks. The bracket beside it and that
+   * bracket's partner are marked. `null` when nothing has the caret.
+   */
+  readonly caret?: number | null;
 }
 
-/** CSS class per token kind. Anything absent is left unstyled. */
+/**
+ * CSS class per token kind. Anything absent is left unstyled.
+ *
+ * The four brackets are missing on purpose: their class is their nesting
+ * depth, which is a property of the token *stream* rather than of any one
+ * token, so `markBrackets` works them out separately.
+ */
 const CLASSES: Partial<Record<TokenType, string>> = {
   NUMBER: 'tk-num',
   STRING: 'tk-str',
@@ -51,19 +63,34 @@ const CLASSES: Partial<Record<TokenType, string>> = {
   LTE: 'tk-op',
   GT: 'tk-op',
   GTE: 'tk-op',
+  /*
+   * Ahadu's three Ethiopic marks carry structure that a reader of an
+   * English-based language would take from a keyword instead, so each gets
+   * its own treatment rather than one shared punctuation colour:
+   *
+   *   ፦  opens a block. It does the job `:` does in an indented language, and
+   *      is painted and weighted like the keyword that leads up to it.
+   *   ።  ends a statement.
+   *   ፣  separates the items of a list or an argument list.
+   *
+   * `:` and `.` stay quiet: they are ASCII spellings that already read as
+   * punctuation to everyone, and `:` only ever appears inside a slice.
+   */
   THEN: 'tk-then',
-  STOP: 'tk-punct',
-  COMMA: 'tk-punct',
+  STOP: 'tk-stop',
+  COMMA: 'tk-sep',
   COLON: 'tk-punct',
   DOT: 'tk-punct',
-  LPAREN: 'tk-punct',
-  RPAREN: 'tk-punct',
-  LBRACKET: 'tk-punct',
-  RBRACKET: 'tk-punct',
 };
 
 /** Keyword sub-types that name a type, which read better in their own colour. */
 const TYPE_KEYWORDS = new Set(['TYPE_NUM', 'TYPE_BOOL', 'TYPE_STRING', 'TYPE_LIST']);
+
+const OPENERS = new Set<TokenType>(['LPAREN', 'LBRACKET']);
+const CLOSERS = new Set<TokenType>(['RPAREN', 'RBRACKET']);
+
+/** How many depths the bracket colours run through before repeating. */
+const BRACKET_DEPTHS = 3;
 
 /** One source code point, and what should be true of it on screen. */
 interface Cell {
@@ -74,6 +101,8 @@ interface Cell {
   bad: boolean;
   /** Covered by the region the pointer is over in a panel. */
   hot: boolean;
+  /** One of the pair of brackets the caret is sitting beside. */
+  match: boolean;
 }
 
 function escapeHtml(text: string): string {
@@ -93,6 +122,94 @@ function classFor(token: Token): string {
     }
   }
   return CLASSES[token.type] ?? '';
+}
+
+/**
+ * Paints `(`, `)`, `[` and `]` by how deeply they are nested, and marks the
+ * pair the caret is sitting beside.
+ *
+ * Depth is counted over `(` and `[` together rather than per kind, because
+ * that is how they actually nest in a program — `ዝ[ድምር(ሀ፣ ለ)]` is three
+ * levels deep however the brackets are spelled, and colouring the two kinds
+ * on separate counters would give the `(` the same colour as the `[` it sits
+ * inside. The lexer counts them on one counter for the same reason (§3.5).
+ *
+ * A stray closer keeps the outermost colour rather than a negative depth. It
+ * is already a parse error with a diagnostic of its own, and `fragment`
+ * snippets on the site are allowed to be unbalanced by design.
+ */
+function markBrackets(grid: Cell[][], tokens: readonly Token[], caret: Caret | null): void {
+  const open: Token[] = [];
+  /** Every pair that closed, so the caret can be matched against them. */
+  const pairs: [Token, Token][] = [];
+
+  const paint = (token: Token, cls: string): void => {
+    const cells = grid[token.line - 1];
+    if (cells === undefined) return;
+    for (let col = token.startCol; col <= token.endCol; col += 1) {
+      const cell = cells[col - 1];
+      if (cell !== undefined) cell.cls = cls;
+    }
+  };
+
+  for (const token of tokens) {
+    if (OPENERS.has(token.type)) {
+      paint(token, `tk-br${open.length % BRACKET_DEPTHS}`);
+      open.push(token);
+    } else if (CLOSERS.has(token.type)) {
+      const opener = open.pop();
+      paint(token, `tk-br${(opener === undefined ? 0 : open.length) % BRACKET_DEPTHS}`);
+      if (opener !== undefined) pairs.push([opener, token]);
+    }
+  }
+
+  if (caret === null) return;
+
+  // Beside, not on: the caret is a gap between characters, so a bracket
+  // counts when the gap is on either side of it. An editor that only lit up
+  // the bracket to the right would go dark the moment you typed a `)`.
+  const beside = (token: Token): boolean =>
+    token.line === caret.line && (caret.col === token.startCol || caret.col === token.endCol + 1);
+
+  for (const [opener, closer] of pairs) {
+    if (!beside(opener) && !beside(closer)) continue;
+    for (const token of [opener, closer]) {
+      const cells = grid[token.line - 1];
+      const cell = cells?.[token.startCol - 1];
+      if (cell !== undefined) cell.match = true;
+    }
+    return;
+  }
+}
+
+/** A caret, as a 1-based line and code-point column — what tokens speak. */
+interface Caret {
+  readonly line: number;
+  readonly col: number;
+}
+
+/**
+ * Turns `textarea.selectionStart` into a line and a code-point column.
+ *
+ * The DOM counts UTF-16 units and the lexer counts code points
+ * (LANGUAGE.md §2.2); for Ge'ez the two agree, but an emoji in a string
+ * literal would put every column after it out by one.
+ */
+function caretAt(source: string, offset: number): Caret {
+  let line = 1;
+  let col = 1;
+  let seen = 0;
+  for (const char of source) {
+    if (seen >= offset) break;
+    seen += char.length;
+    if (char === '\n') {
+      line += 1;
+      col = 1;
+    } else {
+      col += 1;
+    }
+  }
+  return { line, col };
 }
 
 /** Marks every column a region covers, across however many lines it spans. */
@@ -138,13 +255,16 @@ interface Marks {
   /** Underlined as a problem. A `Diagnostic` already has this shape. */
   readonly bad?: readonly Region[];
   readonly hot?: Region | null;
+  readonly caret?: number | null;
 }
 
 /** Builds the per-column grid for a source, with every mark applied. */
 function build(input: Marks): Cell[][] {
   const grid: Cell[][] = input.source
     .split('\n')
-    .map((line) => codePoints(line).map((char) => ({ char, cls: '', bad: false, hot: false })));
+    .map((line) =>
+      codePoints(line).map((char) => ({ char, cls: '', bad: false, hot: false, match: false })),
+    );
 
   for (const token of input.tokens) {
     const cells = grid[token.line - 1];
@@ -157,6 +277,7 @@ function build(input: Marks): Cell[][] {
     }
   }
 
+  markBrackets(grid, input.tokens, input.caret == null ? null : caretAt(input.source, input.caret));
   markComments(grid);
 
   for (const region of input.bad ?? []) markRegion(grid, region, 'bad');
@@ -180,7 +301,12 @@ function renderLine(cells: readonly Cell[]): string {
   };
 
   for (const cell of cells) {
-    const classes = [cell.cls, cell.bad ? 'tk-bad' : '', cell.hot ? 'tk-hot' : '']
+    const classes = [
+      cell.cls,
+      cell.bad ? 'tk-bad' : '',
+      cell.hot ? 'tk-hot' : '',
+      cell.match ? 'tk-match' : '',
+    ]
       .filter((c) => c !== '')
       .join(' ');
     if (classes !== key) {
@@ -207,6 +333,7 @@ export function highlight(input: HighlightInput): string {
     tokens: input.tokens,
     bad: input.diagnostics ?? [],
     hot: input.hovered ?? null,
+    caret: input.caret ?? null,
   })
     .map(renderLine)
     .join('\n');

@@ -14,111 +14,199 @@
  * No web font is loaded: nothing is sent anywhere, and fetching an Ethiopic
  * face from a CDN would be a request. The stack prefers whatever the system
  * has.
+ *
+ *
+ * ## The scale, and why these numbers
+ *
+ * Teal, white and black. The neutrals are not grey: every shade carries a
+ * little of the accent's hue (Lab hue ≈ 190°), which is what keeps a teal
+ * accent from looking stuck onto a grey page. The brand colour and the
+ * `ቁጥር/ሐረግ/…` type keywords share that hue, so the one colour a reader learns
+ * to recognise means the same thing in the chrome and in the code.
+ *
+ * **Every colour here was solved for a contrast ratio, not picked.** Each
+ * syntax colour is the most saturated sRGB colour at its hue that reaches its
+ * target ratio against the *worst* surface it is ever painted on — a
+ * translucent layer over `--surface-1`, which is the code quoted inside a
+ * diagnostic. Clearing AA there clears it on `--bg` and on `--surface-1` by
+ * construction, and those are where the same colour appears in the editor and
+ * in a lesson's snippet. The lowest ratio anywhere is 4.68:1.
+ *
+ * ## Why the syntax colours sit on a luminance ladder
+ *
+ * A dichromat has two usable axes rather than three, so hue alone cannot
+ * separate eight categories: under deuteranopia a violet keyword and a blue
+ * operator land on the same point. What survives every form of colour
+ * blindness is **luminance**, so the categories a reader could actually
+ * confuse are spread along it, and hue is the second cue rather than the only
+ * one:
+ *
+ * - The four things drawn as **Ge'ez words** — a keyword, a type keyword,
+ *   `እውነት/ሐሰት/ምንም`, and a plain name — are spread from 5:1 to 16:1, and the
+ *   three coloured ones are **bold**, so weight alone tells them from a name.
+ * - The three **bracket depths** are spread from 5:1 to 13:1, which is what
+ *   makes depth readable with no colour vision at all.
+ * - Numbers, strings, comments and operators are drawn with shapes nothing
+ *   else on the page uses — digits, quotation marks, a leading `#`, ASCII
+ *   symbols — so they need no rung of their own.
+ *
+ * Simulated for deuteranopia, protanopia and tritanopia (Machado, Oliveira &
+ * Santos 2009), the worst pair inside any of those groups is ΔE2000 6.4, and
+ * inside the brackets 15.1. Nothing a reader has to tell apart is separated
+ * by hue alone.
  */
 
 :root,
 :root[data-theme='dark'] {
   /* One scale of solid shades: the page's regions are told apart by these. */
-  --bg: #15171c;
-  --surface-1: #1b1e25;
-  --surface-2: #21252d;
-  --surface-3: #272c35;
+  --bg: #0a0f0f;
+  --surface-1: #111818;
+  --surface-2: #172020;
+  --surface-3: #1e2a29;
 
-  --ink: #e7e9ef;
-  --muted: #949cb0;
+  --ink: #e6efee;
+  --muted: #95b0ad;
 
   /* Translucent, for things that sit on top of whatever shade they land on. */
   --layer: rgb(255 255 255 / 5%);
   --layer-strong: rgb(255 255 255 / 9%);
-  --layer-hover: rgb(255 255 255 / 13%);
+  --layer-hover: rgb(255 255 255 / 14%);
 
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 28%);
-  --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 45%);
-  --shadow-lg: 0 14px 40px -10px rgb(0 0 0 / 70%);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 34%);
+  --shadow-md: 0 2px 10px -2px rgb(0 0 0 / 50%);
+  --shadow-lg: 0 14px 40px -10px rgb(0 0 0 / 72%);
 
-  --accent: #74b7ff;
-  --ring: rgb(116 183 255 / 55%);
-  --kw: #cb9bee;
-  --type: #86d6b4;
-  --str: #a9d9ab;
-  --num: #f8ca86;
-  --lit: #ffa4a4;
-  --comment: #767e91;
-  --bad: #ff7272;
-  --bad-wash: rgb(255 114 114 / 15%);
-  --hot: rgb(116 183 255 / 20%);
-  --gutter: rgb(231 233 239 / 35%);
-  --select: rgb(116 183 255 / 28%);
+  --accent: #03d1be;
+  /*
+   * Solid, not translucent. A focus ring has to clear 3:1 against whatever it
+   * lands on (WCAG 2.2 §1.4.11), and a translucent one cannot promise that:
+   * it takes the colour of the surface beneath it.
+   */
+  --ring: #03d1be;
+  --bad: #ff7578;
+  --good: #5cc26e;
 
+  /* Syntax, on the ladder described above. */
+  --kw: #cc94ff;
+  --type: #08e4cf;
+  --lit: #eb5da2;
+  --num: #ffbb88;
+  --str: #6dd273;
+  --op: #7eceff;
+  --punct: #88a8a5;
+  --comment: #7a9290;
+
+  /* Bracket nesting depth, cycling every three levels. */
+  --br0: #ffe38e;
+  --br1: #ed8ef3;
+  --br2: #039ea7;
+
+  --bad-wash: rgb(255 117 120 / 16%);
+  --hot: rgb(3 209 190 / 22%);
+  --match: rgb(3 209 190 / 34%);
+  --gutter: #839b98;
+  --select: rgb(3 209 190 / 26%);
+
+  /*
+   * Ethiopic faces first in both stacks. `--ui` needs them too: `system-ui`
+   * covers Ge'ez on macOS and on Windows 10 and later, but on a Linux desktop
+   * it often does not — and the site's own chrome is Amharic, so a missing
+   * face there is not a detail.
+   */
   --code:
     'Noto Sans Ethiopic', 'Noto Serif Ethiopic', 'Abyssinica SIL', 'Kefa', 'Nyala', ui-monospace,
     'SF Mono', Menlo, monospace;
-  --ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ui: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Ethiopic', 'Nyala', sans-serif;
 }
 
-/* Colours chosen for contrast on white rather than lightened dark ones. */
+/*
+ * Light is its own set rather than the dark one lightened. A hue that clears
+ * 4.5:1 against near-black is nowhere near clearing it against near-white, so
+ * each of these was solved again from scratch — and the ladder runs the other
+ * way, since here the text is the dark end.
+ */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #fdfdfc;
-    --surface-1: #f3f4f1;
-    --surface-2: #eaebe7;
-    --surface-3: #e1e3de;
+    --bg: #fbfdfc;
+    --surface-1: #eef3f2;
+    --surface-2: #e3eae9;
+    --surface-3: #d6e1df;
 
-    --ink: #1b1f27;
-    --muted: #636b7b;
+    --ink: #0f1a1a;
+    --muted: #405957;
 
-    --layer: rgb(18 22 31 / 4%);
-    --layer-strong: rgb(18 22 31 / 7%);
-    --layer-hover: rgb(18 22 31 / 10%);
+    --layer: rgb(13 26 26 / 5%);
+    --layer-strong: rgb(13 26 26 / 8%);
+    --layer-hover: rgb(13 26 26 / 12%);
 
-    --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
-    --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
-    --shadow-lg: 0 14px 40px -10px rgb(18 22 31 / 26%);
+    --shadow-sm: 0 1px 2px rgb(13 26 26 / 10%);
+    --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
+    --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-    --accent: #0a5fc0;
-    --ring: rgb(10 95 192 / 45%);
-    --kw: #7f24b0;
-    --type: #0a6a51;
-    --str: #1c6b29;
-    --num: #a04d08;
-    --lit: #ab1f4c;
-    --comment: #747b8a;
-    --bad: #c0252b;
-    --bad-wash: rgb(192 37 43 / 11%);
-    --hot: rgb(10 95 192 / 14%);
-    --gutter: rgb(27 31 39 / 38%);
-    --select: rgb(10 95 192 / 20%);
+    --accent: #00695f;
+    --ring: #00695f;
+    --bad: #b8012f;
+    --good: #006f29;
+
+    --kw: #4d1d81;
+    --type: #006157;
+    --lit: #4f002c;
+    --num: #9b4d00;
+    --str: #005916;
+    --op: #004c6a;
+    --punct: #385754;
+    --comment: #536a67;
+
+    --br0: #746100;
+    --br1: #6e1277;
+    --br2: #002a2d;
+
+    --bad-wash: rgb(184 1 47 / 10%);
+    --hot: rgb(0 105 95 / 16%);
+    --match: rgb(0 105 95 / 24%);
+    --gutter: #495f5d;
+    --select: rgb(0 105 95 / 20%);
   }
 }
 
 :root[data-theme='light'] {
-  --bg: #fdfdfc;
-  --surface-1: #f3f4f1;
-  --surface-2: #eaebe7;
-  --surface-3: #e1e3de;
+  --bg: #fbfdfc;
+  --surface-1: #eef3f2;
+  --surface-2: #e3eae9;
+  --surface-3: #d6e1df;
 
-  --ink: #1b1f27;
-  --muted: #636b7b;
+  --ink: #0f1a1a;
+  --muted: #405957;
 
-  --layer: rgb(18 22 31 / 4%);
-  --layer-strong: rgb(18 22 31 / 7%);
-  --layer-hover: rgb(18 22 31 / 10%);
+  --layer: rgb(13 26 26 / 5%);
+  --layer-strong: rgb(13 26 26 / 8%);
+  --layer-hover: rgb(13 26 26 / 12%);
 
-  --shadow-sm: 0 1px 2px rgb(18 22 31 / 8%);
-  --shadow-md: 0 2px 10px -2px rgb(18 22 31 / 14%);
-  --shadow-lg: 0 14px 40px -10px rgb(18 22 31 / 26%);
+  --shadow-sm: 0 1px 2px rgb(13 26 26 / 10%);
+  --shadow-md: 0 2px 10px -2px rgb(13 26 26 / 16%);
+  --shadow-lg: 0 14px 40px -10px rgb(13 26 26 / 28%);
 
-  --accent: #0a5fc0;
-  --ring: rgb(10 95 192 / 45%);
-  --kw: #7f24b0;
-  --type: #0a6a51;
-  --str: #1c6b29;
-  --num: #a04d08;
-  --lit: #ab1f4c;
-  --comment: #747b8a;
-  --bad: #c0252b;
-  --bad-wash: rgb(192 37 43 / 11%);
-  --hot: rgb(10 95 192 / 14%);
-  --gutter: rgb(27 31 39 / 38%);
-  --select: rgb(10 95 192 / 20%);
+  --accent: #00695f;
+  --ring: #00695f;
+  --bad: #b8012f;
+  --good: #006f29;
+
+  --kw: #4d1d81;
+  --type: #006157;
+  --lit: #4f002c;
+  --num: #9b4d00;
+  --str: #005916;
+  --op: #004c6a;
+  --punct: #385754;
+  --comment: #536a67;
+
+  --br0: #746100;
+  --br1: #6e1277;
+  --br2: #002a2d;
+
+  --bad-wash: rgb(184 1 47 / 10%);
+  --hot: rgb(0 105 95 / 16%);
+  --match: rgb(0 105 95 / 24%);
+  --gutter: #495f5d;
+  --select: rgb(0 105 95 / 20%);
 }
