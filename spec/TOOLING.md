@@ -253,6 +253,13 @@ have none.
   and hovering source highlights the row.
 - **AST** — the collapsible tree; selecting a node highlights its span.
 
+  These two are **debugging tools**, hidden by default. They show the
+  lexer's and parser's output, which is what someone working on Ahadu needs
+  and noise for someone learning it. Opening the playground once with
+  `?debug=1` shows them, and the choice is remembered in that browser until
+  `?debug=0`. The query is removed from the address on load, so it does not
+  travel with a shared link. With them hidden, their panels are not built.
+
 ### 2.1.1 On a phone
 
 Below 760px the five sections of the site header move into a **drawer**,

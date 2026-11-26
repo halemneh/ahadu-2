@@ -313,6 +313,11 @@ button:focus-visible {
   box-shadow: none;
 }
 
+/* The debug-only tabs (main.ts) stay out of the layout, whatever buttons do. */
+.tab[hidden] {
+  display: none;
+}
+
 /* The selected tab is painted as the panel below it, so the two read as one. */
 .tab[aria-selected='true'] {
   background: var(--surface-1);

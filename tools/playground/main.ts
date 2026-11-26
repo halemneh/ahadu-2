@@ -54,6 +54,7 @@ const MAX_STEPS = 5_000_000;
 
 const STORAGE_SOURCE = 'ahadu.playground.source';
 const STORAGE_INPUT = 'ahadu.playground.input';
+const STORAGE_DEBUG = 'ahadu.playground.debug';
 /*
  * The theme and the language are the site's, not the playground's: arriving
  * here from a lesson should not change either. The site's pages write the
@@ -117,6 +118,42 @@ const panels = {
 };
 
 const tabs = [...document.querySelectorAll<HTMLButtonElement>('.tab')];
+
+/**
+ * The token and tree panels are for whoever is working on Ahadu, not for
+ * learners: they show the lexer's and the parser's output, which is
+ * invaluable when debugging the language and noise when learning it.
+ *
+ * So they are off unless the playground is opened once with `?debug=1`,
+ * which is remembered in this browser until `?debug=0`. The query is taken
+ * out of the address straight away, so it does not travel with a shared
+ * link. Off, the tabs are not shown and their panels are not even built.
+ */
+const debug = ((): boolean => {
+  const asked = new URLSearchParams(window.location.search).get('debug');
+  if (asked !== null) {
+    try {
+      if (asked === '0') localStorage.removeItem(STORAGE_DEBUG);
+      else localStorage.setItem(STORAGE_DEBUG, '1');
+    } catch {
+      // Storage refused: the flag lasts for this page only.
+    }
+    history.replaceState(history.state, '', window.location.pathname + window.location.hash);
+    if (asked !== '0') return true;
+  }
+  try {
+    return localStorage.getItem(STORAGE_DEBUG) === '1';
+  } catch {
+    return false;
+  }
+})();
+
+for (const tab of tabs) {
+  if (tab.dataset.panel === 'tokens' || tab.dataset.panel === 'ast') tab.hidden = !debug;
+}
+
+/** The tabs a reader can reach — the debug ones only when debugging. */
+const shownTabs = tabs.filter((tab) => !tab.hidden);
 
 let current: Analysis = { tokens: [], diagnostics: [], rows: [] };
 /**
@@ -355,8 +392,10 @@ function refresh(): void {
 
   gutter.textContent = gutterHtml(editor.value);
   paintEditor();
-  panels.tokens.innerHTML = tokenRowsHtml(current.tokens, s);
-  panels.ast.innerHTML = astRowsHtml(current.rows, s);
+  if (debug) {
+    panels.tokens.innerHTML = tokenRowsHtml(current.tokens, s);
+    panels.ast.innerHTML = astRowsHtml(current.rows, s);
+  }
   paintErrors();
 
   const { text, state } = statusOf(current.diagnostics, s);
@@ -510,16 +549,17 @@ for (const tab of tabs) {
 
   // Arrows, Home and End move between tabs and open the one reached.
   tab.addEventListener('keydown', (event) => {
-    const i = tabs.indexOf(tab);
+    const i = shownTabs.indexOf(tab);
+    const n = shownTabs.length;
     const target =
       event.key === 'ArrowRight'
-        ? tabs[(i + 1) % tabs.length]
+        ? shownTabs[(i + 1) % n]
         : event.key === 'ArrowLeft'
-          ? tabs[(i - 1 + tabs.length) % tabs.length]
+          ? shownTabs[(i - 1 + n) % n]
           : event.key === 'Home'
-            ? tabs[0]
+            ? shownTabs[0]
             : event.key === 'End'
-              ? tabs[tabs.length - 1]
+              ? shownTabs[n - 1]
               : undefined;
     if (target === undefined) return;
     event.preventDefault();
