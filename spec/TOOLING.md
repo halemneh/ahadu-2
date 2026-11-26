@@ -103,7 +103,13 @@ for help. `--json` emits
 `{code, message, line, startCol, endCol, stage, severity}` so an editor can
 consume it.
 
-Exit codes: `0` success · `1` diagnostics reported · `2` could not read input.
+Exit codes: `0` success · `1` diagnostics reported · `2` could not read input
+· `70` the CLI itself failed unexpectedly.
+
+An unexpected failure — in a stage or in the CLI around it — is reported as
+`AH9001` in Amharic, asking the reader to report it, never as a JavaScript
+stack trace (LANGUAGE.md §9.3). Setting `AHADU_DEBUG=1` additionally prints
+the original error, for whoever is fixing it.
 
 ### 1.4 Program output
 

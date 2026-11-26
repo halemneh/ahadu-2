@@ -39,6 +39,7 @@ import {
   AH2015,
   AH2016,
   diagnostic,
+  internalError,
   sortDiagnostics,
 } from '../diagnostics.js';
 import type { KeywordType, Token, TokenType } from '../lexer/index.js';
@@ -1392,5 +1393,13 @@ class Parser {
  * order.
  */
 export function parse(tokens: readonly Token[]): ParseResult {
-  return new Parser(tokens).parse();
+  try {
+    return new Parser(tokens).parse();
+  } catch (thrown) {
+    // A bug here, not in the program: AH9001 rather than a stack trace (§9.3).
+    return {
+      program: { type: 'Program', body: [], line: 1, startCol: 1, endLine: 1, endCol: 1 },
+      diagnostics: [internalError('parser', thrown)],
+    };
+  }
 }

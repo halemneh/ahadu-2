@@ -19,6 +19,7 @@ import {
   AH1004,
   AH1005,
   diagnostic,
+  internalError,
   sortDiagnostics,
 } from '../diagnostics.js';
 import type { KeywordType, Token, TokenType } from './token.js';
@@ -579,7 +580,15 @@ class Lexer {
  * order (§3.9).
  */
 export function tokenize(input: string | Uint8Array): LexResult {
-  const source =
-    typeof input === 'string' ? input : new TextDecoder('utf-8', { fatal: false }).decode(input);
-  return new Lexer(source).run();
+  try {
+    const source =
+      typeof input === 'string' ? input : new TextDecoder('utf-8', { fatal: false }).decode(input);
+    return new Lexer(source).run();
+  } catch (thrown) {
+    // A bug here, not in the program: AH9001 rather than a stack trace (§9.3).
+    return {
+      tokens: [{ type: 'EOF', value: null, line: 1, startCol: 1, endCol: 1 }],
+      diagnostics: [internalError('lexer', thrown)],
+    };
+  }
 }

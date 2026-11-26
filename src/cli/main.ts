@@ -11,8 +11,9 @@
  */
 
 import { readFileSync, readSync } from 'node:fs';
-import { argv, exit, stderr, stdin, stdout } from 'node:process';
+import process, { argv, exit, stderr, stdin, stdout } from 'node:process';
 import type { Diagnostic } from '../diagnostics.js';
+import { AH9001, MESSAGES, internalCause } from '../diagnostics.js';
 import { tokenize } from '../lexer/index.js';
 import type { Token } from '../lexer/index.js';
 import { parse, printAst } from '../parser/index.js';
@@ -66,7 +67,15 @@ interface Flags {
 function reportDiagnostics(source: string, diagnostics: readonly Diagnostic[], flags: Flags): void {
   for (const d of diagnostics) {
     stderr.write(renderDiagnostic(source, d, flags.errorColors));
+    debugCause(d);
   }
+}
+
+/** With `AHADU_DEBUG=1`, what an AH9001 is hiding — for whoever fixes it. */
+function debugCause(d: Diagnostic): void {
+  if (d.code !== AH9001 || process.env.AHADU_DEBUG !== '1') return;
+  const cause = internalCause(d);
+  stderr.write(`${cause instanceof Error ? (cause.stack ?? cause.message) : String(cause)}\n`);
 }
 
 /** Reads a file, or null after reporting that it could not be read. */
@@ -213,6 +222,7 @@ function execute(source: string, flags: Flags, options: RunOptions = {}): number
       stderr.write(`${JSON.stringify({ diagnostics: [result.diagnostic] }, null, 2)}\n`);
     } else {
       stderr.write(renderDiagnostic(source, result.diagnostic, flags.errorColors, result.frames));
+      debugCause(result.diagnostic);
     }
     return 1;
   }
@@ -333,4 +343,20 @@ function main(args: string[]): number {
   return cmdRun(source, flags);
 }
 
-exit(main(argv.slice(2)));
+/*
+ * The last line of defence. Every stage already returns AH9001 for its own
+ * failures; this catches anything in the CLI itself, so a reader never sees
+ * a JavaScript stack trace — only an Amharic message asking them to report
+ * it. `AHADU_DEBUG=1` shows what it hid.
+ */
+try {
+  exit(main(argv.slice(2)));
+} catch (thrown) {
+  stderr.write(`[${AH9001}] ${MESSAGES[AH9001] ?? ''}\n`);
+  if (process.env.AHADU_DEBUG === '1') {
+    stderr.write(
+      `${thrown instanceof Error ? (thrown.stack ?? thrown.message) : String(thrown)}\n`,
+    );
+  }
+  exit(70);
+}

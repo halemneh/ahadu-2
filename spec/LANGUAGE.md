@@ -1429,6 +1429,7 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3020` | `ዘፈቀደ_ቁጥር` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
 | `AH3021` | `ወደ_ግዕዝ` on a number with no Ge'ez spelling — `ይህ ቁጥር በግዕዝ አይጻፍም።` |
 | `AH3022` | a date or month number that does not exist — `ቀኑ አይሰራም።` |
+| `AH9001` | Ahadu itself failed — a bug in the implementation, not the program — `ያልተጠበቀ ስተት ተፈጥሯል። ችግሩ የአሃዱ እንጂ የእርስዎ ፕሮግራም አይደለም፤ እባክዎ ያሳውቁን።` (§9.3) |
 
 ### 9.3 Recovery
 
@@ -1447,6 +1448,14 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
   `AH2016` and abandons the line. No program a person writes comes near them.
 - **Evaluator**: stops at the first runtime error and returns it. There is no
   exception handling in 2.0.
+- **Anything unexpected**: if a stage fails in a way it was never meant to —
+  a bug in the implementation, or a host callback that throws — it MUST
+  still return, with the single diagnostic `AH9001`. Its message is in
+  Amharic, says the fault is Ahadu's rather than the program's, and asks
+  the reader to report it. The reader MUST NOT see the host's own error or a
+  stack trace; an implementation MAY keep the original error where a
+  developer can reach it (the CLI prints it under `AHADU_DEBUG=1`), but not
+  in anything a reader is shown or that is serialised.
 
 ---
 

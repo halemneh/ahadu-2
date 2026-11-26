@@ -28,6 +28,7 @@ const STAGE_TITLE: Record<string, { am: string; en: string }> = {
   AH1: { am: 'የቃላት ስተቶች', en: 'Lexical errors' },
   AH2: { am: 'የአገባብ ስተቶች', en: 'Syntax errors' },
   AH3: { am: 'የአሂድ ስተቶች', en: 'Runtime errors' },
+  AH9: { am: 'የአሃዱ ራሱ ስተቶች', en: 'Errors in Ahadu itself' },
 };
 
 const STAGE_NOTE: Record<string, { am: string; en: string }> = {
@@ -42,6 +43,10 @@ const STAGE_NOTE: Record<string, { am: string; en: string }> = {
   AH3: {
     am: 'ፕሮግራሙ እየሄደ ሳለ የሚከሰቱ ስተቶች። አንድ ስተት ሲገኝ አሂዱ ይቆማል።',
     en: 'Raised while the program runs. Evaluation stops at the first one.',
+  },
+  AH9: {
+    am: 'ስተቱ በፕሮግራሙ ሳይሆን በአሃዱ ውስጥ ሲሆን። ቢያጋጥምዎ እባክዎ ያሳውቁን።',
+    en: 'The fault is in Ahadu, not in the program. If you meet one, please report it.',
   },
 };
 
@@ -108,7 +113,7 @@ ${table}
 
 /** The error catalogue, one section per stage. */
 export function errorTable(s: Strings): string {
-  const stages = ['AH1', 'AH2', 'AH3'];
+  const stages = ['AH1', 'AH2', 'AH3', 'AH9'];
   const codes = Object.keys(MESSAGES).sort();
 
   return stages

@@ -37,6 +37,7 @@ import {
   AH3020,
   AH3021,
   AH3022,
+  internalError,
 } from '../diagnostics.js';
 import { MAX_GEEZ, parseNumericText, trimText, writeGeezNumeral } from '../numeric.js';
 import {
@@ -461,7 +462,14 @@ export class Interpreter {
           frames,
         };
       }
-      throw thrown;
+      // Anything else is a bug in the interpreter, not in the program — or a
+      // host callback that threw. AH9001, in Amharic, never a stack trace.
+      const frames = this.callStack;
+      return {
+        value: NOTHING,
+        diagnostic: internalError('runtime', thrown, deepestLine(frames)),
+        frames,
+      };
     }
   }
 
