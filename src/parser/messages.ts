@@ -23,6 +23,16 @@ export const EMPTY_BLOCK = 'ብሎኩ ባዶ ነው። ቢያንስ አንድ �
 
 export const EMPTY_CLASS_BODY = 'የክላሱ ይዘት ባዶ ነው።';
 
+/** AH2016 for brackets, operators and blocks nested inside each other. */
+export function nestedTooDeeply(limit: number): string {
+  return `ከ${limit} በላይ የተደራረቡ ቅንፎች ወይም ብሎኮች አሉ። በትናንሽ ክፍሎች ከፍለው በተለዋጮች ይጻፉት።`;
+}
+
+/** AH2016 for one expression too long to evaluate, like a chain of a thousand `+`. */
+export function expressionTooLong(limit: number): string {
+  return `ይህ አገላለጽ ከ${limit} ደረጃ በላይ ረዝሟል። በትናንሽ ክፍሎች ከፍለው በተለዋጮች ይጻፉት።`;
+}
+
 export function overIndented(expected: number, actual: number): string {
   return `ከሚያስፈልገው በላይ ክፍተት አለ። ${expected} ይጠበቃል፣ ${actual} ተገኝቷል።`;
 }

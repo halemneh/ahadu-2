@@ -156,6 +156,14 @@ export const GLOBAL_SCOPE_NAME = 'ዋና ፕሮግራም';
 const DEFAULT_MAX_DEPTH = 200;
 
 /**
+ * The longest a string or list may get, in UTF-16 units or elements (§4.3,
+ * §4.5). The step budget counts operations, not memory, so without this a
+ * loop of forty doublings — eighty steps — asks the host for a trillion
+ * elements and kills it outright, a crash no `try` can catch.
+ */
+export const MAX_LENGTH = 10_000_000;
+
+/**
  * The seed `ዘፈቀደ_ቁጥር` starts from when no host supplies one.
  *
  * Any constant would do; 1 is the one the spec names so a second
@@ -311,8 +319,26 @@ export class Interpreter {
     // up in the *learner's* source, so the prelude's lines came out as blank
     // or unrelated statements before their program had run a step.
     this.onStatement = undefined;
+    // In a scope of its own, holding the built-ins, and only then copied
+    // into the globals. The library's functions close over that scope, so
+    // when `ደርድር` calls `ርዝመት` it reaches the built-in even after a
+    // learner has defined a `ርዝመት` of their own — shadowing one pre-bound
+    // name must not quietly break another (§8.5): it never could for the
+    // ones written in TypeScript.
+    const own = new Scope(null, GLOBAL_SCOPE_NAME);
+    for (const name of this.globals.ownNames()) {
+      const binding = this.globals.resolve(name);
+      if (binding !== null) own.define(name, binding.value);
+    }
+    const before = new Set(own.ownNames());
     try {
-      return this.tryRun(program);
+      const result = this.tryRun(program, own);
+      for (const name of own.ownNames()) {
+        if (before.has(name)) continue;
+        const binding = own.resolve(name);
+        if (binding !== null) this.globals.define(name, binding.value);
+      }
+      return result;
     } finally {
       this.loadingLibrary = false;
       this.maxSteps = budget;
@@ -388,10 +414,10 @@ export class Interpreter {
   // Program and statements
   // =========================================================================
 
-  runProgram(program: Program): Value {
+  runProgram(program: Program, scope: Scope = this.globals): Value {
     let last: Value = NOTHING;
     for (const statement of program.body) {
-      last = this.execute(statement, this.globals);
+      last = this.execute(statement, scope);
     }
     return last;
   }
@@ -403,10 +429,10 @@ export class Interpreter {
    * programs and keep its bindings between them (TOOLING.md §1.2). The step
    * budget is per call, so a long session is not slowly starved of it.
    */
-  tryRun(program: Program): RunResult {
+  tryRun(program: Program, scope: Scope = this.globals): RunResult {
     this.steps = 0;
     try {
-      return { value: this.runProgram(program), diagnostic: null, frames: [] };
+      return { value: this.runProgram(program, scope), diagnostic: null, frames: [] };
     } catch (thrown) {
       if (thrown instanceof AhaduError) {
         return { value: NOTHING, diagnostic: thrown.diagnosticValue, frames: thrown.frames };
@@ -417,15 +443,20 @@ export class Interpreter {
         return { value: thrown.value, diagnostic: null, frames: [] };
       }
       if (thrown instanceof RangeError) {
-        // A real stack overflow, which means the depth limit was set higher
-        // than this host can take. Still an Ahadu error: nothing escapes.
+        // The host gave out. Still an Ahadu error — nothing escapes — but an
+        // honest one: a stack overflow is AH3017 without a number (the
+        // frames have already unwound, so any count would be wrong), and
+        // anything else, like a string too long to allocate, is AH3006.
+        // Every route to either that a program can take on purpose is
+        // caught earlier, with a precise message; this is the backstop.
         const frames = this.callStack;
+        const stack = /call stack/i.test(thrown.message);
         return {
           value: NOTHING,
           diagnostic: runtimeDiagnostic(
-            AH3017,
+            stack ? AH3017 : AH3006,
             { line: deepestLine(frames), startCol: 1, endCol: 1 },
-            err.callDepthExceeded(frames.length),
+            stack ? err.STACK_EXHAUSTED : err.HOST_TOO_LARGE,
           ),
           frames,
         };
@@ -451,6 +482,11 @@ export class Interpreter {
    * loop, reading as though the loop ran at the end.
    */
   private trace(line: number, value: Value): void {
+    // Not from inside the library. The hook reports line numbers, and a
+    // host reads them against the learner's source — so a statement in
+    // `ደምር` showed up as lines 13 to 16 of a program that had none (§8.5).
+    // The call to `ደምር` itself is still the learner's statement.
+    if (this.frames[this.frames.length - 1]?.fromLibrary === true) return;
     this.onStatement?.(line, value, this.frames.length - 1);
   }
 
@@ -521,8 +557,10 @@ export class Interpreter {
         for (const item of items) {
           // The enclosing scope, not a child: a block introduces no scope
           // anywhere in Ahadu (§5.3), and making this one name the exception
-          // would be a special case a learner has to be told about.
-          scope.define(statement.name, item);
+          // would be a special case a learner has to be told about. Bound
+          // as an assignment is: a pinned type is checked, and inside a
+          // method an attribute's name assigns the attribute (§7.2, §7.6).
+          this.assignName(statement.name, item, scope, statement.collection);
           this.executeBlock(statement.body, scope);
         }
         return NOTHING;
@@ -572,6 +610,26 @@ export class Interpreter {
 
   private declare(statement: TypedDeclaration, scope: Scope): Value {
     const value = this.evaluate(statement.value, scope);
+
+    // Inside a method, an attribute's name is in scope directly (§7.6), so a
+    // typed declaration of it assigns the attribute, as plain assignment
+    // does — checked against the annotation here and the attribute's own.
+    if (!scope.hasOwn(statement.name) && scope.self?.attributes.has(statement.name) === true) {
+      if (!matchesDeclaredType(value, statement.declaredType)) {
+        this.fail(
+          AH3009,
+          statement.value,
+          err.typeMismatch(
+            statement.name,
+            declaredTypeName(statement.declaredType),
+            typeName(value),
+          ),
+        );
+      }
+      this.setAttribute(scope.self, statement.name, value, statement.value);
+      this.trace(statement.line, value);
+      return NOTHING;
+    }
 
     // A name already declared here keeps the type it was given: re-typing
     // shows up as a mismatch against the first annotation, which says more
@@ -846,11 +904,13 @@ export class Interpreter {
     }
 
     if (operator === 'ADD' && left.kind === 'string' && right.kind === 'string') {
+      this.fits(left.value.length + right.value.length, expression);
       return str(left.value + right.value);
     }
     if (operator === 'ADD' && left.kind === 'list' && right.kind === 'list') {
       // Concatenation into a new list. v1-py appended the right operand as a
       // single element, so `[1] + [2]` gave `[1, [2]]` (CHANGES C15).
+      this.fits(left.items.length + right.items.length, expression);
       return list([...left.items, ...right.items]);
     }
     if (operator === 'MUL' && left.kind === 'string') {
@@ -943,9 +1003,15 @@ export class Interpreter {
         err.repeatCount(count.kind === 'number' ? render(count) : typeName(count)),
       );
     }
-    const result = text.repeat(count.value);
-    if (result.length > 1e7) this.fail(AH3006, at, err.OVERFLOW);
-    return str(result);
+    // Checked before repeating, not after: `"ab" * 10^12` would ask the host
+    // for the memory first and never get as far as the check.
+    this.fits(text.length * count.value, at);
+    return str(text.repeat(count.value));
+  }
+
+  /** AH3006 unless a string or list of `length` is within MAX_LENGTH. */
+  fits(length: number, at: Site): void {
+    if (length > MAX_LENGTH) this.fail(AH3006, at, err.tooLarge(MAX_LENGTH));
   }
 
   // =========================================================================
@@ -1073,7 +1139,24 @@ export class Interpreter {
     // was declared in. Evaluating them once at declaration would give every
     // object of the class the same list (§7.6).
     for (const { cls: owner, declaration } of this.attributeChain(cls)) {
-      attributes.set(declaration.name, this.evaluate(declaration.value, owner.scope));
+      const value = this.evaluate(declaration.value, owner.scope);
+      // A typed default is held to its type, as a typed declaration
+      // anywhere else is (§7.2): `ቁጥር ስ = "x"` is AH3009, in a class too.
+      if (
+        declaration.declaredType !== null &&
+        !matchesDeclaredType(value, declaration.declaredType)
+      ) {
+        this.fail(
+          AH3009,
+          declaration.value,
+          err.typeMismatch(
+            declaration.name,
+            declaredTypeName(declaration.declaredType),
+            typeName(value),
+          ),
+        );
+      }
+      attributes.set(declaration.name, value);
       if (declaration.declaredType !== null) {
         attributeTypes.set(declaration.name, declaration.declaredType);
       } else {
@@ -1343,7 +1426,14 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     // joins without a conversion step and there is one rendering to learn
     // (§8.1). The default separator is a space for the same reason: it is
     // what `ጻፍ` puts between its arguments.
-    return str(items.map((item) => render(item)).join(separator));
+    let length = 0;
+    const parts = items.map((item, i) => {
+      const part = render(item);
+      length += part.length + (i > 0 ? separator.length : 0);
+      interpreter.fits(length, at);
+      return part;
+    });
+    return str(parts.join(separator));
   });
 
   define('ከርክም', (args, at) => {

@@ -1,0 +1,17 @@
+# Redefining one pre-bound name changes that name, and nothing else (§8.5).
+# The library's ደርድር and መዝገብ call ርዝመት and ፈልግ; a learner's own
+# functions of the same names must not reach inside them.
+# expect: [1፣ 2፣ 3]
+# expect: 0
+# expect: 22
+ተግባር ርዝመት(ዝ)፦
+    ተመላሽ 0
+ተግባር ፈልግ(ዝ፣ ነገር)፦
+    ተመላሽ 0
+ዝ = [3፣ 1፣ 2]
+ደርድር(ዝ)
+ጻፍ(ዝ)
+ጻፍ(ርዝመት(ዝ))
+ዕድሜ = መዝገብ()
+ዕድሜ.አስገባ("አበበ"፣ 22)
+ጻፍ(ዕድሜ.አግኝ("አበበ"))

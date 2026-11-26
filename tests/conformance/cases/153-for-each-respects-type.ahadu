@@ -1,0 +1,5 @@
+# A for-each over a pinned name checks the type, as assignment does (§7.4).
+# expect-error: AH3009
+ቁጥር ሀ = 0
+["x"] ለእያንዳንዱ ሀ፦
+    ጻፍ(ሀ)

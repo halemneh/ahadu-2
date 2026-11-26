@@ -164,6 +164,14 @@ describe('the learner keeps their own step budget', () => {
     expect(seen).toEqual([1]);
   });
 
+  it('never reports a line from inside a library function either', () => {
+    // Loading was silenced; running was not. `ደምር`'s own statements came
+    // out as lines 13 to 16 of a two-line program.
+    const seen: number[] = [];
+    runSource('ዝ = [3፣ 1]\nጻፍ(ደምር(ዝ))', { onStatement: (line) => seen.push(line) });
+    expect(seen).toEqual([1, 2]);
+  });
+
   it('still enforces the budget on the learner is own work', () => {
     expect(code('እውነት እስከሆነ ድረስ፦\n    ሀ = 1', { maxSteps: 500 })).toBe('AH3018');
   });
@@ -211,13 +219,36 @@ describe('an error inside a library function points at the call (§8.5)', () => 
     expect(result.frames.map((f) => f.name)).toEqual(['ዋና ፕሮግራም', 'ደምር']);
   });
 
+  it('is not broken by a learner redefining a name it uses', () => {
+    // `ደርድር` and `መዝገብ` call `ርዝመት` and `ፈልግ`. A learner's own function
+    // of the same name used to replace them inside the library too, so
+    // `ደርድር` silently stopped sorting (§8.5).
+    const sorted = runSource(
+      lines('ተግባር ርዝመት(ዝ)፦', '    ተመላሽ 0', 'ዝ = [3፣ 1፣ 2]', 'ደርድር(ዝ)', 'ጻፍ(ዝ)'),
+    );
+    expect(sorted.errors).toEqual([]);
+    expect(sorted.output).toEqual(['[1፣ 2፣ 3]']);
+
+    const map = runSource(
+      lines('ተግባር ፈልግ(ሀ፣ ለ)፦', '    ተመላሽ 0', 'መ = መዝገብ()', 'መ.አስገባ("ሀ"፣ 1)', 'ጻፍ(መ.አግኝ("ሀ"))'),
+    );
+    expect(map.errors).toEqual([]);
+    expect(map.output).toEqual(['1']);
+  });
+
   it('reattributes a method of a library class too', () => {
     // `findMethod` builds a method value straight from the declaration and
     // never goes through `makeFunction`, so provenance has to live on the
     // class. Without it this pointed at prelude line 127.
-    const source = lines('ርዝመት = 5', 'መ = መዝገብ()', 'ጻፍ(መ.ብዛት())');
+    //
+    // The error is raised inside `ብዛት` by a subclass whose `ቁልፎች` is not a
+    // list. (Redefining `ርዝመት` used to do it, until the library stopped
+    // seeing the learner's definitions — see 'is not broken by a learner
+    // redefining a name it uses'.)
+    const source = lines('ክላስ ዝ(መዝገብ)፦', '    ቁልፎች = 5', 'መ = ዝ()', 'ጻፍ(መ.ብዛት())');
     const result = runSource(source);
-    expect(result.errors[0]?.line).toBe(3);
+    expect(result.errors[0]?.code).toBe('AH3002');
+    expect(result.errors[0]?.line).toBe(4);
     expect(result.errors[0]?.message).toContain('ብዛት');
   });
 

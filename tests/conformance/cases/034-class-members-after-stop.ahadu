@@ -1,0 +1,9 @@
+# `።` ends a statement, and a class body may hold several on one line (§5.1,
+# §7.6). Both attributes belong to the class; neither becomes a global.
+# expect: 2
+# expect: 1
+ክላስ ሰው፦
+    ስም = 1። ዕድሜ = 2
+አበበ = ሰው()
+ጻፍ(አበበ.ዕድሜ)
+ጻፍ(አበበ.ስም)
