@@ -121,6 +121,20 @@ export function undefinedPower(base: number, exponent: number): string {
 
 export const OVERFLOW = 'ውጤቱ ከቁጥር መጠን አለፈ።';
 
+/** AH3006 for a string or list too long to hold (§4.3, §4.5). */
+export function tooLarge(limit: number): string {
+  return `ውጤቱ ከ${limit} በላይ ርዝመት ይኖረዋል፤ ይህ ከሚፈቀደው በላይ ነው።`;
+}
+
+/** AH3006 when the host itself ran out of room for a value. */
+export const HOST_TOO_LARGE = 'ውጤቱ ለመያዝ ከሚቻለው በላይ ትልቅ ነው።';
+
+/**
+ * AH3017 when the host's own stack ran out before Ahadu's call limit was
+ * reached — so there is no honest number to put in the message.
+ */
+export const STACK_EXHAUSTED = 'ፕሮግራሙ ይህ ኮምፒውተር ከሚችለው በላይ ጠለቀ። ድግግሞሹ መቆሚያ አለው?';
+
 export function repeatCount(found: string): string {
   return `ጽሁፍን ለማባዛት ከዜሮ የማያንስ ሙሉ ቁጥር ያስፈልጋል፤ ${found} ተገኝቷል።`;
 }

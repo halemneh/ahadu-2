@@ -15,7 +15,8 @@
  */
 
 import type { Program } from './parser/index.js';
-import { Interpreter } from './interpreter/index.js';
+import { internalError } from './diagnostics.js';
+import { Interpreter, NOTHING } from './interpreter/index.js';
 import type { Host, RunOptions, RunResult } from './interpreter/index.js';
 import { loadLibrary } from './library/index.js';
 
@@ -24,11 +25,20 @@ import { loadLibrary } from './library/index.js';
  *
  * Never throws, exactly as `run` does not: a runtime error comes back in
  * `RunResult.diagnostic` with the call stack as it stood. A failure in the
- * library itself is the one exception, and it is a bug in this repository
- * rather than anything a program did — see `loadLibrary`.
+ * library itself is a bug in this repository rather than anything a program
+ * did — see `loadLibrary` — and comes back as AH9001.
  */
 export function run(program: Program, host: Host, options: RunOptions = {}): RunResult {
-  return withLibrary(host, options).tryRun(program);
+  let interpreter: Interpreter;
+  try {
+    interpreter = withLibrary(host, options);
+  } catch (thrown) {
+    // The library failing to load is a bug in this repository, which the
+    // tests exist to catch first. If one ships anyway, the reader gets
+    // AH9001 in Amharic, not "the standard library failed to run".
+    return { value: NOTHING, diagnostic: internalError('runtime', thrown), frames: [] };
+  }
+  return interpreter.tryRun(program);
 }
 
 /**

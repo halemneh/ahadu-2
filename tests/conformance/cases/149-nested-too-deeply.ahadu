@@ -1,0 +1,4 @@
+# Nesting has a limit, so a parser that never throws cannot overflow its
+# own stack (§9.3). A hundred levels is past anything a person writes.
+# expect-error: AH2016
+ጻፍ((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((((1))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))

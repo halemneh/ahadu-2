@@ -1,0 +1,5 @@
+# A typed attribute's default is held to its type (§7.2, §7.6).
+# expect-error: AH3009
+ክላስ ሰው፦
+    ቁጥር ዕድሜ = "ሃያ"
+ሰው()

@@ -399,6 +399,11 @@ annotations** (§7.2). There is no static type checker.
   string instead — `ስም = "ሀ" + ስም[1:]`. Lists, by contrast, are mutable
   (§4.5): the asymmetry is because a string is a single word-like value while
   a list is a container of them.
+- A string is at most **10,000,000** UTF-16 units long. An operation whose
+  result would be longer — `+`, `*`, `ጽሁፍ_አድርግ` — is error `AH3006` before
+  anything is built. The step budget counts operations, not memory, so
+  without a limit forty doublings — eighty steps — ask the host for a
+  trillion characters and end the process in a way nothing can catch.
 
 ### 4.4 Boolean and truthiness
 
@@ -440,6 +445,11 @@ annotations** (§7.2). There is no static type checker.
     `ሰርዝ` ("delete!") modify the list they are given and return `ምንም` (§8).
 - `ቅጂ_አድርግ` is a **shallow** copy: the new list has the same elements, so a nested
   list is still shared.
+- A list holds at most **10,000,000** elements; `+` past that is `AH3006`,
+  for the reason in §4.3.
+- A list can contain itself — `ጨምር(ሀ፣ ሀ)` — because it is a reference.
+  Printing one shows `[…]` where it recurs (§8.1), and comparing one ends
+  (§6.3): neither may recurse until the host gives out.
 
 ### 4.6 Nothing
 
@@ -592,6 +602,9 @@ Amharic.
 - Lists compare by **value**, not identity, even though they are mutable
   references: `[1፣ 2] == [1፣ 2]` is `እውነት` for two separate lists. 2.0 has no
   identity test; if you need one, compare something you control.
+- A value is always equal to itself, and comparing lists that contain
+  themselves ends: a pair of lists already being compared further up is
+  taken as equal.
 - `!=` is the negation of `==`.
 
 ### 6.4 Access
@@ -693,6 +706,10 @@ when `x` is a `ስብስብ`:
   error: it assigns, and checks the value against whatever type is already
   pinned. Re-typing a name therefore surfaces as `AH3009` against the first
   declaration's type, which says more than "you declared this twice" would.
+- Inside a method or constructor, a typed declaration of one of the object's
+  attributes assigns that attribute, as plain assignment does (§7.6), and
+  the value is checked against both the annotation and the attribute's own
+  type. It does not create a local that hides the attribute.
 
   There was an `AH3016` here for redeclaration, and it could not survive
   §5.3: a `ከሆነ` or `እስከሆነ ድረስ` block creates no scope, so a typed
@@ -768,6 +785,10 @@ Ahadu (§5.3), so the loop variable survives the loop and holds the last
 element visited, exactly as a `እስከሆነ ድረስ` counter does. Making this one name
 behave differently would be a special case a learner has to be told about.
 
+For the same reason each element is bound **as an assignment** binds
+(§7.1): a name pinned by a typed declaration is checked (`AH3009`), and
+inside a method an attribute's name assigns the attribute (§7.6).
+
 An empty collection runs the body zero times and leaves `<name>` untouched —
 undefined, if it did not already exist. Reading it afterwards is then the
 ordinary `AH3001`.
@@ -842,7 +863,9 @@ reserved.
 A class body contains, in any order and all indented one level:
 
 - **attribute declarations** — `name = <expr>`, optionally type-annotated.
-  Every attribute MUST be declared here with a default value.
+  Every attribute MUST be declared here with a default value. A typed
+  attribute's default is checked against its type when each object is made,
+  as a typed declaration is (§7.2): `ቁጥር ዕድሜ = "ሃያ"` is `AH3009`.
 - **at most one constructor** — `ፍጠር(<params>)፦` with a block body.
 - **methods** — `ተግባር <name>(<params>)፦` with a block body.
 
@@ -952,6 +975,9 @@ the non-mutating half of the pair (§4.5).
 
 Nesting is the only context where a string is quoted, so that `ጻፍ(["ሀ"])`
 shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
+
+A list that contains itself prints `[…]` where it recurs: `ሀ = [1]`,
+`ጨምር(ሀ፣ ሀ)`, `ጻፍ(ሀ)` shows `[1፣ […]]`.
 
 `ወደ_ጽሁፍ` returns exactly this rendering, so there is one answer to "how does
 this value look" rather than two that could drift apart.
@@ -1089,9 +1115,18 @@ that an implementation could easily break:
   `AH3018`). Resetting the counter is not enough — the prelude's own
   statements must not be charged against the limit at all, or a small budget
   is exhausted before the program runs a line.
-- **Loading the library MUST NOT reach the statement hook** that `ahadu trace`
-  uses (TOOLING.md §1.1). The hook reports a line number, and the renderer
-  looks that number up in the *learner's* source.
+- **The library MUST NOT reach the statement hook** that `ahadu trace` uses
+  (TOOLING.md §1.1) — neither while it loads nor while one of its functions
+  runs. The hook reports a line number, and the renderer looks that number
+  up in the *learner's* source. The learner's own call to a library function
+  is their statement, and is reported.
+- **The library is not affected by the learner's definitions.** It resolves
+  the names it uses — `ርዝመት`, `ፈልግ`, its own functions — in a scope of its
+  own, so a learner who defines a `ርዝመት` changes `ርዝመት` and nothing else;
+  `ደርድር` still sorts. A built-in written in the host language could never
+  be broken this way, and the promise above is that the two are
+  indistinguishable. (A learner's **subclass** of a library class can still
+  override its methods — that is what subclassing is for, §7.6.)
 - **A failure inside a library function is reported at the line that called
   it**, with the library function named. A line number inside the library
   belongs to a file the learner cannot open: pointing at one frames a line of
@@ -1372,12 +1407,13 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH2013` | illegal item in a class body |
 | `AH2014` | `ተመላሽ <expr>` inside `ፍጠር` |
 | `AH2015` | block indented deeper than one level |
+| `AH2016` | nesting or an expression too deep — `ፕሮግራሙ ከመጠን በላይ ተደራርቧል።` (§9.3) |
 | `AH3001` | undefined variable — `ያልታወቀ ተለዋጭ` |
 | `AH3002` | illegal operation for these types — `ሕጋዊ ያለሆነ ተግባር` |
 | `AH3003` | division or modulo by zero — `በዘሮ ማካፈል አይቻልም።` |
 | `AH3004` | undefined exponentiation |
 | `AH3005` | non-boolean condition |
-| `AH3006` | numeric overflow |
+| `AH3006` | numeric overflow, or a string or list past its size limit (§4.3, §4.5) |
 | `AH3007` | non-integer index |
 | `AH3008` | index out of range — `ከስብስቡ ውጪ ያለ ቦታ` |
 | `AH3009` | annotated type mismatch |
@@ -1387,12 +1423,13 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
 | `AH3013` | call of a non-callable value — names a shadowed built-in (§8.2) |
 | `AH3014` | member access on a non-object |
 | `AH3015` | assignment to a string index — `ጽሁፍን በቦታው መቀየር አይቻልም።` |
-| `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` |
+| `AH3017` | call depth exceeded — `የጥሪ ጥልቀት ከመጠን አለፈ።` Also raised, with no count, if the host's own stack runs out first. |
 | `AH3018` | step limit exceeded — `ፕሮግራሙ ከመጠን በላይ ረዘመ።` |
 | `AH3019` | `ወደ_ቁጥር` on text that is not a number — `ጽሁፉ ቁጥር አይደለም።` |
 | `AH3020` | `ዘፈቀደ_ቁጥር` given bounds it cannot use — `የአጋጣሚው ክልል አይሰራም።` |
 | `AH3021` | `ወደ_ግዕዝ` on a number with no Ge'ez spelling — `ይህ ቁጥር በግዕዝ አይጻፍም።` |
 | `AH3022` | a date or month number that does not exist — `ቀኑ አይሰራም።` |
+| `AH9001` | Ahadu itself failed — a bug in the implementation, not the program — `ያልተጠበቀ ስተት ተፈጥሯል። ችግሩ የአሃዱ እንጂ የእርስዎ ፕሮግራም አይደለም፤ እባክዎ ያሳውቁን።` (§9.3) |
 
 ### 9.3 Recovery
 
@@ -1402,8 +1439,23 @@ error, while `x[1:2] = v` is refused on sight and so is `AH2009`.
   line does not cascade. It always returns a `Program` node, possibly
   containing error placeholders. This is what makes live highlighting of a
   half-typed file possible.
+
+  Never throwing includes never running out of stack, so nesting is limited:
+  brackets and prefix operators (`-`, `ተቃርኖ`, `^`) nest at most **100** deep,
+  blocks at most **50**, and a finished expression or statement tree at most
+  **400** levels — `1 + 1 + …` with four hundred `+` parses in a loop but
+  would be evaluated recursively. Past any of these the parser reports
+  `AH2016` and abandons the line. No program a person writes comes near them.
 - **Evaluator**: stops at the first runtime error and returns it. There is no
   exception handling in 2.0.
+- **Anything unexpected**: if a stage fails in a way it was never meant to —
+  a bug in the implementation, or a host callback that throws — it MUST
+  still return, with the single diagnostic `AH9001`. Its message is in
+  Amharic, says the fault is Ahadu's rather than the program's, and asks
+  the reader to report it. The reader MUST NOT see the host's own error or a
+  stack trace; an implementation MAY keep the original error where a
+  developer can reach it (the CLI prints it under `AHADU_DEBUG=1`), but not
+  in anything a reader is shown or that is serialised.
 
 ---
 

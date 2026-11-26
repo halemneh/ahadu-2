@@ -37,7 +37,9 @@ import {
   AH2013,
   AH2014,
   AH2015,
+  AH2016,
   diagnostic,
+  internalError,
   sortDiagnostics,
 } from '../diagnostics.js';
 import type { KeywordType, Token, TokenType } from '../lexer/index.js';
@@ -110,6 +112,57 @@ function endsWithBlock(statement: Statement): boolean {
   );
 }
 
+/**
+ * How deeply brackets, prefix operators and blocks may nest (AH2016).
+ *
+ * The parser is recursive descent, so every level of nesting is JavaScript
+ * stack, and a thousand nested `(` used to overflow it — a `RangeError` out
+ * of a parser that promises never to throw (§9.3). A hundred is far past
+ * anything a person writes, and far short of any engine's stack.
+ */
+export const MAX_NESTING = 100;
+
+/**
+ * How deeply blocks may nest (AH2016). Counted apart from expressions, so a
+ * block at the limit still has room for an ordinary condition on its
+ * header — otherwise the header fails instead, and its body is reported line
+ * by line as over-indented.
+ */
+export const MAX_BLOCK_NESTING = 50;
+
+/**
+ * How deep the finished tree may be (AH2016).
+ *
+ * `1 + 1 + … + 1` parses in a loop, so it never troubles the parser, but it
+ * builds a tree as deep as it is long, and the interpreter walks trees
+ * recursively. Checked after parsing, iteratively, so the check itself cannot
+ * overflow.
+ */
+export const MAX_TREE_DEPTH = 400;
+
+/**
+ * The first node deeper than `limit`, if any. Iterative on purpose: this is
+ * the one walk over a tree that may be too deep to walk recursively.
+ */
+function tooDeepNode(root: object, limit: number): Span | null {
+  const stack: { value: unknown; depth: number }[] = [{ value: root, depth: 0 }];
+  while (stack.length > 0) {
+    const { value, depth } = stack.pop() as { value: unknown; depth: number };
+    if (typeof value !== 'object' || value === null) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) stack.push({ value: item, depth });
+      continue;
+    }
+    const isNode = typeof (value as { type?: unknown }).type === 'string';
+    const here = isNode ? depth + 1 : depth;
+    if (isNode && here > limit) return value as Span;
+    for (const child of Object.values(value)) {
+      if (typeof child === 'object' && child !== null) stack.push({ value: child, depth: here });
+    }
+  }
+  return null;
+}
+
 /** Tokens a panicking parser may stop in front of without consuming. */
 const CLOSERS: ReadonlySet<TokenType> = new Set<TokenType>([
   'RPAREN',
@@ -147,6 +200,10 @@ class Parser {
   private readonly grouped = new WeakSet<object>();
   /** `ተመላሽ` is only legal inside a function (§7.5). */
   private functionDepth = 0;
+  /** Current nesting of brackets and prefix operators; see MAX_NESTING. */
+  private nesting = 0;
+  /** Current nesting of blocks; see MAX_BLOCK_NESTING. */
+  private blockNesting = 0;
   /** `ፍጠር` may not return a value (§7.6). */
   private inConstructor = false;
 
@@ -311,6 +368,22 @@ class Parser {
       endLine: last?.endLine ?? first.line,
       endCol: last?.endCol ?? first.endCol,
     };
+
+    if (!this.diagnostics.some((d) => d.code === AH2016)) {
+      const deep = tooDeepNode(program, MAX_TREE_DEPTH);
+      if (deep !== null) {
+        this.diagnostics.push(
+          diagnostic(
+            AH2016,
+            'parser',
+            deep.line,
+            deep.startCol,
+            deep.line === deep.endLine ? deep.endCol : deep.startCol,
+            msg.expressionTooLong(MAX_TREE_DEPTH),
+          ),
+        );
+      }
+    }
 
     return { program, diagnostics: sortDiagnostics(this.diagnostics) };
   }
@@ -725,12 +798,19 @@ class Parser {
       this.report(AH2006, kw, msg.EMPTY_CLASS_BODY);
     }
 
+    // After `።`, the next member is on the same line, with no indentation of
+    // its own to read (§5.1). Reading the line's indent there saw zero and
+    // ended the class, so `ስም = 1። ዕድሜ = 2` made `ዕድሜ` a global.
+    let sameLine = false;
     for (;;) {
-      const line = this.peekLine();
-      if (line === null || line.indent < inner) break;
-      if (line.indent > inner)
-        this.report(AH2015, line.token, msg.overIndented(inner, line.indent));
-      this.pos = line.index;
+      if (!sameLine) {
+        const line = this.peekLine();
+        if (line === null || line.indent < inner) break;
+        if (line.indent > inner)
+          this.report(AH2015, line.token, msg.overIndented(inner, line.indent));
+        this.pos = line.index;
+      }
+      sameLine = false;
 
       const t = this.peek();
       const before = this.pos;
@@ -749,7 +829,9 @@ class Parser {
         if (attribute !== null) {
           attributes.push(attribute);
           end = attribute;
-          this.consumeTerminator();
+          if (this.consumeTerminator() === 'stop' && !this.check('NEWLINE') && !this.isAtEnd()) {
+            sameLine = true;
+          }
         } else {
           // The member failed, and anything indented under it was its body.
           this.skipIndentedLines(inner);
@@ -872,6 +954,12 @@ class Parser {
       return empty;
     }
 
+    if (this.blockNesting >= MAX_BLOCK_NESTING) {
+      this.report(AH2016, opener, msg.nestedTooDeeply(MAX_BLOCK_NESTING));
+      this.skipIndentedLines(parentIndent);
+      return empty;
+    }
+
     const inner = parentIndent + 1;
     const line = this.peekLine();
     if (line === null || line.indent < inner) {
@@ -880,7 +968,9 @@ class Parser {
     }
 
     const reportedBefore = this.diagnostics.length;
+    this.blockNesting += 1;
     const statements = this.parseStatements(inner, true);
+    this.blockNesting -= 1;
     if (statements.length === 0) {
       // Empty because its one statement failed, not because nothing was
       // written: that mistake has already been reported.
@@ -907,7 +997,27 @@ class Parser {
   // =========================================================================
 
   private parseExpression(): Expression {
-    return this.parseOr();
+    return this.deeper(() => this.parseOr());
+  }
+
+  /** Parses one level further in, or reports AH2016 and abandons the line. */
+  private deeper(parse: () => Expression): Expression {
+    if (this.nesting >= MAX_NESTING) {
+      const at = this.peek();
+      this.report(AH2016, at, msg.nestedTooDeeply(MAX_NESTING));
+      // Going on would only recurse further. Skip to the end of the line by
+      // raw position — inside brackets the cursor would skip line breaks.
+      while (this.pos < this.tokens.length - 1) {
+        const type = (this.tokens[this.pos] as Token).type;
+        if (type === 'NEWLINE' || type === 'STOP') break;
+        this.pos += 1;
+      }
+      return this.invalidAt(at);
+    }
+    this.nesting += 1;
+    const expression = parse();
+    this.nesting -= 1;
+    return expression;
   }
 
   private parseOr(): Expression {
@@ -933,7 +1043,7 @@ class Parser {
   private parseNot(): Expression {
     if (this.checkKeyword('NOT')) {
       const kw = this.advance();
-      const operand = this.parseNot();
+      const operand = this.deeper(() => this.parseNot());
       return {
         type: 'UnaryExpression',
         operator: 'NOT',
@@ -998,7 +1108,7 @@ class Parser {
   private parseUnary(): Expression {
     if (this.check('MINUS')) {
       const op = this.advance();
-      const operand = this.parseUnary();
+      const operand = this.deeper(() => this.parseUnary());
       return {
         type: 'UnaryExpression',
         operator: 'NEG',
@@ -1020,7 +1130,7 @@ class Parser {
     const base = this.parsePostfix();
     if (!this.check('CARET')) return base;
     this.advance();
-    const exponent = this.parseUnary();
+    const exponent = this.deeper(() => this.parseUnary());
     return {
       type: 'BinaryExpression',
       operator: 'POW',
@@ -1283,5 +1393,13 @@ class Parser {
  * order.
  */
 export function parse(tokens: readonly Token[]): ParseResult {
-  return new Parser(tokens).parse();
+  try {
+    return new Parser(tokens).parse();
+  } catch (thrown) {
+    // A bug here, not in the program: AH9001 rather than a stack trace (§9.3).
+    return {
+      program: { type: 'Program', body: [], line: 1, startCol: 1, endLine: 1, endCol: 1 },
+      diagnostics: [internalError('parser', thrown)],
+    };
+  }
 }

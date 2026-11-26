@@ -1,0 +1,8 @@
+# A string or list has a size limit (§4.3, §4.5). The step budget counts
+# operations, so without it these eighty steps would ask for a trillion items.
+# expect-error: AH3006
+ሀ = [1]
+ቆ = 0
+ቆ < 40 እስከሆነ ድረስ፦
+    ሀ = ሀ + ሀ
+    ቆ = ቆ + 1

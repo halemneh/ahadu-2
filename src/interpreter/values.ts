@@ -244,7 +244,8 @@ export function compareStrings(a: string, b: string): number {
  * Lists compare element-wise even though they are mutable references; objects
  * and functions compare by identity.
  */
-export function valuesEqual(a: Value, b: Value): boolean {
+export function valuesEqual(a: Value, b: Value, comparing?: Map<object, Set<object>>): boolean {
+  if (a === b) return true;
   if (a.kind !== b.kind) return false;
 
   switch (a.kind) {
@@ -259,7 +260,15 @@ export function valuesEqual(a: Value, b: Value): boolean {
     case 'list': {
       const other = b as ListValue;
       if (a.items.length !== other.items.length) return false;
-      return a.items.every((item, i) => valuesEqual(item, other.items[i] as Value));
+      // A list can contain itself (`ጨምር(ሀ፣ ሀ)`). A pair already being
+      // compared further up is assumed equal, so the comparison ends instead
+      // of recursing until the host's stack gives out.
+      const pairs = comparing ?? new Map<object, Set<object>>();
+      const against = pairs.get(a) ?? new Set<object>();
+      if (against.has(other)) return true;
+      against.add(other);
+      pairs.set(a, against);
+      return a.items.every((item, i) => valuesEqual(item, other.items[i] as Value, pairs));
     }
     default:
       return a === b;
@@ -288,7 +297,7 @@ function renderNumber(value: number): string {
  * `nested` is set for a value inside a list, which is the only place a string
  * is quoted: `ጻፍ(["ሀ"])` shows `["ሀ"]` while `ጻፍ("ሀ")` shows `ሀ`.
  */
-export function render(value: Value, nested = false): string {
+export function render(value: Value, nested = false, open = new Set<object>()): string {
   switch (value.kind) {
     case 'number':
       return renderNumber(value.value);
@@ -298,8 +307,15 @@ export function render(value: Value, nested = false): string {
       return nested ? `"${value.value}"` : value.value;
     case 'nothing':
       return 'ምንም';
-    case 'list':
-      return `[${value.items.map((item) => render(item, true)).join('፣ ')}]`;
+    case 'list': {
+      // A list that contains itself prints as `[…]` where it recurs (§8.1),
+      // rather than recursing until the host's stack gives out.
+      if (open.has(value)) return '[…]';
+      open.add(value);
+      const text = `[${value.items.map((item) => render(item, true, open)).join('፣ ')}]`;
+      open.delete(value);
+      return text;
+    }
     case 'function':
     case 'builtin':
       return `[ተግባር ${value.name}]`;

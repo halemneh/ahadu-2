@@ -1,0 +1,14 @@
+# The loop variable is bound as an assignment is (§7.4): inside a method, an
+# attribute's name assigns the attribute (§7.6).
+# expect: 1
+# expect: 2
+# expect: 3
+# expect: 3
+ክላስ ቆጣሪ፦
+    መጨረሻ = 0
+    ተግባር ቁጠር(ዝርዝር)፦
+        ዝርዝር ለእያንዳንዱ መጨረሻ፦
+            ጻፍ(መጨረሻ)
+ቆ = ቆጣሪ()
+ቆ.ቁጠር([1፣ 2፣ 3])
+ጻፍ(ቆ.መጨረሻ)

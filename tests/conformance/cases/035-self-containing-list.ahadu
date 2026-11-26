@@ -1,0 +1,10 @@
+# A list can contain itself. It prints `[…]` where it recurs, and compares
+# equal to itself, rather than recursing until the host gives out (§8.1).
+# expect: [1፣ […]]
+# expect: እውነት
+# expect: 2
+ሀ = [1]
+ጨምር(ሀ፣ ሀ)
+ጻፍ(ሀ)
+ጻፍ(ሀ == ሀ)
+ጻፍ(ርዝመት(ሀ))

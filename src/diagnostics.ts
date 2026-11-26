@@ -51,6 +51,7 @@ export const AH2012 = 'AH2012';
 export const AH2013 = 'AH2013';
 export const AH2014 = 'AH2014';
 export const AH2015 = 'AH2015';
+export const AH2016 = 'AH2016';
 
 // ---------------------------------------------------------------------------
 // Runtime codes (§9.2)
@@ -77,6 +78,13 @@ export const AH3019 = 'AH3019';
 export const AH3020 = 'AH3020';
 export const AH3021 = 'AH3021';
 export const AH3022 = 'AH3022';
+
+/**
+ * Something inside Ahadu failed that was never meant to — a bug in this
+ * repository, not in the program (§9.2). The reader sees a message in
+ * Amharic asking them to report it, never a JavaScript stack trace.
+ */
+export const AH9001 = 'AH9001';
 
 /**
  * Default Amharic text, keyed by code.
@@ -108,6 +116,7 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH2013]: 'በክላስ ውስጥ መሆን የማይገባው ነገር አለ።',
   [AH2014]: '"ፍጠር" ዋጋ አይመልስም።',
   [AH2015]: 'ከሚያስፈልገው በላይ ክፍተት አለ።',
+  [AH2016]: 'ፕሮግራሙ ከመጠን በላይ ተደራርቧል።',
 
   [AH3001]: 'ያልታወቀ ተለዋጭ',
   [AH3002]: 'ሕጋዊ ያለሆነ ተግባር',
@@ -130,6 +139,8 @@ export const MESSAGES: Readonly<Record<string, string>> = {
   [AH3020]: 'የአጋጣሚው ክልል አይሰራም።',
   [AH3021]: 'ይህ ቁጥር በግዕዝ አይጻፍም።',
   [AH3022]: 'ቀኑ አይሰራም።',
+
+  [AH9001]: 'ያልተጠበቀ ስተት ተፈጥሯል። ችግሩ የአሃዱ እንጂ የእርስዎ ፕሮግራም አይደለም፤ እባክዎ ያሳውቁን።',
 };
 
 export function diagnostic(
@@ -164,4 +175,23 @@ export function sortDiagnostics(diagnostics: readonly Diagnostic[]): Diagnostic[
 /** The one-line header of a rendered diagnostic (§9.1). */
 export function formatDiagnostic(d: Diagnostic): string {
   return `[${d.code}] ${d.message}: መስመር ${d.line} ላይ: ${d.startCol}ኛው ካራክተር`;
+}
+
+/**
+ * The diagnostic a stage returns when it fails unexpectedly (AH9001).
+ *
+ * The original error is kept as a non-enumerable `cause`: invisible to JSON,
+ * to a worker's message and to anything that prints the diagnostic, so the
+ * reader only ever sees the Amharic message — but still there for a host
+ * that wants to show a developer what happened (`AHADU_DEBUG=1` in the CLI).
+ */
+export function internalError(stage: Stage, cause: unknown, line = 1): Diagnostic {
+  const d = diagnostic(AH9001, stage, line, 1, 1);
+  Object.defineProperty(d, 'cause', { value: cause, enumerable: false });
+  return d;
+}
+
+/** The original error behind an AH9001 diagnostic, if there is one. */
+export function internalCause(d: Diagnostic): unknown {
+  return (d as { cause?: unknown }).cause;
 }

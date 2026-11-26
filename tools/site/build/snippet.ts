@@ -14,7 +14,7 @@
  */
 
 import { evaluate } from '../../playground/evaluate.js';
-import { formatDiagnostic } from '../../../src/diagnostics.js';
+import { AH9001, formatDiagnostic, internalCause } from '../../../src/diagnostics.js';
 
 /** How much a runaway snippet is allowed before it is stopped. */
 export const MAX_STEPS = 2_000_000;
@@ -153,6 +153,9 @@ export function verify(snippet: Snippet, where: string): SnippetResult {
 
   if (failed) {
     const first = reply.diagnostics[0];
+    // An internal error hides its cause from readers; an author running the
+    // build needs it, or "please report this" is all they have to go on.
+    if (first?.code === AH9001) console.error(internalCause(first));
     problem(
       `this snippet is meant to run, but failed: ${
         first === undefined ? 'unknown error' : formatDiagnostic(first)

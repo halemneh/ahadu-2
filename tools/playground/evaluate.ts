@@ -22,6 +22,7 @@ import { render } from '../../src/interpreter/index.js';
 import { run } from '../../src/engine.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
+import { internalError } from '../../src/diagnostics.js';
 
 export interface RunRequest {
   readonly source: string;
@@ -66,6 +67,22 @@ export interface RunReply {
  * the function that decides which diagnostics the page gets to see.
  */
 export function evaluate(request: RunRequest): RunReply {
+  try {
+    return evaluateUnguarded(request);
+  } catch (thrown) {
+    // Each stage already turns its own failures into AH9001; this catches
+    // anything between them, so the page never shows a raw error (§9.3).
+    return {
+      output: '',
+      diagnostics: [internalError('runtime', thrown)],
+      frames: [],
+      value: null,
+      stoppedAt: 'runtime',
+    };
+  }
+}
+
+function evaluateUnguarded(request: RunRequest): RunReply {
   const nothing = { output: '', value: null, frames: [] as readonly Frame[] };
 
   const lexed = tokenize(request.source);

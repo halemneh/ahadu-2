@@ -54,6 +54,34 @@ describe('never throws', () => {
     const source = `${'('.repeat(200)}1${')'.repeat(200)}`;
     expect(() => parseSource(source)).not.toThrow();
   });
+
+  /*
+   * Each of these overflowed the JavaScript stack — a RangeError out of a
+   * parser that promises never to throw — until nesting was limited (§9.3).
+   * Each is now one AH2016, and nothing else.
+   */
+  describe('never runs out of stack', () => {
+    const blocks = (n: number): string =>
+      Array.from({ length: n }, (_, i) => `${'    '.repeat(i)}እውነት ከሆነ፦`).join('\n') +
+      `\n${'    '.repeat(n)}ጻፍ(1)`;
+
+    it.each([
+      ['a thousand brackets', `ጻፍ(${'('.repeat(1000)}1${')'.repeat(1000)})`],
+      ['twenty thousand minus signs', `ጻፍ(${'-'.repeat(20000)}1)`],
+      ['twenty thousand ተቃርኖ', `ጻፍ(${'ተቃርኖ '.repeat(20000)}እውነት)`],
+      ['twenty thousand powers', `ጻፍ(1${' ^ 1'.repeat(20000)})`],
+      ['a two-thousand-term sum', `ጻፍ(1${' + 1'.repeat(2000)})`],
+      ['two hundred nested blocks', blocks(200)],
+    ])('%s', (_, source) => {
+      expect(codes(source)).toEqual(['AH2016']);
+    });
+
+    it('leaves what a person writes alone', () => {
+      expect(parseSource(`ጻፍ(${'('.repeat(90)}1${')'.repeat(90)})`).diagnostics).toEqual([]);
+      expect(parseSource(`ጻፍ(1${' + 1'.repeat(300)})`).diagnostics).toEqual([]);
+      expect(parseSource(blocks(40)).diagnostics).toEqual([]);
+    });
+  });
 });
 
 describe('one report per bad line', () => {
