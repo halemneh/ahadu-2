@@ -427,8 +427,22 @@ body {
     width: 7.5rem;
   }
 
+  /*
+   * On a phone the list spans the header instead of hanging from the box.
+   * Hung from the box's right edge, a list wider than the space to the
+   * box's left ran off the screen: half of it out of reach, behind a
+   * sideways scroll. `.find` stops being the anchor, so the sticky header
+   * is, and the list takes its width less a margin each side.
+   */
+  .find {
+    position: static;
+  }
+
   .find-results {
-    width: min(20rem, calc(100vw - 2rem));
+    top: calc(100% + 0.25rem);
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
   }
 }
 

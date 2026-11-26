@@ -110,7 +110,7 @@ Fences carry what the build should check:
 | `ahadu` + `ውጤት` fence after it | The next fence states the exact expected output. |
 | `ahadu error=AH2008` | Must fail, with that code. This is how errors are taught. |
 | `ahadu fragment` | Not a whole program; highlighted, never run. |
-| `ahadu varies` | Runs (so it cannot crash), but its output depends on when it runs — `ዛሬ` — so the page shows none until Run, and says so instead of "verified". It cannot state an output. |
+| `ahadu varies` | Runs at build (so it cannot crash), but its output depends on when it runs — `ዛሬ` — so the build shows none and does not call it verified. It cannot state an output. The page runs it in the reader's browser as it opens, so they see today's answer; with scripting off they see none. |
 
 A snippet with no stated output still runs, so a lesson cannot contain a
 program that crashes. A snippet that states output is checked character for
@@ -142,6 +142,12 @@ someone who followed a link meant to see that program. The fragment stays in
 the address bar until the reader changes the program, so until then the URL
 is a permalink worth sharing; after that, a reload shows their own work
 (`TOOLING.md` §2.2).
+
+Every code sample on the site — a lesson's snippet, a fragment, a reference
+example, the library's source — carries line numbers in a column beside it,
+the same numbers every diagnostic refers to. They are `aria-hidden` and not
+selectable, so a screen reader reads the program and copying it copies the
+program.
 
 The reader never has to leave a lesson to try something, and never has to set
 anything up to begin. That is the whole argument for a site over a README.

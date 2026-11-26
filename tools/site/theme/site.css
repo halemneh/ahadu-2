@@ -381,8 +381,33 @@ a {
   overflow: hidden;
 }
 
-.snip-editor {
+/*
+ * Line numbers in a column of their own, beside the code (lessons, the
+ * reference's examples, the library listing). The editable layers sit in
+ * `.snip-layers`, which is what the textarea is positioned over, so the
+ * gutter takes no part in the overlay and cannot put it out of line.
+ */
+.snip-editor,
+.snip-lines {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.snip-layers {
   position: relative;
+}
+
+/* Same font, size, leading and vertical padding as the code beside it. */
+.snip-gutter {
+  margin: 0;
+  padding: 0.85rem 0 0.85rem 0.9rem;
+  font-family: var(--code);
+  font-size: 1rem;
+  line-height: 1.75;
+  white-space: pre;
+  text-align: right;
+  color: var(--gutter);
+  user-select: none;
 }
 
 /*
@@ -762,6 +787,10 @@ details.answer[open] summary {
     padding: 0.75rem;
   }
 
+  .snip-gutter {
+    padding: 0.75rem 0 0.75rem 0.75rem;
+  }
+
 }
 
 /* ---------------------------------------------------------------------------
@@ -1111,11 +1140,20 @@ body:has(.fidel) .foot {
   font-style: italic;
 }
 
+.fn-eg-lines {
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.fn-eg-lines .snip-gutter {
+  padding: 0.9rem 0 0.9rem 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.8;
+}
+
 .fn-eg {
   margin: 0;
   padding: 0.9rem 1.1rem;
-  border-radius: 12px;
-  background: var(--bg);
   font-family: var(--code);
   font-size: 0.95rem;
   line-height: 1.8;

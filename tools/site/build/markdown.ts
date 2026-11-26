@@ -214,6 +214,21 @@ export function render(input: RenderInput): Rendered {
 }
 
 /**
+ * Line numbers for a code sample: one per line of `source`, in a column of
+ * their own beside the code.
+ *
+ * `aria-hidden` and unselectable, so a screen reader reads the program and
+ * copying it copies the program — not "1 2 3" interleaved with it. The
+ * numbers are the same ones every diagnostic refers to, which is the point
+ * of having them on a page that teaches errors.
+ */
+export function lineGutter(source: string): string {
+  const count = source.split('\n').length;
+  const numbers = Array.from({ length: count }, (_, i) => String(i + 1)).join('\n');
+  return `<pre class="snip-gutter" aria-hidden="true">${numbers}</pre>`;
+}
+
+/**
  * One snippet: highlighted source, and what it produces.
  *
  * The output shown is the output the build just saw, so a reader who never
@@ -227,7 +242,9 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
   const s = input.strings;
 
   if (snippet.kind === 'fragment') {
-    return `<div class="snip snip-fragment"><pre class="snip-code"><code>${code}</code></pre></div>\n`;
+    return `<div class="snip snip-fragment"><div class="snip-lines">${lineGutter(
+      snippet.code,
+    )}<pre class="snip-code"><code>${code}</code></pre></div></div>\n`;
   }
 
   // A `varies` snippet shows nothing until Run: what the build saw is a
@@ -252,12 +269,15 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
   return [
     `<div class="snip" data-kind="${snippet.kind}"${
       snippet.input.length > 0 ? ` data-input="${escapeHtml(snippet.input.join('\n'))}"` : ''
-    } data-empty="${escapeHtml(s.noOutput)}">`,
+    } data-empty="${escapeHtml(s.noOutput)}"${snippet.varies === true ? ' data-varies' : ''}>`,
     `  <div class="snip-editor">`,
+    `    ${lineGutter(snippet.code)}`,
+    `    <div class="snip-layers">`,
     `    <pre class="snip-backdrop" aria-hidden="true"><code>${code}</code></pre>`,
     `    <textarea class="snip-input" spellcheck="false" rows="${
       snippet.code.split('\n').length
     }" aria-label="${escapeHtml(s.snippetLabel)}">${escapeHtml(snippet.code)}</textarea>`,
+    `    </div>`,
     `  </div>`,
     `  <div class="snip-bar">`,
     `    <button class="snip-run" type="button">${escapeHtml(s.run)}</button>`,

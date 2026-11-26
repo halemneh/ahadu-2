@@ -56,6 +56,11 @@ describe('a `varies` snippet', () => {
     expect(html).not.toContain(strings('en').snippetVerified);
   });
 
+  it('is marked so the page can run it as it opens', () => {
+    expect(view('```ahadu varies\nጻፍ(ዛሬ())\n```\n').html).toContain(' data-varies');
+    expect(view('```ahadu\nጻፍ(1)\n```\n').html).not.toContain('data-varies');
+  });
+
   it('cannot also state its output', () => {
     expect(() => view('```ahadu varies\nጻፍ(1)\n```\n\n```output\n1\n```\n')).toThrow(/varies/);
   });
@@ -82,4 +87,16 @@ describe('the reference’s examples', () => {
       expect(reply.output.trimEnd()).toBe(entry.out);
     });
   }
+});
+
+describe('line numbers', () => {
+  it('number every line of an editable snippet, out of reach of a screen reader', () => {
+    const { html } = view('```ahadu\nሀ = 1\nለ = 2\nጻፍ(ሀ + ለ)\n```\n');
+    expect(html).toContain('<pre class="snip-gutter" aria-hidden="true">1\n2\n3</pre>');
+  });
+
+  it('number a fragment too', () => {
+    const { html } = view('```ahadu fragment\nሀ > 1 ከሆነ፦\n```\n');
+    expect(html).toContain('<pre class="snip-gutter" aria-hidden="true">1</pre>');
+  });
 });
