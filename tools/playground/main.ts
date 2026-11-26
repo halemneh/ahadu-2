@@ -16,6 +16,7 @@
 import { attachCompletion } from '../shared/completion.js';
 import { setUpContact } from '../shared/contact-dialog.js';
 import { setUpSearch } from '../shared/search.js';
+import { tokenize } from '../../src/lexer/index.js';
 import { highlight } from './highlight.js';
 import type { Region } from './highlight.js';
 import {
@@ -211,6 +212,9 @@ function applyLanguage(): void {
   }
 
   languageButton.textContent = s.languageToggle;
+  // Its text is in the other language ("English" on an Amharic page), and
+  // a screen reader should pronounce it as that language (WCAG 3.1.2).
+  languageButton.lang = otherLanguage(language);
   languageButton.setAttribute('aria-label', s.languageToggle);
   themeButton.setAttribute('aria-label', s.theme);
   themeButton.title = s.theme;
@@ -241,11 +245,11 @@ function systemTheme(): Theme {
 }
 
 function applyTheme(theme: Theme | null): void {
-  if (theme === null) {
-    delete document.documentElement.dataset.theme;
-    return;
-  }
-  document.documentElement.dataset.theme = theme;
+  if (theme === null) delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = theme;
+  // The button is labelled "Dark theme"; this says whether it is on.
+  const showing = (document.documentElement.dataset.theme as Theme | undefined) ?? systemTheme();
+  themeButton.setAttribute('aria-pressed', String(showing === 'dark'));
 }
 
 function toggleTheme(): void {
@@ -273,6 +277,13 @@ function paintEditor(): void {
     hovered,
     caret,
   });
+  syncScroll();
+}
+
+/** Colours the editor from a fresh lex, ahead of the debounced analysis. */
+function paintNow(): void {
+  const { tokens, diagnostics } = tokenize(editor.value);
+  backdrop.innerHTML = highlight({ source: editor.value, tokens, diagnostics, hovered, caret });
   syncScroll();
 }
 
@@ -484,12 +495,36 @@ for (const panel of [panels.tokens, panels.ast, panels.errors]) {
 
 function showPanel(name: keyof typeof panels): void {
   for (const [key, element] of Object.entries(panels)) element.hidden = key !== name;
-  for (const tab of tabs) tab.setAttribute('aria-selected', String(tab.dataset.panel === name));
+  for (const tab of tabs) {
+    const on = tab.dataset.panel === name;
+    tab.setAttribute('aria-selected', String(on));
+    // One tab stop for the whole set, on the selected tab (WAI-ARIA tabs).
+    tab.tabIndex = on ? 0 : -1;
+  }
 }
 
 for (const tab of tabs) {
   tab.addEventListener('click', () => {
     showPanel((tab.dataset.panel ?? 'output') as keyof typeof panels);
+  });
+
+  // Arrows, Home and End move between tabs and open the one reached.
+  tab.addEventListener('keydown', (event) => {
+    const i = tabs.indexOf(tab);
+    const target =
+      event.key === 'ArrowRight'
+        ? tabs[(i + 1) % tabs.length]
+        : event.key === 'ArrowLeft'
+          ? tabs[(i - 1 + tabs.length) % tabs.length]
+          : event.key === 'Home'
+            ? tabs[0]
+            : event.key === 'End'
+              ? tabs[tabs.length - 1]
+              : undefined;
+    if (target === undefined) return;
+    event.preventDefault();
+    showPanel((target.dataset.panel ?? 'output') as keyof typeof panels);
+    target.focus();
   });
 }
 
@@ -555,14 +590,43 @@ function start(): void {
   // for every answer up front — so say how many lines are really wanted.
   askRepeat.hidden = !readsRepeatedly(current.tokens);
 
+  askOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   ask.hidden = false;
   askInput.focus();
   askInput.setSelectionRange(askInput.value.length, askInput.value.length);
 }
 
+/** Whatever had focus when the input dialog opened, to give it back. */
+let askOpener: HTMLElement | null = null;
+
 function closeAsk(): void {
   ask.hidden = true;
+  askOpener?.focus();
+  askOpener = null;
 }
+
+// The dialog is modal (`aria-modal`), so it behaves like one: Escape closes
+// it from anywhere inside, and Tab cycles within it rather than wandering
+// off into the page behind.
+ask.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAsk();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+  const stops = [askInput, askCancel, askRun].filter((el) => !el.hidden);
+  const first = stops[0];
+  const last = stops[stops.length - 1];
+  if (first === undefined || last === undefined) return;
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
 
 function inputLines(): string[] {
   return askInput.value === '' ? [] : askInput.value.split('\n');
@@ -577,7 +641,6 @@ askRun.addEventListener('click', () => {
 });
 
 askInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') closeAsk();
   // Enter adds a line; the modifier runs, as in the editor.
   if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
     event.preventDefault();
@@ -602,6 +665,9 @@ function launch(input: readonly string[]): void {
   worker.onmessage = (event: MessageEvent<RunReply>): void => {
     const reply = event.data;
     panels.output.innerHTML = outputHtml(reply, s);
+    // The error that stopped a run is under its output; show it, rather than
+    // the top of a long scroll that says nothing went wrong.
+    if (reply.diagnostics.length > 0) panels.output.scrollTop = panels.output.scrollHeight;
 
     const first = reply.diagnostics[0];
     if (first === undefined) {
@@ -745,9 +811,13 @@ editor.addEventListener('input', () => {
   forgetLink();
   // The program has changed, so last run's error no longer describes it.
   runtimeError = null;
-  // The gutter and the readout follow every keystroke; the colours wait for
-  // the debounce, since re-lexing is the expensive half.
+  // The gutter, the readout and the colours follow every keystroke; parsing
+  // and the panels wait for the debounce. The colours used to wait too, and
+  // since the textarea's own text is transparent, the newest characters were
+  // invisible for up to 150 ms. Lexing alone is cheap — lesson snippets do it
+  // on every keystroke — and it is all the colouring needs.
   gutter.textContent = gutterHtml(editor.value);
+  paintNow();
   updatePosition();
   window.clearTimeout(timer);
   timer = window.setTimeout(refresh, DEBOUNCE_MS);

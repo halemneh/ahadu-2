@@ -315,7 +315,9 @@ describe('the generated reference', () => {
     // like three different things.
     const table = keywordTable(strings('en'));
     const row =
-      /<tr><td class="ref-word">([^<]*(?:<code>[^<]*<\/code>\s*)+)<\/td><td>if<\/td>/.exec(table);
+      /<tr id="kw-IF"><td class="ref-word">([^<]*(?:<code>[^<]*<\/code>\s*)+)<\/td><td>if<\/td>/.exec(
+        table,
+      );
     expect(row?.[0]).toContain('ከሆነ');
     expect(row?.[0]).toContain('ከሖነ');
   });

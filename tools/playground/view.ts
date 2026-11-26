@@ -23,8 +23,17 @@ export interface Analysis {
   readonly rows: readonly AstRow[];
 }
 
+/**
+ * Escapes text for HTML — including `"`, because the site build puts this
+ * in attributes too (a meta description, a snippet's `data-input`), where an
+ * unescaped quote would end the attribute early and cut the value short.
+ */
 export function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /**
@@ -257,6 +266,8 @@ export function outputHtml(reply: RunReply, s: Strings): string {
   const parts: string[] = [];
 
   if (reply.output !== '') parts.push(escapeHtml(reply.output.replace(/\n$/, '')));
+  if (reply.truncated === true)
+    parts.push(`<span class="value">${escapeHtml(s.outputTruncated)}</span>`);
 
   const first = reply.diagnostics[0];
   if (first !== undefined) {

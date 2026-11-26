@@ -43,9 +43,21 @@ export interface RunRequest {
   readonly now?: number;
 }
 
+/**
+ * How much of a program's output is kept, in UTF-16 units.
+ *
+ * A loop that prints until the step budget stops it wrote 714,287 lines —
+ * fifteen million pixels of panel, built in the worker, posted across and
+ * laid out — with the error that explains it at the very bottom. The rest is
+ * dropped and the reply says so.
+ */
+export const MAX_OUTPUT = 100_000;
+
 export interface RunReply {
-  /** Everything `ጻፍ` wrote, as it was written. */
+  /** What `ጻፍ` wrote, as it was written, up to MAX_OUTPUT. */
   readonly output: string;
+  /** Output past MAX_OUTPUT was dropped. */
+  readonly truncated?: boolean;
   /**
    * Every diagnostic from the stage that stopped the run.
    *
@@ -96,16 +108,24 @@ function evaluateUnguarded(request: RunRequest): RunReply {
   }
 
   let output = '';
+  let truncated = false;
+  const keep = (text: string): void => {
+    if (truncated) return;
+    if (output.length + text.length > MAX_OUTPUT) {
+      output += text.slice(0, MAX_OUTPUT - output.length);
+      truncated = true;
+      return;
+    }
+    output += text;
+  };
   const pending = [...request.input];
 
   const result = run(
     parsed.program,
     {
-      write: (text) => {
-        output += text;
-      },
+      write: keep,
       readLine: (prompt) => {
-        if (prompt !== null) output += prompt;
+        if (prompt !== null) keep(prompt);
         return pending.shift() ?? '';
       },
     },
@@ -118,6 +138,7 @@ function evaluateUnguarded(request: RunRequest): RunReply {
 
   return {
     output,
+    ...(truncated ? { truncated: true } : {}),
     diagnostics: result.diagnostic === null ? [] : [result.diagnostic],
     frames: result.frames,
     value: result.value.kind === 'nothing' ? null : render(result.value),

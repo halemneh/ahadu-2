@@ -154,3 +154,18 @@ describe('over a real program', () => {
     expect(diagnosticAt(diagnostics, at7)?.code).toBe('AH1001');
   });
 });
+
+describe('positionAt on a tab-indented line', () => {
+  // A tab reaches the next stop of four spaces, as `tab-size: 4` draws it,
+  // so with ten pixels a character the first letter after a tab is at 40.
+  const tabbed = '\tሀለ';
+
+  it('puts a point inside the tab on column 1', () => {
+    expect(at(tabbed, 10 + 15, 12).column).toBe(1);
+  });
+
+  it('finds the first letter after the tab where it is drawn', () => {
+    expect(at(tabbed, 10 + 42, 12).column).toBe(2);
+    expect(at(tabbed, 10 + 52, 12).column).toBe(3);
+  });
+});

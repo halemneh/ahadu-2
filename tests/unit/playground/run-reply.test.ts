@@ -167,3 +167,24 @@ describe('the output panel says how many more there are', () => {
     expect(outputHtml(run('1 + 2'), en)).toContain('Value: 3');
   });
 });
+
+describe('output that would not fit', () => {
+  it('is cut at MAX_OUTPUT and the reply says so', async () => {
+    const { MAX_OUTPUT } = await import('../../../tools/playground/evaluate.js');
+    const reply = evaluate({
+      source: 'እውነት እስከሆነ ድረስ፦\n    ጻፍ("ሀሀሀሀሀሀሀሀሀሀ")',
+      input: [],
+      maxSteps: 200_000,
+    });
+    expect(reply.output.length).toBe(MAX_OUTPUT);
+    expect(reply.truncated).toBe(true);
+    // The step budget still stops it, and that is still reported.
+    expect(reply.diagnostics[0]?.code).toBe('AH3018');
+    expect(outputHtml(reply, strings('en'))).toContain(strings('en').outputTruncated);
+  });
+
+  it('leaves ordinary output alone', () => {
+    const reply = evaluate({ source: 'ጻፍ(1)', input: [], maxSteps: 1000 });
+    expect(reply.truncated).toBeUndefined();
+  });
+});

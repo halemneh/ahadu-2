@@ -16,10 +16,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Read-only by default. Only the deploy job, which runs no code from the
+# repository and installs nothing, may write to Pages: the build job runs
+# `npm ci`, and a dependency's install script should not hold a token that
+# can publish the site.
+#
+# Actions are pinned to commit SHAs, not tags, because a tag can be moved.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # One deploy at a time, and never cancel one half-finished.
 concurrency:
@@ -30,32 +34,40 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: npm
 
       - run: npm ci
 
+      # Everything CI checks, first. A push to main used to deploy whether or
+      # not lint and the tests passed, since this workflow did not wait for
+      # CI; running the same checks here means a red main cannot publish.
+      - run: npm run check
+
       # This runs every code sample on the site through the interpreter and
       # fails on one whose output is not what its page claims (SITE.md §2),
       # so a lesson that lies cannot reach the web.
       - run: npm run site:build
 
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: tools/site/dist
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

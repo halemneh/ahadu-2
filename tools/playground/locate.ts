@@ -56,7 +56,7 @@ export function positionAt(
 
   let before = 0;
   for (let i = 0; i < chars.length; i += 1) {
-    const after = measure(chars.slice(0, i + 1).join(''));
+    const after = measureTabbed(chars.slice(0, i + 1).join(''), measure);
     if (target < (before + after) / 2) return { line: line + 1, column: i + 1 };
     before = after;
   }
@@ -92,4 +92,24 @@ export function diagnosticAt(diagnostics: readonly Diagnostic[], at: Position): 
   }
 
   return best;
+}
+
+/**
+ * A line's width with tabs at their stops, as the editor draws them.
+ *
+ * A canvas draws `\t` as a single space, but the editor sets `tab-size: 4`,
+ * so each tab reaches the next multiple of four spaces' width. Tabs are
+ * legal indentation (LANGUAGE.md §3.7), and measuring them as one space put
+ * the hover four columns wrong on every tab-indented line.
+ */
+export function measureTabbed(text: string, measure: Measure): number {
+  if (!text.includes('\t')) return measure(text);
+  const stop = 4 * measure(' ');
+  const parts = text.split('\t');
+  let width = 0;
+  parts.forEach((part, i) => {
+    width += measure(part);
+    if (i < parts.length - 1) width = stop > 0 ? (Math.floor(width / stop) + 1) * stop : width;
+  });
+  return width;
 }

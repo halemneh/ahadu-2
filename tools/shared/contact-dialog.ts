@@ -163,6 +163,11 @@ export function setUpContact(): void {
      */
     void fetch(modal.dataset.endpoint ?? '', {
       method: 'POST',
+      // A connection that drops packets — ordinary for part of this audience
+      // (SITE.md §6.1) — never answers at all, and left the button disabled
+      // on "Sending…" for good. After this long it fails like any other
+      // failure: the text is kept and GitHub is offered.
+      ...(typeof AbortSignal.timeout === 'function' ? { signal: AbortSignal.timeout(20_000) } : {}),
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         message: message.value,
