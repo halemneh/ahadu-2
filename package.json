@@ -30,6 +30,10 @@
     "./interpreter": {
       "types": "./dist/interpreter/index.d.ts",
       "import": "./dist/interpreter/index.js"
+    },
+    "./engine": {
+      "types": "./dist/engine.d.ts",
+      "import": "./dist/engine.js"
     }
   },
   "scripts": {

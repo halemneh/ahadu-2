@@ -93,6 +93,27 @@ class Lexer {
     this.i += 1;
   }
 
+  /** How many ignored format characters start `ahead` code points on. */
+  private invisibleRun(ahead = 0): number {
+    let n = 0;
+    while (IGNORED_FORMAT_CHARS.has(this.peek(ahead + n) ?? '')) n += 1;
+    return n;
+  }
+
+  /**
+   * Takes a run of ASCII digits into `text`, skipping format characters
+   * between them (§2.1): `1\u200B2` is the number 12, not 1 and then 2.
+   */
+  private takeDigits(text: string): string {
+    for (;;) {
+      const skip = this.invisibleRun();
+      const next = this.peek(skip);
+      if (next === null || !isDigit(next)) return text;
+      for (let k = 0; k < skip; k += 1) this.skipInvisible();
+      text += this.take();
+    }
+  }
+
   private newLine(): void {
     this.line += 1;
     this.col = 1;
@@ -147,7 +168,15 @@ class Lexer {
     const line = this.line;
     const runs: SpaceRun[] = [];
 
-    while (this.peek() === ' ' || this.peek() === '\t') {
+    // Format characters are skipped here as everywhere (§2.1). A zero-width
+    // space pasted at the start of an indented line used to end the
+    // indentation and leave the body looking empty (AH2006).
+    for (;;) {
+      if (IGNORED_FORMAT_CHARS.has(this.peek() ?? '')) {
+        this.skipInvisible();
+        continue;
+      }
+      if (this.peek() !== ' ' && this.peek() !== '\t') break;
       const col = this.col;
       const ch = this.take();
       runs.push({ col, width: ch === '\t' ? TAB_WIDTH : 1 });
@@ -394,16 +423,14 @@ class Lexer {
   private scanNumber(): void {
     const line = this.line;
     const startCol = this.col;
-    let text = '';
-
-    while (!this.done && isDigit(this.peek() as string)) text += this.take();
+    let text = this.takeDigits('');
 
     // A `.` is part of the number only with digits on both sides, so `5.` is
     // `5` then DOT and `1.2.3` is `1.2`, DOT, `3` (§3.4).
     const after = this.peek(1);
     if (this.peek() === '.' && after !== null && isDigit(after)) {
       text += this.take();
-      while (!this.done && isDigit(this.peek() as string)) text += this.take();
+      text = this.takeDigits(text);
     }
 
     this.emit('NUMBER', Number(text), line, startCol, this.col - 1);
@@ -545,13 +572,26 @@ class Lexer {
    * token is still emitted so the parser sees the structure.
    */
   private scanWhileTail(line: number, startCol: number, headEndCol: number): void {
-    const tail = Array.from(WHILE_TAIL);
-    let matches = this.peek() === ' ';
-    for (let n = 0; matches && n < tail.length; n += 1) {
-      if (this.peek(n + 1) !== tail[n]) matches = false;
+    // The space and `ድረስ`, with format characters allowed anywhere among
+    // them (§2.1) — `ድ\u200Bረስ` is still `ድረስ`. `visible` records, for each
+    // code point of the match, whether it takes a column.
+    const tail = [' ', ...Array.from(WHILE_TAIL)];
+    const visible: boolean[] = [];
+    let k = 0;
+    let matches = true;
+    for (const want of tail) {
+      const skip = this.invisibleRun(k);
+      for (let n = 0; n < skip; n += 1) visible.push(false);
+      k += skip;
+      if (this.peek(k) !== want) {
+        matches = false;
+        break;
+      }
+      visible.push(true);
+      k += 1;
     }
     // Whole-word: `እስከሆነ ድረስነገር` is not the tail.
-    const after = this.peek(tail.length + 1);
+    const after = this.peek(k + this.invisibleRun(k));
     if (matches && after !== null && isWordChar(after)) matches = false;
 
     if (!matches) {
@@ -561,9 +601,13 @@ class Lexer {
     }
 
     let endCol = headEndCol;
-    for (let n = 0; n < tail.length + 1; n += 1) {
-      endCol = this.col;
-      this.take();
+    for (const takesColumn of visible) {
+      if (takesColumn) {
+        endCol = this.col;
+        this.take();
+      } else {
+        this.skipInvisible();
+      }
     }
     this.emit('KEYWORD', 'WHILE', line, startCol, endCol);
   }

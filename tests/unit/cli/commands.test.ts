@@ -307,3 +307,29 @@ describe.skipIf(!built)('global flags', () => {
     expect(stdout).toContain('ahadu tokens <file>');
   });
 });
+
+describe.skipIf(!built)('--json for an error that stops a command', () => {
+  // The human rendering came out whatever the flag said, so an editor
+  // asking for JSON got prose exactly when there was something to report.
+  it('is JSON for a lexer error that stops run', () => {
+    const { stderr, status } = run(
+      'run',
+      'tests/conformance/cases/112-unterminated-string.ahadu',
+      '--json',
+    );
+    expect(status).toBe(1);
+    const parsed = JSON.parse(stderr) as { diagnostics: { code: string; severity: string }[] };
+    expect(parsed.diagnostics[0]?.code).toBe('AH1003');
+    expect(parsed.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('carries severity on every diagnostic', () => {
+    const { stdout } = run(
+      'check',
+      'tests/conformance/cases/105-chained-comparison.ahadu',
+      '--json',
+    );
+    const parsed = JSON.parse(stdout) as { diagnostics: { severity: string }[] };
+    expect(parsed.diagnostics.every((d) => d.severity === 'error')).toBe(true);
+  });
+});

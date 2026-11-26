@@ -203,9 +203,19 @@ export function matchesDeclaredType(value: Value, type: DeclaredType): boolean {
  * unit per code point, and splitting it is only needed when some astral
  * character — an emoji, say — is present.
  */
-export function codePoints(text: string): string[] {
-  return /[\uD800-\uDFFF]/.test(text) ? Array.from(text) : text.split('');
+export function codePoints(text: string): readonly string[] {
+  // The last answer is kept, because the common caller is a loop indexing
+  // one string — `ጽሁፍ[ቆ]` with `ቆ` counting up — and re-splitting the whole
+  // string for every character made walking it quadratic: 17 seconds for
+  // 40,000 characters. Callers never change the array they are given.
+  if (text === lastText) return lastPoints;
+  lastPoints = /[\uD800-\uDFFF]/.test(text) ? Array.from(text) : text.split('');
+  lastText = text;
+  return lastPoints;
 }
+
+let lastText: string | null = null;
+let lastPoints: readonly string[] = [];
 
 /** A string's length in code points, which is what `ርዝመት` reports. */
 export function stringLength(text: string): number {
@@ -288,7 +298,28 @@ export function valuesEqual(a: Value, b: Value, comparing?: Map<object, Set<obje
  */
 function renderNumber(value: number): string {
   if (Object.is(value, -0)) return '0';
-  return String(value);
+  return plainDecimal(String(value));
+}
+
+/**
+ * JavaScript's shortest round-trip digits, written out without an exponent.
+ *
+ * `String(10 ** 21)` is `1e+21` and `String(1e-7)` is `1e-7`, and Ahadu has
+ * no exponent literal — so `ወደ_ቁጥር(ወደ_ጽሁፍ(10 ^ 21))` was AH3019, breaking
+ * §8.1's one rendering that reads back. The digits are the same; only the
+ * point moves.
+ */
+export function plainDecimal(text: string): string {
+  const match = /^(-?)(\d+)(?:\.(\d+))?e([+-]\d+)$/.exec(text);
+  if (match === null) return text;
+  const [, sign = '', whole = '', fraction = '', exponentText = '0'] = match;
+  const digits = whole + fraction;
+  const point = whole.length + Number(exponentText);
+  let out: string;
+  if (point <= 0) out = `0.${'0'.repeat(-point)}${digits}`;
+  else if (point >= digits.length) out = digits + '0'.repeat(point - digits.length);
+  else out = `${digits.slice(0, point)}.${digits.slice(point)}`;
+  return sign + out.replace(/^0+(?=\d)/, '');
 }
 
 /**

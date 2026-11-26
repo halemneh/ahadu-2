@@ -55,6 +55,10 @@ whichever option best satisfies the earlier principle.
   Rationale: Ge'ez text pasted from word processors and the web routinely
   carries these, and one of them inside a name would otherwise split it in
   two for reasons invisible on screen.
+  "Wherever they appear" includes the places that are easy to forget:
+  among a line's leading indentation, between the digits of a number (`1`,
+  ZWSP, `2` is `12`), and inside `እስከሆነ ድረስ` between the two words or
+  within `ድረስ`.
 - Inside a string literal they are **kept**, along with U+FEFF. A string is
   data, and silently altering the user's characters is worse than tolerating
   invisible formatting in it.
@@ -382,8 +386,13 @@ annotations** (§7.2). There is no static type checker.
 - Printing: a value that is mathematically an integer prints with **no**
   decimal point — `4 / 2` prints `2`, not `2.0`. Otherwise the shortest
   round-tripping decimal form is used.
+- Printing never uses an exponent. `10 ^ 21` prints
+  `1000000000000000000000` and `1 / 10000000` prints `0.0000001`: Ahadu has
+  no exponent literal, so `1e+21` is not a number `ወደ_ቁጥር` can read back,
+  and §8.1's one rendering has to be one that reads back.
 - `NaN` and `±Infinity` are not reachable: every operation that would produce
-  one is a runtime error instead (§6.2).
+  one is a runtime error instead (§6.2). That includes a literal too large to
+  hold — four hundred nines — which is `AH3006` where it is evaluated.
 
 ### 4.3 String
 
@@ -1063,7 +1072,8 @@ raises — a guard that can itself fail is no guard.
 library and the wrong one for a first program: everyone who writes
 `ዘፈቀደ_ቁጥር(1፣ 6)` means six faces, and an exclusive bound would hand them five and
 no error. Both bounds MUST be integers and `ሀ` MUST NOT exceed `ለ`; otherwise
-`AH3020`.
+`AH3020`. So is a range with more integers in it than a number can count
+exactly (more than 2⁵³), which would otherwise draw `Infinity`.
 
 The sequence is **fully determined by a seed**. A program sets it with `ዘር`,
 which is an imperative like `ጨምር` and `ሰርዝ` and returns `ምንም`. The same seed
