@@ -431,3 +431,139 @@ body {
     width: min(20rem, calc(100vw - 2rem));
   }
 }
+
+/*
+ * The suggestion list under an editor's caret (TOOLING.md §2.2.1).
+ *
+ * Here rather than in either page's stylesheet because the playground and
+ * every lesson snippet open the same list, and it is a body-level element
+ * positioned over the page rather than something inside one editor. It
+ * genuinely floats, so it is one of the few things with a shadow — and like
+ * everything else on these pages, no border.
+ */
+.cmp {
+  position: fixed;
+  z-index: 30;
+  display: grid;
+  width: min(30rem, calc(100vw - 16px));
+  padding: 0.3rem;
+  border-radius: 10px;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-lg);
+  color: var(--ink);
+  font-family: var(--ui);
+}
+
+.cmp[hidden] {
+  display: none;
+}
+
+.cmp-list {
+  max-height: min(15rem, 40vh);
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.cmp-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cmp-list li[aria-selected='true'] {
+  background: var(--layer-strong);
+}
+
+.cmp-mark {
+  flex: none;
+  width: 1.4rem;
+  font-family: var(--code);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Each kind wears its own syntax colour, so the list reads like the code. */
+.cmp-keyword {
+  color: var(--kw);
+}
+
+.cmp-type,
+.cmp-class {
+  color: var(--type);
+}
+
+.cmp-function,
+.cmp-member {
+  color: var(--op);
+}
+
+.cmp-variable,
+.cmp-param {
+  color: var(--id);
+}
+
+.cmp-label {
+  flex: none;
+  font-family: var(--code);
+  font-size: 1rem;
+}
+
+.cmp-via {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.cmp-detail {
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--muted);
+  font-family: var(--code);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+}
+
+.cmp-doc {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.6rem;
+  margin-top: 0.3rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--layer);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.cmp-doc:empty {
+  display: none;
+}
+
+.cmp-doc code {
+  overflow-wrap: anywhere;
+  font-family: var(--code);
+}
+
+.cmp-kind {
+  color: var(--muted);
+}
+
+.cmp-doc p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  /* Three lines is enough to choose by; the reference has the rest. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
