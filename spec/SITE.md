@@ -213,7 +213,14 @@ than loosened.
 third-party script, no font, no `fetch` on a timer, nothing that happens
 because a page was opened or read. A reader can open every page on this site
 and the only requests made are for the site's own HTML, stylesheet and script.
-That part is not negotiable and is not weakened by anything below. In
+That part is not negotiable and is not weakened by anything below, and the
+browser enforces it: every page carries a Content Security Policy
+(`tools/shared/csp.ts`) that allows scripts, styles, fonts and connections
+from the site itself only — plus the contact endpoint below, for
+connections — and its one inline script by hash. A script added to the page
+by anything between the site and the reader, such as a CDN's analytics, is
+refused. The host cannot set headers, so the policy is a `<meta>` tag; that
+cannot express `frame-ancestors`, which needs a host that sends headers. In
 particular, a CAPTCHA or bot-check widget may not be loaded by a page's HTML,
 because its script would be a third-party request on every page view — if one
 is ever needed, it is fetched at the moment a reader opens the form.
@@ -228,8 +235,12 @@ actions, and both begin with the reader deciding to act:
 - **Contact** — a form in a dialog, which POSTs once, when Send is pressed, to
   a single endpoint belonging to this project (`tools/contact-worker/`). It
   sends what the reader typed and the path and language of the page they were
-  on, and nothing else: no identifier, no history, nothing retained between
-  visits.
+  on. The endpoint adds one thing of its own: the country the connection comes
+  from, as Cloudflare reports it, which says where a report comes from
+  without saying who sent it. The IP address it is derived from is not passed
+  on. Nothing else: no identifier, no history, nothing retained between
+  visits. The form and the privacy page both say all of this, in both
+  languages — what is collected and what is disclosed must be the same list.
 
 The distinction is consent, and it is the whole of it. Telemetry is a request
 the reader did not make, about behaviour they did not report; those remain
@@ -243,8 +254,8 @@ Two constraints follow, and they are requirements, not preferences:
   schoolchildren. Telling us about a typo must never cost a child their email
   address, so the field is there only for a reader who wants an answer, and it
   is labelled as optional where they can see it rather than only in the markup.
-  The form states in both languages what is sent and that it is used only to
-  reply.
+  The form states in both languages what is sent, including the country,
+  and that it is used only to reply.
 - **The form fails gracefully.** The endpoint may be blocked or unreachable —
   restricted connectivity is ordinary for part of this audience. On failure the
   page says so in the reader's language, keeps what they typed, and offers the

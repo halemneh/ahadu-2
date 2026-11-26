@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    // The contact Worker imports Cloudflare's runtime module, which exists
+    // only on Cloudflare. Its tests run against a stand-in that records what
+    // would have been sent.
+    alias: {
+      'cloudflare:email': new URL('./tests/helpers/cloudflare-email.ts', import.meta.url).pathname,
+    },
+  },
   test: {
     include: ['tests/**/*.test.ts'],
     coverage: {

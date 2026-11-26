@@ -154,7 +154,8 @@ const amharic: Strings = {
   contactEmail: 'ኢሜይል',
   contactEmailOptional: 'አማራጭ ነው',
   contactEmailHint: 'መልስ ከፈለጉ ብቻ',
-  contactPrivacy: 'የሚላከው የጻፉት መልእክት ነው፤ ኢሜይሉን ከሞሉት ደግሞ ኢሜይሉ። መልስ ለመስጠት ብቻ ይጠቅማሉ። ሌላ ምንም አይሰበሰብም።',
+  contactPrivacy:
+    'የሚደርሰን የጻፉት መልእክት፣ ኢሜይሉን ከሞሉት ኢሜይሉ፣ የነበሩበት ገጽ እና ግንኙነትዎ የመጣበት አገር ነው። መልስ ለመስጠት ብቻ ይጠቅማሉ። ሌላ ምንም አይሰበሰብም።',
   contactSend: 'ላክ',
   contactSending: 'በመላክ ላይ…',
   contactSent: 'መልእክቱ ተልኳል። እናመሰግናለን።',
@@ -231,7 +232,7 @@ const english: Strings = {
   contactEmailOptional: 'optional',
   contactEmailHint: 'only if you would like a reply',
   contactPrivacy:
-    'What is sent is the message you write, and your email address if you fill it in. They are used only to reply to you. Nothing else is collected.',
+    'What reaches us is the message you write, your email address if you fill it in, the page you were on, and the country your connection comes from. They are used only to reply to you. Nothing else is collected.',
   contactSend: 'Send',
   contactSending: 'Sending…',
   contactSent: 'Your message was sent. Thank you.',
