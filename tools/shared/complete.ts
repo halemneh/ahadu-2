@@ -78,6 +78,12 @@ export interface Context {
 export interface Completion {
   readonly context: Context;
   readonly items: readonly Suggestion[];
+  /**
+   * The word as typed is already a whole name — a variable, a function, a
+   * keyword — so the reader may well be finished with it. Enter then ends
+   * the line rather than taking the top suggestion; Tab still takes it.
+   */
+  readonly complete: boolean;
 }
 
 /** More than this and the list is a wall, not a choice. */
@@ -663,6 +669,7 @@ export function complete(source: string, caret: number, options: Options): Compl
 
   const scored: { item: Candidate; quality: number }[] = [];
   const labels = new Set<string>();
+  const whole = prefix !== '' && pool.some((item) => item.label === prefix);
   for (const item of pool) {
     let quality: number | null = prefix === '' ? 0 : matchQuality(prefix, item.label);
     let via: string | undefined;
@@ -692,7 +699,7 @@ export function complete(source: string, caret: number, options: Options): Compl
       ? { label, insert, caret: at, kind, detail, doc }
       : { label, insert, caret: at, kind, detail, doc, via };
   });
-  return items.length === 0 ? null : { context, items };
+  return items.length === 0 ? null : { context, items, complete: whole };
 }
 
 /** The source after `item` replaces the context's word, and the caret in it. */

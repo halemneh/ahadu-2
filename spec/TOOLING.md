@@ -370,8 +370,8 @@ draws.
   program and the library declare: which class an object has is a runtime
   fact.
 - **It opens** on a typed letter or `.`, never inside a string or a comment,
-  and never in a number. Ctrl+Space opens it on demand, with an empty word
-  included. Nothing happens while an input method is composing.
+  and never in a number. Ctrl+Space or Ctrl+J opens it on demand, with an
+  empty word included. Nothing happens while an input method is composing.
 - **Matching is loose where Ge'ez typing needs it.** The last syllable matches
   by consonant, because an Amharic keyboard types the consonant before its
   vowel; and letters that are one sound — `ሀ`/`ሐ`/`ኀ` (and `ሃ`), `ሰ`/`ሠ`,
@@ -394,10 +394,19 @@ draws.
   block-opening keyword typed at the end of a line brings its shape with it:
   `ከሆነ፦`, `እስከሆነ ድረስ፦`, `አለበለዚያ፦`, `ግን ‸ ከሆነ፦`, `ፍጠር(‸)፦`. `፦` is the
   mark a reader is least likely to have on their keyboard.
-- **Keys:** ↑/↓ and PageUp/PageDown move, Enter or Tab inserts, Escape
-  closes. While the list is open it takes Tab and Enter ahead of the editor's
-  own indent; Ctrl/Cmd+Enter still runs. Insertion goes through the
-  browser's editing command so Ctrl+Z undoes exactly the completion.
+- **Keys:** ↑/↓ and PageUp/PageDown move, Tab inserts, Escape closes. Enter
+  inserts too — **except** when the word as typed is already a whole name or
+  keyword and the reader has not moved the selection: then it closes the list
+  and ends the line. Typing `ድምር` and pressing Enter, with `ድምር_አጠቃላይ` also
+  defined, means a new line, not the longer name; Tab still takes it. While
+  the list is open it takes Tab and Enter ahead of the editor's own indent;
+  Ctrl/Cmd+Enter still runs. Insertion goes through the browser's editing
+  command so Ctrl+Z undoes exactly the completion.
+- **Ctrl+Space opens the list on demand, and so does Ctrl+J.** macOS switches
+  input sources with Ctrl+Space, which is the shortcut a reader typing
+  Amharic is most likely to have taken, and the system gets it before the
+  page does. Both are matched by physical key, so they work on a Ge'ez
+  layout, where the J key does not type `j`.
 - The selected entry's signature and description show under the list, in
   the page's language. The list is a `listbox` the textarea points at with
   `aria-activedescendant`, and like every floating thing it has a shadow and
