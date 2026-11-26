@@ -36,7 +36,16 @@ function snippet(over: Partial<Snippet> = {}): Snippet {
 
 describe('fence flags', () => {
   it('reads a plain Ahadu fence as a whole program', () => {
-    expect(parseInfo('ahadu')).toEqual({ kind: 'program', expectedCode: null });
+    expect(parseInfo('ahadu')).toEqual({ kind: 'program', expectedCode: null, varies: false });
+  });
+
+  it('reads the varies flag, only on a program', () => {
+    expect(parseInfo('ahadu varies')).toEqual({
+      kind: 'program',
+      expectedCode: null,
+      varies: true,
+    });
+    expect(() => parseInfo('ahadu fragment varies')).toThrow(/varies/);
   });
 
   it('reads the fragment flag', () => {
@@ -44,7 +53,11 @@ describe('fence flags', () => {
   });
 
   it('reads an expected error code', () => {
-    expect(parseInfo('ahadu error=AH2008')).toEqual({ kind: 'error', expectedCode: 'AH2008' });
+    expect(parseInfo('ahadu error=AH2008')).toEqual({
+      kind: 'error',
+      expectedCode: 'AH2008',
+      varies: false,
+    });
   });
 
   it('rejects a flag it does not know, rather than ignoring it', () => {

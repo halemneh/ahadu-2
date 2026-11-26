@@ -76,7 +76,7 @@ five — or six, every fourth year.
 
 `ዛሬ` gives today's date as three numbers — year, month, day:
 
-```ahadu
+```ahadu varies
 ቀኑ = ዛሬ()
 ጻፍ(ወር_መጠሪያ(ቀኑ[1]) + " " + ወደ_ግዕዝ(ቀኑ[2]) + " ቀን " + ወደ_ግዕዝ(ቀኑ[0]))
 ```

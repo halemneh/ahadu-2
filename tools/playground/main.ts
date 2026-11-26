@@ -512,6 +512,8 @@ function stop(): void {
   dispose();
   status.textContent = s.statusStopped;
   status.dataset.state = 'bad';
+  // The output panel said "Running…", which stopped being true.
+  panels.output.innerHTML = `<span class="empty">${s.statusStopped}</span>`;
 }
 
 /**
@@ -620,6 +622,10 @@ function launch(input: readonly string[]): void {
 
   worker.onerror = (): void => {
     panels.output.innerHTML = `<span class="empty">${s.unexpected}</span>`;
+    // Otherwise the status line says "Running…" for good — which is what a
+    // reader saw when a deploy shipped without the worker's chunk.
+    status.textContent = s.unexpected;
+    status.dataset.state = 'bad';
     dispose();
   };
 
@@ -690,6 +696,11 @@ examplesSelect.addEventListener('change', () => {
   if (source === undefined) return;
   editor.value = source;
   remember(STORAGE_SOURCE, editor.value);
+  forgetLink();
+  // The last program's output and runtime error do not describe this one.
+  dispose();
+  runtimeError = null;
+  panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
   refresh();
   updatePosition();
   editor.focus();
@@ -698,6 +709,16 @@ examplesSelect.addEventListener('change', () => {
 // ---------------------------------------------------------------------------
 // Editing
 // ---------------------------------------------------------------------------
+
+/**
+ * Drops a shared program's fragment from the address once the program on
+ * screen is no longer that one, so a reload shows the reader's own draft.
+ * `replaceState`, so it adds no history entry for Back to step through.
+ */
+function forgetLink(): void {
+  if (window.location.hash === '') return;
+  history.replaceState(history.state, '', window.location.pathname + window.location.search);
+}
 
 /*
  * Nothing re-lexes while an input method is composing.
@@ -721,6 +742,7 @@ editor.addEventListener('compositionend', () => {
 editor.addEventListener('input', () => {
   if (composing) return;
   remember(STORAGE_SOURCE, editor.value);
+  forgetLink();
   // The program has changed, so last run's error no longer describes it.
   runtimeError = null;
   // The gutter and the readout follow every keystroke; the colours wait for
@@ -742,19 +764,38 @@ attachCompletion(editor, { language: () => language });
 
 editor.addEventListener('scroll', syncScroll);
 
+/**
+ * Escape was the last key pressed, so the next Tab leaves the editor.
+ *
+ * Tab indents (§3.7), which would make the editor a keyboard trap — WCAG
+ * 2.1.2, Level A — if it were the whole story. Shift+Tab always moves focus
+ * back, and Escape then Tab moves it forward, the convention code editors on
+ * the web share. The editor's description says so to a screen reader.
+ */
+let tabLeaves = false;
+
 editor.addEventListener('keydown', (event) => {
-  // Tab inserts one indent level rather than leaving the editor (§3.7).
-  if (event.key === 'Tab') {
-    event.preventDefault();
-    const { selectionStart: from, selectionEnd: to, value } = editor;
-    editor.value = `${value.slice(0, from)}    ${value.slice(to)}`;
-    editor.selectionStart = from + 4;
-    editor.selectionEnd = from + 4;
-    remember(STORAGE_SOURCE, editor.value);
-    refresh();
-    updatePosition();
+  if (event.key === 'Escape') {
+    tabLeaves = true;
     return;
   }
+
+  if (event.key === 'Tab') {
+    if (event.shiftKey || tabLeaves || event.ctrlKey || event.metaKey || event.altKey) {
+      tabLeaves = false;
+      return;
+    }
+    event.preventDefault();
+    // Through the browser's editing command, so Ctrl+Z takes back an indent
+    // like any other typing, and so it goes down the ordinary `input` path:
+    // the draft is saved, the shared link forgotten, the analysis re-run.
+    if (!document.execCommand('insertText', false, '    ')) {
+      editor.setRangeText('    ', editor.selectionStart, editor.selectionEnd, 'end');
+      editor.dispatchEvent(new Event('input'));
+    }
+    return;
+  }
+  tabLeaves = false;
 
   // Ctrl/Cmd+Enter runs, the way a notebook cell does.
   if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
@@ -779,13 +820,27 @@ language = savedLanguage === 'en' ? 'en' : 'am';
  * (tools/shared/share.ts). It wins over the saved draft, because someone who
  * followed a link meant to see that program.
  *
- * The fragment is left in the address bar rather than cleaned away: it makes
- * the URL a permalink to this program, which is worth more than saving a
- * reader from re-reading the link they just followed. Edits still go to
- * storage, so leaving and coming back without the link keeps them.
+ * The fragment stays in the address bar until the program changes — until
+ * then the URL is a permalink to what is on screen. The first edit, or
+ * picking an example, removes it (`forgetLink`): otherwise a reload, or a
+ * phone discarding a background tab, would bring back the original snippet
+ * over the reader's work, and their next keystroke would overwrite the
+ * draft it had hidden.
  */
 const shared = decodeProgram(window.location.hash);
 editor.value = shared ?? recall(STORAGE_SOURCE) ?? STARTER;
+
+// A different program pasted into the address bar of an open tab is a
+// same-document navigation, which reloads nothing. Load it all the same.
+window.addEventListener('hashchange', () => {
+  const next = decodeProgram(window.location.hash);
+  if (next === null || next === editor.value) return;
+  editor.value = next;
+  remember(STORAGE_SOURCE, editor.value);
+  runtimeError = null;
+  refresh();
+  updatePosition();
+});
 askInput.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
 applyLanguage();

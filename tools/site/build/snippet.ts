@@ -36,25 +36,42 @@ export interface Snippet {
   readonly expectedCode: string | null;
   /** Lines served to አንብብ, from a `ግቤት` fence. */
   readonly input: readonly string[];
+  /**
+   * `varies`: its output depends on when it runs (`ዛሬ`). It still runs at
+   * build, so it cannot crash, but the page shows no output for it — the
+   * build's answer is a fixed instant, and showing it under "verified" would
+   * be showing the reader a wrong date.
+   */
+  readonly varies?: boolean;
 }
 
 /**
  * Reads a fence's info string.
  *
- * `ahadu` · `ahadu fragment` · `ahadu error=AH2008`
+ * `ahadu` · `ahadu fragment` · `ahadu error=AH2008` · `ahadu varies`
  *
  * Anything that is not understood is rejected rather than ignored, so a typo
  * in a flag cannot silently turn checking off — which is the one way this
  * whole mechanism could quietly stop working.
  */
-export function parseInfo(info: string): { kind: SnippetKind; expectedCode: string | null } {
+export function parseInfo(info: string): {
+  kind: SnippetKind;
+  expectedCode: string | null;
+  varies: boolean;
+} {
   const words = info.trim().split(/\s+/).filter(Boolean);
   if (words[0] !== 'ahadu') throw new Error(`not an Ahadu fence: ${info}`);
 
   let kind: SnippetKind = 'program';
   let expectedCode: string | null = null;
+  let varies = false;
 
   for (const word of words.slice(1)) {
+    if (word === 'varies') {
+      varies = true;
+      continue;
+    }
+
     if (word === 'fragment') {
       kind = 'fragment';
       continue;
@@ -70,7 +87,10 @@ export function parseInfo(info: string): { kind: SnippetKind; expectedCode: stri
     throw new Error(`unknown flag on an Ahadu fence: ${word}`);
   }
 
-  return { kind, expectedCode };
+  if (varies && kind !== 'program') {
+    throw new Error(`\`varies\` is for a program that runs: ${info}`);
+  }
+  return { kind, expectedCode, varies };
 }
 
 /** What running a snippet produced, for rendering beneath it. */
@@ -87,6 +107,9 @@ export interface SnippetResult {
  */
 export function verify(snippet: Snippet, where: string): SnippetResult {
   if (snippet.kind === 'fragment') return { output: '', failed: false };
+  if (snippet.varies === true && snippet.expectedOutput !== null) {
+    throw new Error(`${where}: a \`varies\` snippet cannot also state its output`);
+  }
 
   const reply = evaluate({
     source: snippet.code,
@@ -109,6 +132,11 @@ export function verify(snippet: Snippet, where: string): SnippetResult {
   };
 
   if (snippet.kind === 'error') {
+    // What an error snippet shows is the diagnostic itself. An output fence
+    // after one used to be swallowed unread, so a wrong claim there passed.
+    if (snippet.expectedOutput !== null) {
+      problem('an error= snippet shows its diagnostic; it cannot also state an output');
+    }
     if (!failed) {
       problem(`this snippet is marked error=${snippet.expectedCode ?? '?'} but it ran cleanly`);
     }

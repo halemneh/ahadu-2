@@ -110,11 +110,19 @@ Fences carry what the build should check:
 | `ahadu` + `ውጤት` fence after it | The next fence states the exact expected output. |
 | `ahadu error=AH2008` | Must fail, with that code. This is how errors are taught. |
 | `ahadu fragment` | Not a whole program; highlighted, never run. |
+| `ahadu varies` | Runs (so it cannot crash), but its output depends on when it runs — `ዛሬ` — so the page shows none until Run, and says so instead of "verified". It cannot state an output. |
 
 A snippet with no stated output still runs, so a lesson cannot contain a
 program that crashes. A snippet that states output is checked character for
 character. `fragment` is the one escape hatch and is deliberately awkward to
 type, because it is the one that turns checking off.
+
+Only fences at the top level of a page are run, so the build refuses the ones
+it could not run rather than letting them through: an `ahadu` fence inside a
+list item or a blockquote, one tagged `Ahadu` instead of `ahadu`, and an
+output fence after an `error=` snippet (whose output is its diagnostic). The
+reference's function cards are held to the same rule by a test that runs
+each card's example and compares what it prints with what the card says.
 
 ### 4.2 Snippets are live
 
@@ -131,7 +139,9 @@ every program a reader opened were in an access log.
 
 The playground reads that fragment on load, and it wins over the saved draft —
 someone who followed a link meant to see that program. The fragment stays in
-the address bar afterwards, which makes the URL a permalink worth sharing.
+the address bar until the reader changes the program, so until then the URL
+is a permalink worth sharing; after that, a reload shows their own work
+(`TOOLING.md` §2.2).
 
 The reader never has to leave a lesson to try something, and never has to set
 anything up to begin. That is the whole argument for a site over a README.
