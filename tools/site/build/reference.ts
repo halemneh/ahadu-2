@@ -72,7 +72,9 @@ export function keywordTable(s: Strings): string {
   const rows = [...groups.entries()]
     .map(([type, words]) => {
       const meaning = GLOSS[type]?.[s.code] ?? type;
-      return `<tr><td class="ref-word">${words
+      // An id per row, the same in both languages, so search and the
+      // language switch can land on the keyword rather than the page top.
+      return `<tr id="kw-${type}"><td class="ref-word">${words
         .map((w) => `<code>${escapeHtml(w)}</code>`)
         .join(' ')}</td><td>${escapeHtml(meaning)}</td></tr>`;
     })

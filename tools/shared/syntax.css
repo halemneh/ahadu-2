@@ -170,3 +170,20 @@
   background: var(--hot);
   border-radius: 2px;
 }
+
+/*
+ * One weight in the editable layers.
+ *
+ * Under a textarea the painted copy has to occupy exactly the space the
+ * textarea's own (transparent, regular-weight) text does, or the caret and
+ * the selection drift from what is drawn. The code font is proportional, and
+ * a bold run is wider — `ከሆነ እና ለ፦ ።` measured 91.2px regular, 93.7px bold —
+ * so everything after a mid-line `እና` or `ወይም` was drawn a little to the
+ * right of where the caret put it, more with each keyword. Colour and the
+ * bracket wash still carry the distinction there; read-only code samples
+ * keep their weight.
+ */
+.backdrop [class],
+.snip-backdrop [class] {
+  font-weight: inherit;
+}

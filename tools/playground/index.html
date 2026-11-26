@@ -121,20 +121,25 @@
 
       <section class="bottom">
         <div class="tabs" role="tablist">
-          <button class="tab" role="tab" data-panel="output" data-i18n="tabOutput" aria-selected="true"></button>
-          <button class="tab" role="tab" data-panel="tokens" data-i18n="tabTokens" aria-selected="false"></button>
-          <button class="tab" role="tab" data-panel="ast" data-i18n="tabAst" aria-selected="false"></button>
-          <button class="tab" role="tab" data-panel="errors" aria-selected="false">
+          <!--
+            One tab stop for the set; arrows move between them (main.ts).
+            Tokens and Tree are debugging tools, hidden unless the page was
+            opened with ?debug=1 (main.ts, TOOLING.md §2.1).
+          -->
+          <button class="tab" role="tab" id="tab-output" aria-controls="panel-output" data-panel="output" data-i18n="tabOutput" aria-selected="true"></button>
+          <button class="tab" role="tab" id="tab-tokens" aria-controls="panel-tokens" data-panel="tokens" data-i18n="tabTokens" aria-selected="false" tabindex="-1" hidden></button>
+          <button class="tab" role="tab" id="tab-ast" aria-controls="panel-ast" data-panel="ast" data-i18n="tabAst" aria-selected="false" tabindex="-1" hidden></button>
+          <button class="tab" role="tab" id="tab-errors" aria-controls="panel-errors" data-panel="errors" aria-selected="false" tabindex="-1">
             <span data-i18n="tabErrors"></span>
             <span id="error-count" class="count"></span>
           </button>
         </div>
 
         <div class="panels">
-          <pre id="panel-output" class="panel" role="tabpanel"></pre>
-          <div id="panel-tokens" class="panel" role="tabpanel" hidden></div>
-          <div id="panel-ast" class="panel" role="tabpanel" hidden></div>
-          <div id="panel-errors" class="panel" role="tabpanel" hidden></div>
+          <pre id="panel-output" class="panel" role="tabpanel" aria-labelledby="tab-output"></pre>
+          <div id="panel-tokens" class="panel" role="tabpanel" aria-labelledby="tab-tokens" hidden></div>
+          <div id="panel-ast" class="panel" role="tabpanel" aria-labelledby="tab-ast" hidden></div>
+          <div id="panel-errors" class="panel" role="tabpanel" aria-labelledby="tab-errors" hidden></div>
         </div>
       </section>
     </main>

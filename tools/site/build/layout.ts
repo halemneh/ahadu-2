@@ -19,6 +19,7 @@ import { PLAYGROUND_URL, STORAGE, sectionUrl } from '../../shared/nav.js';
 import { contactDialog, footerActions } from './contact.js';
 import { headLinks } from './discovery.js';
 import type { Alternates } from './discovery.js';
+import { otherLanguage } from './strings.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
 
@@ -198,7 +199,7 @@ export function page(view: PageView): string {
         <ul id="find-results" class="find-results" role="listbox" hidden></ul>
       </div>
 
-      <a class="chip" href="${view.counterpart}" rel="alternate">${escapeHtml(s.languageToggle)}</a>
+      <a class="chip" href="${view.counterpart}" rel="alternate" lang="${otherLanguage(s.code)}" hreflang="${otherLanguage(s.code)}">${escapeHtml(s.languageToggle)}</a>
       <button class="chip" type="button" id="theme" aria-label="${escapeHtml(s.themeToggle)}">◐</button>
       <button
         class="chip menu"

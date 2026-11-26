@@ -37,6 +37,19 @@ function setUpTheme(): void {
   const button = document.getElementById('theme');
   if (!(button instanceof HTMLButtonElement)) return;
 
+  // A toggle named for its "on" state ("Dark theme") that says whether it
+  // is on: a bare ◐ told a screen reader nothing about which theme it had.
+  const reflect = (): void => {
+    const root = document.documentElement;
+    const dark =
+      root.dataset.theme === undefined
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : root.dataset.theme === 'dark';
+    button.setAttribute('aria-pressed', String(dark));
+  };
+  reflect();
+  button.addEventListener('click', reflect);
+
   button.addEventListener('click', () => {
     const root = document.documentElement;
     const dark =
@@ -195,7 +208,29 @@ function setUpSnippet(snippet: HTMLElement): void {
   }
 }
 
+/**
+ * Keeps the reader's place when they switch language (SITE.md §3).
+ *
+ * The other language's page is a fixed URL, but the anchors that matter
+ * most — an error code, a function card — have the same id in both
+ * languages, so carrying the fragment across lands on the same entry. One
+ * that does not exist there simply leaves the reader at the top, as before.
+ * Updated on load and on every fragment change, rather than in a click
+ * handler, so the link is already right when it is followed.
+ */
+function setUpLanguageSwitch(): void {
+  const link = document.querySelector('a.chip[rel="alternate"]');
+  if (!(link instanceof HTMLAnchorElement)) return;
+  const base = link.href.split('#')[0] ?? link.href;
+  const sync = (): void => {
+    link.href = base + window.location.hash;
+  };
+  sync();
+  window.addEventListener('hashchange', sync);
+}
+
 setUpTheme();
+setUpLanguageSwitch();
 setUpMenu();
 setUpContact();
 setUpSearch();

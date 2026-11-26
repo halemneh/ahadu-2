@@ -32,6 +32,8 @@ async function shoot(name, { theme, language, source, input, prepare }) {
       localStorage.setItem('ahadu.playground.language', language);
       if (source !== null) localStorage.setItem('ahadu.playground.source', source);
       if (input !== null) localStorage.setItem('ahadu.playground.input', input);
+      // The token and tree panels are debug-only; the shots include them.
+      localStorage.setItem('ahadu.playground.debug', '1');
     },
     [theme, language, source ?? null, input ?? null],
   );

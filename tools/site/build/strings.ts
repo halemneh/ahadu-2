@@ -127,7 +127,7 @@ const am: Strings = {
 
   languageToggle: 'English',
   findLabel: 'ማጣቀሻውን ፈልግ',
-  themeToggle: 'ብርሃን ቀይር',
+  themeToggle: 'ጨለማ ገጽታ',
 
   run: '▸ አሂድ',
   running: 'በመሄድ ላይ…',
@@ -202,7 +202,7 @@ const en: Strings = {
 
   languageToggle: 'አማርኛ',
   findLabel: 'Search the reference',
-  themeToggle: 'Toggle theme',
+  themeToggle: 'Dark theme',
 
   run: '▸ Run',
   running: 'Running…',

@@ -1023,6 +1023,12 @@ body:has(.fidel) .foot {
  */
 .fns {
   display: grid;
+  /*
+   * minmax(0, 1fr), not the implicit auto: an auto column grows to fit its
+   * widest unbreakable line — a long code example — and on a phone that
+   * pushed every card about 20px past the screen's edge.
+   */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin: 1.4rem 0 2.5rem;
 }
@@ -1055,9 +1061,15 @@ body:has(.fidel) .foot {
 
 .fn-io {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem 2rem;
   margin-bottom: 1.1rem;
+}
+
+@media (max-width: 560px) {
+  .fn-io {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .fn-io h4 {

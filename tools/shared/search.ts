@@ -64,7 +64,7 @@ export function buildIndex(language: Language): Hit[] {
     hits.push({
       title: words.join('  '),
       note,
-      href: `${base}#keywords`,
+      href: `${base}#kw-${type}`,
       haystack: fold(`${words.join(' ')} ${note} ${type}`),
     });
   }
@@ -73,7 +73,7 @@ export function buildIndex(language: Language): Hit[] {
     hits.push({
       title: code,
       note: message,
-      href: `${base}#error-codes`,
+      href: `${base}#${code}`,
       haystack: fold(`${code} ${message}`),
     });
   }
@@ -104,10 +104,12 @@ export function setUpSearch(): void {
   const list = document.getElementById('find-results');
   if (!(box instanceof HTMLInputElement) || !(list instanceof HTMLElement)) return;
 
-  const language: Language = document.documentElement.lang === 'en' ? 'en' : 'am';
-  // Built once, on the first keystroke: a reader who never searches pays
-  // nothing for the index.
-  let index: Hit[] | null = null;
+  // Read on every search, not once: the playground switches language in
+  // place, and an index built for the old one listed the old language's
+  // notes and linked to its pages. One index per language, built on the
+  // first keystroke in it, so a reader who never searches pays nothing.
+  const language = (): Language => (document.documentElement.lang === 'en' ? 'en' : 'am');
+  const indexes = new Map<Language, Hit[]>();
   let hits: Hit[] = [];
   let at = -1;
 
@@ -145,7 +147,12 @@ export function setUpSearch(): void {
   };
 
   box.addEventListener('input', () => {
-    index ??= buildIndex(language);
+    const lang = language();
+    let index = indexes.get(lang);
+    if (index === undefined) {
+      index = buildIndex(lang);
+      indexes.set(lang, index);
+    }
     hits = search(index, box.value);
     at = hits.length > 0 ? 0 : -1;
     paint();

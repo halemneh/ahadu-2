@@ -38,11 +38,11 @@ than building a workaround for a few weeks.
 1. **Settings → Pages → Source: GitHub Actions.** This option only appears
    once the repository is public, or on a paid plan — it is the same
    condition as above, in the place you will meet it.
-2. In `.github/workflows/pages.yml`, uncomment the two `push:` lines. The
-   workflow ships **manual-only**, because until Pages exists the build fails
-   on every push and a permanently red tick is worse than no tick. Nothing is
-   committed either way — the site is uploaded as an artifact, so
-   `tools/site/dist/` stays out of the repository.
+2. `.github/workflows/pages.yml` deploys on every push to `main`, and can be
+   run by hand from the Actions tab. It runs `npm run check` before building,
+   so a commit that fails lint or the tests does not publish. Only its deploy
+   job can write to Pages. Nothing is committed — the site is uploaded as an
+   artifact, so `tools/site/dist/` stays out of the repository.
 3. Push, or run the workflow by hand from the Actions tab.
 4. **Settings → Pages → Custom domain:** `ahaducode.com`, then tick **Enforce
    HTTPS** once the certificate is issued (a few minutes).
@@ -225,11 +225,12 @@ the issue pre-filled at build time. It needs no host and no JavaScript.
 ## Before each deploy
 
 `npm run site:build` already refuses to produce a site whose code samples do
-not do what the pages claim — 112 of them run on every build (SITE.md §2).
+not do what the pages claim — every one of them runs on every build, and the
+build prints how many (SITE.md §2).
 On top of that:
 
 ```sh
-npm run check        # lint, formatting, types, 1,494 tests
+npm run check        # lint, formatting, types, the whole test suite
 npm run site:smoke   # drives the dev server in a browser
 ```
 

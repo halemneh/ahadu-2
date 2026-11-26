@@ -105,6 +105,8 @@ export interface Strings {
 
   // Panels
   readonly emptyOutput: string;
+  /** After output cut short at MAX_OUTPUT. */
+  readonly outputTruncated: string;
   readonly emptyPressRun: string;
   readonly emptyRunning: string;
   readonly emptyTokens: string;
@@ -128,7 +130,7 @@ const amharic: Strings = {
   examplesErrors: 'ስተት ያላቸው',
   run: '▸ አሂድ',
   stop: '■ አቁም',
-  theme: 'መልክ',
+  theme: 'ጨለማ ገጽታ',
   languageToggle: 'English',
   navHome: 'መነሻ',
   navLearn: 'ተማር',
@@ -183,6 +185,7 @@ const amharic: Strings = {
   statusStopped: 'ተቋርጧል',
 
   emptyOutput: 'ምንም ውጤት የለም',
+  outputTruncated: '… ውጤቱ በጣም ስለረዘመ የተቀረው አልታየም።',
   emptyPressRun: '"አሂድ" ይጫኑ',
   emptyRunning: 'ይሰራል…',
   emptyTokens: 'ምንም ቶከን የለም',
@@ -204,7 +207,7 @@ const english: Strings = {
   examplesErrors: 'With errors',
   run: '▸ Run',
   stop: '■ Stop',
-  theme: 'Theme',
+  theme: 'Dark theme',
   languageToggle: 'አማርኛ',
   navHome: 'Home',
   navLearn: 'Learn',
@@ -262,6 +265,7 @@ const english: Strings = {
   statusStopped: 'Stopped',
 
   emptyOutput: 'No output',
+  outputTruncated: '… the output was too long, so the rest is not shown.',
   emptyPressRun: 'Press Run',
   emptyRunning: 'Running…',
   emptyTokens: 'No tokens',
