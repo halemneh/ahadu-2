@@ -352,6 +352,57 @@ Three things beyond one colour per token type:
   work. Nothing is sent anywhere; the whole playground is static and runs the
   interpreter in the browser.
 
+### 2.2.1 Suggestions as you type
+
+The playground's editor and every lesson snippet offer a list of
+suggestions under the caret. Both use one implementation:
+`tools/shared/complete.ts` decides (no DOM, covered by
+`tests/unit/playground/complete.test.ts`) and `tools/shared/completion.ts`
+draws.
+
+- **What is offered** comes from the same places the language does, never
+  from a second list kept beside it: keywords from the lexer's `KEYWORDS`
+  (reserved words excluded, since using one is `AH2010`), pre-bound functions
+  from the reference's entries, the methods of the library's classes from
+  the library's own parse, and the program's own functions, classes,
+  variables and — inside a function or class — its parameters and members.
+  After a `.`, only attributes and methods are offered, from every class the
+  program and the library declare: which class an object has is a runtime
+  fact.
+- **It opens** on a typed letter or `.`, never inside a string or a comment,
+  and never in a number. Ctrl+Space opens it on demand, with an empty word
+  included. Nothing happens while an input method is composing.
+- **Matching is loose where Ge'ez typing needs it.** The last syllable matches
+  by consonant, because an Amharic keyboard types the consonant before its
+  vowel; and letters that are one sound — `ሀ`/`ሐ`/`ኀ` (and `ሃ`), `ሰ`/`ሠ`,
+  `አ`/`ዐ` (and `ኣ`), `ጸ`/`ፀ` — match each other. What is inserted is always
+  the spelling the program or the language actually uses: identifiers are
+  compared by exact code points (LANGUAGE.md §3.1), so echoing the reader's
+  own spelling would insert an undefined name.
+- **An ASCII word of two or more letters also matches the English idea** of a
+  built-in or keyword — `print` offers `ጻፍ`, `if` offers `ከሆነ` — and picking
+  it replaces the English word. A reader without a Ge'ez keyboard can still
+  write a program.
+- **Order:** exact matches, then loose, then English; within each, what is in
+  scope at the caret, then the program's names and the keywords, then the
+  built-ins; then shorter before longer. A keyword that only begins a line
+  (`ተግባር`, `አለበለዚያ`, …) is preferred at the start of one and demoted
+  elsewhere, and the reverse for `ከሆነ`, `እስከሆነ`, `ለእያንዳንዱ`, `እና` and
+  `ወይም`, since the condition comes first (§7.3).
+- **What picking one inserts:** a function or class gets `()`, with the caret
+  inside unless it takes nothing — unless a `(` already follows. A
+  block-opening keyword typed at the end of a line brings its shape with it:
+  `ከሆነ፦`, `እስከሆነ ድረስ፦`, `አለበለዚያ፦`, `ግን ‸ ከሆነ፦`, `ፍጠር(‸)፦`. `፦` is the
+  mark a reader is least likely to have on their keyboard.
+- **Keys:** ↑/↓ and PageUp/PageDown move, Enter or Tab inserts, Escape
+  closes. While the list is open it takes Tab and Enter ahead of the editor's
+  own indent; Ctrl/Cmd+Enter still runs. Insertion goes through the
+  browser's editing command so Ctrl+Z undoes exactly the completion.
+- The selected entry's signature and description show under the list, in
+  the page's language. The list is a `listbox` the textarea points at with
+  `aria-activedescendant`, and like every floating thing it has a shadow and
+  no border (§2.1).
+
 ### 2.3 Build constraints
 
 - The interpreter package must stay dependency-free and must run unchanged in

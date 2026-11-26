@@ -26,6 +26,7 @@ import { encodeProgram } from '../../shared/share.js';
 import { setUpMenu } from '../../shared/menu.js';
 import { setUpSearch } from '../../shared/search.js';
 import { setUpContact } from '../../shared/contact-dialog.js';
+import { attachCompletion } from '../../shared/completion.js';
 
 /** Smaller than the playground's: a lesson's program should be quick. */
 const MAX_STEPS = 500_000;
@@ -159,6 +160,12 @@ function setUpSnippet(snippet: HTMLElement): void {
   area.addEventListener('scroll', () => {
     const backdrop = snippet.querySelector('.snip-backdrop');
     if (backdrop instanceof HTMLElement) backdrop.scrollLeft = area.scrollLeft;
+  });
+
+  // The same suggestions as the playground's editor (TOOLING.md §2.2.1), in
+  // the language the page is being read in.
+  attachCompletion(area, {
+    language: () => (document.documentElement.lang === 'en' ? 'en' : 'am'),
   });
 
   area.addEventListener('keydown', (event) => {

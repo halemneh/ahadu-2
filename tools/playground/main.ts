@@ -13,6 +13,7 @@
  * tab.
  */
 
+import { attachCompletion } from '../shared/completion.js';
 import { setUpContact } from '../shared/contact-dialog.js';
 import { setUpSearch } from '../shared/search.js';
 import { highlight } from './highlight.js';
@@ -733,6 +734,11 @@ editor.addEventListener('input', () => {
 for (const event of ['click', 'keyup', 'select', 'focus'] as const) {
   editor.addEventListener(event, updatePosition);
 }
+
+// Suggestions under the caret (TOOLING.md §2.2.1). Its keydown listener is a
+// capturing one, so while the list is open it takes Tab and Enter ahead of
+// the indent and the run below.
+attachCompletion(editor, { language: () => language });
 
 editor.addEventListener('scroll', syncScroll);
 

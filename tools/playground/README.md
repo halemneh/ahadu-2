@@ -26,6 +26,8 @@ stylesheet cannot be reviewed by reading it.
 | `strings.ts` | the page's own text, in Amharic and English |
 | `evaluate.ts` | running a program, and what comes back — no globals |
 | `locate.ts` | which error the pointer is over, as arithmetic |
+| `../shared/complete.ts` | what the suggestion list offers, and what picking one inserts — no DOM |
+| `../shared/completion.ts` | the suggestion list itself, shared with every lesson snippet |
 | `shot.mjs` | screenshots, for reviewing how it looks |
 | `worker.ts` | binding `evaluate` to a worker's `self`, and nothing else |
 | `vite.config.ts` | build; root is this directory, `base` is relative |
