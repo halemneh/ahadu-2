@@ -91,8 +91,41 @@ export interface Rendered {
   readonly snippets: number;
 }
 
+/**
+ * Refuses an Ahadu fence the loop in `render` would not see.
+ *
+ * Only top-level fences are run. One inside a list item or a blockquote, or
+ * one tagged `Ahadu` rather than `ahadu`, used to render as plain code and
+ * pass the build unrun — the exact hole SITE.md §2 exists to close. Rather
+ * than run them in place, the build says where they are, so a program on
+ * this site is always one the checker found.
+ */
+function refuseUncheckable(tokens: TokensList, where: string): void {
+  const topLevel = new Set<MdToken>(tokens);
+  // `walkTokens` returns the results of async extensions; there are none here.
+  void marked.walkTokens(tokens, (token) => {
+    const fence = asCode(token);
+    if (fence === null) return;
+    const lang = fence.lang.trim();
+    const word = lang.split(/\s+/)[0] ?? '';
+    const ours = /^ahadu$/i.test(word) || OUTPUT_FENCE.has(word) || INPUT_FENCE.has(word);
+    if (!ours) return;
+    if (/^ahadu$/i.test(word) && word !== 'ahadu') {
+      throw new Error(
+        `${where}: write the fence as \`ahadu\`, in lowercase — \`${word}\` is not run`,
+      );
+    }
+    if (!topLevel.has(token)) {
+      throw new Error(
+        `${where}: an \`${word}\` fence inside a list or a quote is not run by the build; move it to the top level`,
+      );
+    }
+  });
+}
+
 export function render(input: RenderInput): Rendered {
   const tokens = marked.lexer(input.markdown);
+  refuseUncheckable(tokens, input.where);
   const headings: { id: string; text: string }[] = [];
   let snippets = 0;
 
@@ -156,13 +189,14 @@ export function render(input: RenderInput): Rendered {
       consumed = j - 1;
     }
 
-    const { kind, expectedCode } = parseInfo(fence.lang);
+    const { kind, expectedCode, varies } = parseInfo(fence.lang);
     const snippet: Snippet = {
       code: fence.text,
       kind,
       expectedOutput,
       expectedCode,
       input: inputLines,
+      varies,
     };
 
     snippets += 1;
@@ -196,8 +230,20 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
     return `<div class="snip snip-fragment"><pre class="snip-code"><code>${code}</code></pre></div>\n`;
   }
 
+  // A `varies` snippet shows nothing until Run: what the build saw is a
+  // fixed instant, not the reader's today.
   const shown =
-    snippet.kind === 'error' ? result.output : (snippet.expectedOutput ?? result.output);
+    snippet.varies === true
+      ? ''
+      : snippet.kind === 'error'
+        ? result.output
+        : (snippet.expectedOutput ?? result.output);
+  const note =
+    snippet.kind === 'error'
+      ? s.snippetFails
+      : snippet.varies === true
+        ? s.snippetVaries
+        : s.snippetVerified;
   const outClass = snippet.kind === 'error' ? 'snip-out snip-out-bad' : 'snip-out';
   const hasOutput = shown.trim() !== '';
 
@@ -206,7 +252,7 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
   return [
     `<div class="snip" data-kind="${snippet.kind}"${
       snippet.input.length > 0 ? ` data-input="${escapeHtml(snippet.input.join('\n'))}"` : ''
-    }>`,
+    } data-empty="${escapeHtml(s.noOutput)}">`,
     `  <div class="snip-editor">`,
     `    <pre class="snip-backdrop" aria-hidden="true"><code>${code}</code></pre>`,
     `    <textarea class="snip-input" spellcheck="false" rows="${
@@ -221,9 +267,7 @@ function renderSnippet(snippet: Snippet, input: RenderInput): string {
     `    <a class="snip-open" href="/playground/#${encodeProgram(
       snippet.code,
     )}" data-open-playground>${escapeHtml(s.openInPlayground)}</a>`,
-    `    <span class="snip-note">${escapeHtml(
-      snippet.kind === 'error' ? s.snippetFails : s.snippetVerified,
-    )}</span>`,
+    `    <span class="snip-note">${escapeHtml(note)}</span>`,
     `  </div>`,
     `  <pre class="${outClass}"${hasOutput ? '' : ' hidden'}><code>${escapeHtml(shown)}</code></pre>`,
     `</div>`,

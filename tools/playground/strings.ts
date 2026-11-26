@@ -56,6 +56,8 @@ export interface Strings {
 
   // Editor
   readonly editorLabel: string;
+  /** Read out with the editor: how to leave it, since Tab indents. */
+  readonly editorKeys: string;
 
   // The input dialog, shown only when a program calls አንብብ
   readonly inputLabel: string;
@@ -142,6 +144,7 @@ const amharic: Strings = {
   pageTitle: 'የአሃዱ ሜዳ',
 
   editorLabel: 'የአሃዱ ኮድ',
+  editorKeys: 'Tab ገብ ያደርጋል። ከኮዱ ሳጥን ለመውጣት Escapeን ከዚያ Tabን ይጫኑ።',
   inputLabel: 'ግቤት',
   inputHint: 'በየመስመሩ አንድ መልስ።',
   inputUnlabelled: '(ጥያቄ የለውም)',
@@ -217,6 +220,7 @@ const english: Strings = {
   pageTitle: 'Ahadu playground',
 
   editorLabel: 'Ahadu code',
+  editorKeys: 'Tab indents. To leave the editor, press Escape, then Tab.',
   inputLabel: 'Input',
   inputHint: 'One answer per line.',
   inputUnlabelled: '(no prompt)',

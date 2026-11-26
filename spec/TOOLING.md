@@ -352,6 +352,20 @@ Three things beyond one colour per token type:
   work. Nothing is sent anywhere; the whole playground is static and runs the
   interpreter in the browser.
 
+  A program that arrived in the URL fragment (a lesson's "open in
+  playground") is shown in preference to the saved draft, and the fragment
+  stays in the address until the program changes. The first edit, or picking
+  an example, removes it with `history.replaceState`, so a reload — or a
+  phone discarding a background tab — shows the reader's draft rather than
+  the original snippet. A new fragment pasted into an open tab loads too.
+- **Tab indents; the editor is not a keyboard trap** (WCAG 2.1.2). Shift+Tab
+  always moves focus back, and Escape then Tab moves it forward, which the
+  editor's description tells a screen reader. An indent goes through the
+  browser's editing command, so Ctrl+Z undoes it like any other typing.
+- Stopping a run, or the worker failing to start, says so in both the output
+  panel and the status line; loading an example clears the last program's
+  output and runtime error.
+
 ### 2.2.1 Suggestions as you type
 
 The playground's editor and every lesson snippet offer a list of

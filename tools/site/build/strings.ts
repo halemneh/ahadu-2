@@ -56,6 +56,8 @@ export interface Strings {
   readonly snippetLabel: string;
   readonly snippetVerified: string;
   readonly snippetFails: string;
+  /** Under a `varies` snippet, which shows no output until Run. */
+  readonly snippetVaries: string;
   readonly noOutput: string;
 
   // Lessons
@@ -133,6 +135,7 @@ const am: Strings = {
   snippetLabel: 'የአሃዱ ኮድ',
   snippetVerified: 'ይህ ውጤት በግንባታ ጊዜ ተረጋግጧል',
   snippetFails: 'ይህ ፕሮግራም ሆን ተብሎ ስተት አለው',
+  snippetVaries: 'ውጤቱ እንደሚሄድበት ጊዜ ይለያያል፤ ለማየት አሂድን ይጫኑ',
   noOutput: 'ምንም አልተጻፈም',
 
   lessonsTitle: 'ትምህርቶች',
@@ -207,6 +210,7 @@ const en: Strings = {
   snippetLabel: 'Ahadu code',
   snippetVerified: 'This output was verified at build time',
   snippetFails: 'This program fails on purpose',
+  snippetVaries: 'Its output depends on when it runs — press Run to see it',
   noOutput: 'nothing was printed',
 
   lessonsTitle: 'Lessons',
