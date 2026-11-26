@@ -172,6 +172,27 @@ describe('complete', () => {
   });
 });
 
+describe('complete — whether the word is already finished', () => {
+  const finished = (marked: string): boolean | undefined => {
+    const caret = marked.indexOf('|');
+    return complete(marked.replace('|', ''), caret, am)?.complete;
+  };
+
+  it('is finished when the word is a whole name with longer ones beside it', () => {
+    expect(finished('ድምር = 1\nድምር_አጠቃላይ = 2\nድምር|')).toBe(true);
+  });
+
+  it('is finished when the word is a whole keyword', () => {
+    expect(finished('ሀ > 1 ከ|')).toBe(false);
+    expect(finished('አለበለዚያ|')).toBe(true);
+  });
+
+  it('is not finished part way through a name, or for an English word', () => {
+    expect(finished('ድምር_አጠቃላይ = 2\nድም|')).toBe(false);
+    expect(finished('print|')).toBe(false);
+  });
+});
+
 describe('apply', () => {
   it('puts the caret inside a call’s parentheses', () => {
     expect(accept('ጻ|', 'ጻፍ')).toBe('ጻፍ(|)');

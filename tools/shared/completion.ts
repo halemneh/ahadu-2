@@ -94,6 +94,8 @@ export function attachCompletion(area: HTMLTextAreaElement, options: CompletionO
 
   let current: Completion | null = null;
   let selected = 0;
+  /** The reader moved the selection themselves since the list last changed. */
+  let chosen = false;
   let composing = false;
   /** The next input event is our own insertion, and should not reopen the list. */
   let ours = false;
@@ -178,6 +180,7 @@ export function attachCompletion(area: HTMLTextAreaElement, options: CompletionO
     const kinds = KIND_NAMES[options.language()];
     current = completion;
     selected = 0;
+    chosen = false;
     list.innerHTML = completion.items.map((item, i) => row(item, i, kinds)).join('');
     box.hidden = false;
     area.setAttribute('aria-expanded', 'true');
@@ -257,7 +260,17 @@ export function attachCompletion(area: HTMLTextAreaElement, options: CompletionO
   area.addEventListener(
     'keydown',
     (event) => {
-      if (event.key === ' ' && event.ctrlKey && !event.metaKey && !event.altKey) {
+      // Ctrl+Space, or Ctrl+J where the system keeps Ctrl+Space for itself —
+      // macOS switches input sources with it, which is exactly the shortcut
+      // someone typing Amharic is using. By physical key, so it works on a
+      // Ge'ez layout, where J is not "j".
+      if (
+        (event.code === 'Space' || event.code === 'KeyJ') &&
+        event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
         event.preventDefault();
         update(true);
         return;
@@ -274,26 +287,38 @@ export function attachCompletion(area: HTMLTextAreaElement, options: CompletionO
         case 'ArrowDown':
           take();
           selected = (selected + 1) % count;
+          chosen = true;
           paintSelection();
           return;
         case 'ArrowUp':
           take();
           selected = (selected - 1 + count) % count;
+          chosen = true;
           paintSelection();
           return;
         case 'PageDown':
           take();
           selected = Math.min(count - 1, selected + 8);
+          chosen = true;
           paintSelection();
           return;
         case 'PageUp':
           take();
           selected = Math.max(0, selected - 8);
+          chosen = true;
           paintSelection();
           return;
         case 'Enter':
         case 'Tab':
           if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) {
+            close();
+            return;
+          }
+          // A finished name followed by Enter is a finished line. Taking the
+          // top suggestion there turned `ድምር` into `ድምር_አጠቃላይ`, and
+          // `አለበለዚያ` into `አለበለዚያ፦` with no new line — unless the reader
+          // chose a suggestion with the arrows, which says they want it.
+          if (event.key === 'Enter' && current.complete && !chosen) {
             close();
             return;
           }
