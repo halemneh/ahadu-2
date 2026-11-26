@@ -306,21 +306,27 @@ themeButton.addEventListener('click', toggleTheme);
 // Painting
 // ---------------------------------------------------------------------------
 
+/*
+ * Both painters end the copy with an extra line break. A `<pre>` drops a
+ * final newline, so a program ending in one was a line shorter behind the
+ * textarea than in it: at the bottom the numbers and the textarea scrolled
+ * a line further than the coloured code could, and the two came apart.
+ */
 function paintEditor(): void {
-  backdrop.innerHTML = highlight({
+  backdrop.innerHTML = `${highlight({
     source: editor.value,
     tokens: current.tokens,
     diagnostics: current.diagnostics,
     hovered,
     caret,
-  });
+  })}\n`;
   syncScroll();
 }
 
 /** Colours the editor from a fresh lex, ahead of the debounced analysis. */
 function paintNow(): void {
   const { tokens, diagnostics } = tokenize(editor.value);
-  backdrop.innerHTML = highlight({ source: editor.value, tokens, diagnostics, hovered, caret });
+  backdrop.innerHTML = `${highlight({ source: editor.value, tokens, diagnostics, hovered, caret })}\n`;
   syncScroll();
 }
 

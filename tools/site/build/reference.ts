@@ -11,6 +11,7 @@
  * languages. Only the facts are generated.
  */
 
+import { lineGutter } from './markdown.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { KEYWORDS } from '../../../src/lexer/constants.js';
@@ -214,7 +215,7 @@ function card(entry: FnEntry, s: Strings): string {
     </div>
   </div>
 
-  <pre class="fn-eg"><code>${code}</code></pre>
+  <div class="snip-lines fn-eg-lines">${lineGutter(entry.eg).replace(/\n/g, '&#10;')}<pre class="fn-eg"><code>${code}</code></pre></div>
   <p class="fn-out"><span aria-hidden="true">→</span> <code>${escapeHtml(entry.out)}</code></p>
 </section>`;
 }
@@ -271,10 +272,13 @@ export function librarySource(s: Strings): string {
       ? 'ከታች ያለው ኮድ ነው — መግለጫው አይደለም። ቋንቋው ራሱ የሚጭነው ይኸው ነው፤ ዑደቱና ሁኔታው አስቀድመህ የምታውቃቸው ናቸው።'
       : 'Below is the code, not a description of it. This is what the language loads, and the loops and conditions in it are the ones you already know.',
   )}</p>
-<div class="snip snip-fragment"><pre class="snip-code"><code>${highlight({
+<div class="snip snip-fragment"><div class="snip-lines">${lineGutter(LIBRARY_SOURCE).replace(
+    /\n/g,
+    '&#10;',
+  )}<pre class="snip-code"><code>${highlight({
     source: LIBRARY_SOURCE,
     tokens,
-  }).replace(/\n/g, '&#10;')}</code></pre></div>`;
+  }).replace(/\n/g, '&#10;')}</code></pre></div></div>`;
 }
 
 export function referenceBody(s: Strings): string {

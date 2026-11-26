@@ -71,7 +71,19 @@ function repaint(snippet: HTMLElement, source: string, caret: number | null = nu
   const backdrop = snippet.querySelector('.snip-backdrop code');
   if (!(backdrop instanceof HTMLElement)) return;
   const { tokens, diagnostics } = tokenize(source);
-  backdrop.innerHTML = highlight({ source, tokens, diagnostics, caret });
+  // The extra line break is for a `<pre>`, which drops a final one: without
+  // it a snippet ending in a newline lost its last, empty line, so the box
+  // was one line short of the textarea over it and the caret fell out of it.
+  backdrop.innerHTML = `${highlight({ source, tokens, diagnostics, caret })}\n`;
+
+  // The line numbers follow the program as it is edited.
+  const gutter = snippet.querySelector('.snip-gutter');
+  if (gutter instanceof HTMLElement) {
+    const count = source.split('\n').length;
+    if (gutter.childNodes.length === 0 || gutter.textContent?.split('\n').length !== count) {
+      gutter.textContent = Array.from({ length: count }, (_, i) => String(i + 1)).join('\n');
+    }
+  }
 }
 
 /** Brackets, whose pairs light up when the caret is beside one. */
@@ -193,6 +205,14 @@ function setUpSnippet(snippet: HTMLElement): void {
       runSnippet(snippet, area.value);
     });
   }
+
+  /*
+   * A `varies` snippet's output depends on when it runs (SITE.md §4.1), so
+   * the build cannot show it — but the reader's own browser can, the moment
+   * the page opens. It runs here, on this device, and requests nothing: the
+   * home page shows today's date rather than an empty box.
+   */
+  if (snippet.dataset.varies !== undefined) runSnippet(snippet, area.value);
 
   /*
    * The link already carries the original code from the build. Keep it in
