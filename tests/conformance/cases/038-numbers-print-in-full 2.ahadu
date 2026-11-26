@@ -1,7 +1,0 @@
-# Numbers print without an exponent, so what prints reads back (§4.2, §8.1).
-# expect: 1000000000000000000000
-# expect: 0.0000001
-# expect: እውነት
-ጻፍ(10 ^ 21)
-ጻፍ(1 / 10000000)
-ጻፍ(ወደ_ቁጥር(ወደ_ጽሁፍ(10 ^ 21)) == 10 ^ 21)
