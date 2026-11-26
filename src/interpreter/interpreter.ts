@@ -734,7 +734,9 @@ export class Interpreter {
 
     switch (expression.type) {
       case 'NumberLiteral':
-        return num(expression.value);
+        // A literal of four hundred nines lexes to Infinity, which is not a
+        // value Ahadu has (§4.2): it is AH3006 like every other route there.
+        return this.finite(expression.value, expression);
       case 'StringLiteral':
         return str(expression.value);
       case 'BooleanLiteral':
@@ -1348,6 +1350,11 @@ function createBuiltins(interpreter: Interpreter): Map<string, Value> {
     }
     if (!Number.isInteger(low.value) || !Number.isInteger(high.value) || low.value > high.value) {
       interpreter.fail(AH3020, at, err.badRandomRange(render(low), render(high)));
+    }
+    // A range wider than a number can count — `0 - 10^308` to `10^308` —
+    // overflowed to Infinity inside the draw and printed `Infinity`.
+    if (!Number.isSafeInteger(high.value - low.value + 1)) {
+      interpreter.fail(AH3020, at, err.RANDOM_RANGE_TOO_WIDE);
     }
     return num(interpreter.nextInt(low.value, high.value));
   });

@@ -64,7 +64,23 @@ interface Flags {
   readonly now: number;
 }
 
+/**
+ * Diagnostics as `--json` emits them (TOOLING.md §1.3): every field of the
+ * diagnostic plus `severity`, which the spec lists and the objects lacked.
+ * Everything Ahadu reports is an error; there are no warnings in 2.0.
+ */
+function asJson(diagnostics: readonly Diagnostic[]): object[] {
+  return diagnostics.map((d) => ({ ...d, severity: 'error' }));
+}
+
 function reportDiagnostics(source: string, diagnostics: readonly Diagnostic[], flags: Flags): void {
+  // With --json, a lexer or parser error that stops a command is JSON too.
+  // It used to be the human rendering whatever the flag said, so an editor
+  // asking for JSON got prose exactly when there was something to report.
+  if (flags.json) {
+    stderr.write(`${JSON.stringify({ diagnostics: asJson(diagnostics) }, null, 2)}\n`);
+    return;
+  }
   for (const d of diagnostics) {
     stderr.write(renderDiagnostic(source, d, flags.errorColors));
     debugCause(d);
@@ -104,7 +120,7 @@ function cmdTokens(source: string, flags: Flags): number {
   const { tokens, diagnostics } = tokenize(source);
 
   if (flags.json) {
-    stdout.write(`${JSON.stringify({ tokens, diagnostics }, null, 2)}\n`);
+    stdout.write(`${JSON.stringify({ tokens, diagnostics: asJson(diagnostics) }, null, 2)}\n`);
   } else {
     for (const t of tokens) stdout.write(`${tokenRow(t)}\n`);
     stdout.write(`\n  ${tokens.length} ቶከኖች`);
@@ -125,7 +141,7 @@ function cmdAst(source: string, flags: Flags): number {
   const { program, diagnostics } = parse(lexed.tokens);
 
   if (flags.json) {
-    stdout.write(`${JSON.stringify({ program, diagnostics }, null, 2)}\n`);
+    stdout.write(`${JSON.stringify({ program, diagnostics: asJson(diagnostics) }, null, 2)}\n`);
   } else {
     stdout.write(`${printAst(program)}\n`);
     reportDiagnostics(source, diagnostics, flags);
@@ -140,7 +156,7 @@ function cmdCheck(source: string, flags: Flags): number {
     lexed.diagnostics.length > 0 ? lexed.diagnostics : parse(lexed.tokens).diagnostics;
 
   if (flags.json) {
-    stdout.write(`${JSON.stringify({ diagnostics }, null, 2)}\n`);
+    stdout.write(`${JSON.stringify({ diagnostics: asJson(diagnostics) }, null, 2)}\n`);
   } else if (diagnostics.length === 0) {
     stdout.write('ምንም ስተት አልተገኘም።\n');
   } else {
@@ -219,7 +235,7 @@ function execute(source: string, flags: Flags, options: RunOptions = {}): number
 
   if (result.diagnostic !== null) {
     if (flags.json) {
-      stderr.write(`${JSON.stringify({ diagnostics: [result.diagnostic] }, null, 2)}\n`);
+      stderr.write(`${JSON.stringify({ diagnostics: asJson([result.diagnostic]) }, null, 2)}\n`);
     } else {
       stderr.write(renderDiagnostic(source, result.diagnostic, flags.errorColors, result.frames));
       debugCause(result.diagnostic);

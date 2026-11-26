@@ -101,7 +101,9 @@ span under the offending columns (LANGUAGE.md §9.1). The code is always shown,
 never only in `--json`, so a learner can quote an error precisely when asking
 for help. `--json` emits
 `{code, message, line, startCol, endCol, stage, severity}` so an editor can
-consume it.
+consume it — for every diagnostic, including a lexer or parser error that
+stops `run`, `ast` or a bare file before anything runs. `severity` is always
+`"error"`; there are no warnings in 2.0.
 
 Exit codes: `0` success · `1` diagnostics reported · `2` could not read input
 · `70` the CLI itself failed unexpectedly.

@@ -161,6 +161,9 @@ export function notNumericText(text: string): string {
 }
 
 /** The message for `ዘፈቀደ_ቁጥር` given bounds it cannot draw from (§8). */
+/** AH3020 for a range with more whole numbers in it than can be counted exactly. */
+export const RANDOM_RANGE_TOO_WIDE = 'ዘፈቀደ_ቁጥር ይህን ያህል ሰፊ ክልል መቁጠር አይችልም። ትንሽ ክልል ይምረጡ።';
+
 export function badRandomRange(low: string, high: string): string {
   return `ዘፈቀደ_ቁጥር ከ${low} እስከ ${high} መምረጥ አይችልም፤ ሁለቱም ሙሉ ቁጥር መሆን አለባቸው እና መጀመሪያው ከመጨረሻው መብለጥ አይችልም።`;
 }

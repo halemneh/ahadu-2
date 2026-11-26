@@ -29,5 +29,8 @@ export type {
   Statement,
 } from './parser/index.js';
 
-// Stage exports are added as each stage lands:
-//   export { run } from './interpreter/index.js';
+// Running a program — with the standard library loaded, as LANGUAGE.md §8.5
+// requires every host to. The bare interpreter, with only the built-ins, is
+// `@halemneh/ahadu/interpreter`, for tooling that wants nothing pre-bound.
+export { run, withLibrary } from './engine.js';
+export type { Host, RunOptions, RunResult } from './interpreter/index.js';

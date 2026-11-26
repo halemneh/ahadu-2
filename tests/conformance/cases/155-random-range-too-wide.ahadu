@@ -1,0 +1,3 @@
+# A range too wide to count is refused rather than drawing Infinity (§8.4).
+# expect-error: AH3020
+ጻፍ(ዘፈቀደ_ቁጥር(0 - 10 ^ 308፣ 10 ^ 308))
