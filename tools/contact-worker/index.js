@@ -43,22 +43,62 @@ function json(status, data, origin) {
   });
 }
 
-/**
- * The origin this answers for.
- *
- * `ALLOWED_ORIGINS` is a comma-separated list, and a request from anywhere
- * else gets no CORS headers, so a browser will not hand it the reply. It is
- * not a security boundary — curl ignores all of this — but it keeps the
- * endpoint from being quietly embedded in someone else's page.
- */
-function allowedOrigin(request, env) {
-  const allowed = String(env.ALLOWED_ORIGINS ?? '')
+/** The origins listed in `ALLOWED_ORIGINS`, a comma-separated list. */
+function allowedOrigins(env) {
+  return String(env.ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((one) => one.trim())
     .filter((one) => one !== '');
+}
+
+/**
+ * The calling page's origin, if it is one of ours; otherwise null.
+ *
+ * Every browser sends `Origin` on a POST, so a request from a page on any
+ * other site arrives carrying that site's origin and is refused here —
+ * before anything is read or sent. CORS alone did not do that: it stops a
+ * foreign page *reading* the reply, not sending the request, and a
+ * `text/plain` POST needs no preflight. curl can still forge the header;
+ * this stops strangers' pages quietly turning their visitors' browsers into
+ * senders, which is the abuse a static site's form actually attracts.
+ */
+function callerOrigin(request, env) {
   const origin = request.headers.get('origin');
-  if (origin !== null && allowed.includes(origin)) return origin;
-  return allowed[0] ?? 'https://ahaducode.com';
+  return origin !== null && allowedOrigins(env).includes(origin) ? origin : null;
+}
+
+/**
+ * The body as text, refusing to buffer more than `limit` bytes.
+ *
+ * `content-length` alone is not a limit: a chunked request has none, and
+ * `request.json()` would read the whole of it before the message's own
+ * length was ever checked.
+ */
+async function readCapped(request, limit) {
+  const declared = Number(request.headers.get('content-length') ?? '0');
+  if (declared > limit) return null;
+  if (request.body === null) return '';
+
+  const reader = request.body.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let at = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, at);
+    at += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 /** `null` when the submission is fine; otherwise why it is not. */
@@ -163,82 +203,92 @@ function mime({ from, to, subject, replyTo, text }) {
   return `${headers.join('\r\n')}\r\n\r\n${encoded}\r\n`;
 }
 
-export default {
-  async fetch(request, env) {
-    const origin = allowedOrigin(request, env);
+async function handle(request, env) {
+  const origin = callerOrigin(request, env);
+  // Replies to a page that is not ours carry no CORS headers, so its
+  // browser will not hand them over.
+  const reply = (status, data) => json(status, data, origin ?? allowedOrigins(env)[0] ?? '');
 
-    if (request.method === 'OPTIONS') {
-      // The site posts JSON, which is not a simple request, so the browser
-      // asks first. Answering this is what makes the form work at all.
-      return new Response(null, { status: 204, headers: CORS(origin) });
-    }
+  if (request.method === 'OPTIONS') {
+    // The site posts JSON, which is not a simple request, so the browser
+    // asks first. Answering this is what makes the form work at all.
+    if (origin === null) return new Response(null, { status: 403 });
+    return new Response(null, { status: 204, headers: CORS(origin) });
+  }
 
-    if (request.method !== 'POST') {
-      return json(405, { ok: false, error: 'method' }, origin);
-    }
+  if (request.method !== 'POST') return reply(405, { ok: false, error: 'method' });
+  if (origin === null) return reply(403, { ok: false, error: 'origin' });
 
-    const length = Number(request.headers.get('content-length') ?? '0');
-    if (length > LIMITS.body) {
-      return json(413, { ok: false, error: 'too-long' }, origin);
-    }
+  // JSON only. That is what the site sends, and it is what forces a
+  // browser to preflight — so the check above is not the only thing
+  // between a foreign page and a send.
+  const type = request.headers.get('content-type') ?? '';
+  if (!/^application\/json\b/i.test(type)) return reply(415, { ok: false, error: 'type' });
 
-    let payload;
-    try {
-      payload = await request.json();
-    } catch {
-      return json(400, { ok: false, error: 'malformed' }, origin);
-    }
+  const body = await readCapped(request, LIMITS.body);
+  if (body === null) return reply(413, { ok: false, error: 'too-long' });
 
-    const problem = validate(payload);
-    if (problem !== null) {
-      // 400 for all of them: the page has already said in the reader's own
-      // language what is wrong, and this reply is read by a script.
-      return json(400, { ok: false, error: problem }, origin);
-    }
+  let payload;
+  try {
+    payload = JSON.parse(body);
+  } catch {
+    return reply(400, { ok: false, error: 'malformed' });
+  }
 
-    if (!(await turnstileOk(payload, env, request.headers.get('cf-connecting-ip')))) {
-      return json(403, { ok: false, error: 'challenge' }, origin);
-    }
+  const problem = validate(payload);
+  if (problem !== null) {
+    // 400 for all of them: the page has already said in the reader's own
+    // language what is wrong, and this reply is read by a script.
+    return reply(400, { ok: false, error: problem });
+  }
 
-    const email = typeof payload.email === 'string' ? payload.email.trim() : '';
-    const page = typeof payload.path === 'string' ? payload.path.slice(0, 300) : '';
-    const language = typeof payload.language === 'string' ? payload.language.slice(0, 16) : '';
+  if (!(await turnstileOk(payload, env, request.headers.get('cf-connecting-ip')))) {
+    return reply(403, { ok: false, error: 'challenge' });
+  }
 
-    const text = [
-      `Page: ${page}`,
-      `Language: ${language}`,
-      `Reply to: ${email === '' ? '(not given)' : email}`,
-      `Country: ${request.headers.get('cf-ipcountry') ?? '?'}`,
-      '',
-      String(payload.message).trim(),
-      '',
-    ].join('\n');
+  const email = typeof payload.email === 'string' ? payload.email.trim() : '';
+  const page = typeof payload.path === 'string' ? payload.path.slice(0, 300) : '';
+  const language = typeof payload.language === 'string' ? payload.language.slice(0, 16) : '';
 
-    const subject = `[ahaducode.com] ${page === '' ? 'message' : page}`;
+  const text = [
+    `Page: ${page}`,
+    `Language: ${language}`,
+    `Reply to: ${email === '' ? '(not given)' : email}`,
+    // Cloudflare's guess from the connection, which says where a report
+    // comes from without saying who sent it. The IP address it is worked out
+    // from is not included. The form and the privacy page both say so.
+    `Country: ${request.headers.get('cf-ipcountry') ?? '?'}`,
+    '',
+    String(payload.message).trim(),
+    '',
+  ].join('\n');
 
-    try {
-      await env.MAIL.send(
-        new EmailMessage(
-          env.CONTACT_FROM,
-          // Always the configured address, never one from the request: that
-          // difference is all that stands between this and an open relay.
-          env.CONTACT_TO,
-          mime({
-            from: `Ahadu site <${env.CONTACT_FROM}>`,
-            to: env.CONTACT_TO,
-            subject,
-            replyTo: email === '' ? null : email,
-            text,
-          }),
-        ),
-      );
-    } catch (error) {
-      // The page keeps what the reader typed and offers them GitHub, so the
-      // worst case here is a message that has to be sent twice.
-      console.error('send_email failed', error);
-      return json(502, { ok: false, error: 'send' }, origin);
-    }
+  const subject = `[ahaducode.com] ${page === '' ? 'message' : page}`;
 
-    return json(200, { ok: true }, origin);
-  },
-};
+  try {
+    await env.MAIL.send(
+      new EmailMessage(
+        env.CONTACT_FROM,
+        // Always the configured address, never one from the request: that
+        // difference is all that stands between this and an open relay.
+        env.CONTACT_TO,
+        mime({
+          from: `Ahadu site <${env.CONTACT_FROM}>`,
+          to: env.CONTACT_TO,
+          subject,
+          replyTo: email === '' ? null : email,
+          text,
+        }),
+      ),
+    );
+  } catch (error) {
+    // The page keeps what the reader typed and offers them GitHub, so the
+    // worst case here is a message that has to be sent twice.
+    console.error('send_email failed', error);
+    return reply(502, { ok: false, error: 'send' });
+  }
+
+  return reply(200, { ok: true });
+}
+
+export default { fetch: handle };

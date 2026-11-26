@@ -19,8 +19,9 @@ sits in ordinary server logs for a short time.
 Programs run in your browser. The interpreter is sent to your device along
 with the page, and what you write never leaves it.
 
-Your browser keeps three things locally so the site behaves sensibly next
-time: your theme, your language, and the code last in the playground.
+Your browser keeps four things locally so the site behaves sensibly next
+time: your theme, your language, the code last in the playground, and the
+answers you last typed into its input box.
 Clearing your site data removes them.
 
 ## Writing to us
@@ -28,8 +29,10 @@ Clearing your site data removes them.
 **Report a problem** is a link to GitHub. Nothing is sent until you submit it
 there, where it is public and covered by GitHub's privacy policy.
 
-**Contact** sends your message, the page you were on, and your email address
-if you give one. The email field is optional — a report is useful without a
+**Contact** sends your message, the page you were on and its language, and
+your email address if you give one. The service that receives it adds the
+country your connection comes from, which it works out from your IP address;
+the address itself is not passed on. The email field is optional — a report is useful without a
 reply address. If you give one, it is used to reply to you.
 
 ## Children

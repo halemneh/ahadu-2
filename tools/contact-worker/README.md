@@ -65,9 +65,33 @@ account** — which is all this needs, because there is exactly one of them.
 Nothing in this repository deploys it, and no CI job touches it. It is a
 hostname and a mailbox, not part of the site build.
 
+## What it refuses
+
+- **Any page but the site's.** A POST must carry an `Origin` listed in
+  `ALLOWED_ORIGINS`, or it is refused with 403 before anything is read.
+  Browsers always send `Origin` on a POST, so a page on another site cannot
+  use its visitors' browsers to send through this. (curl can forge the
+  header; this is about strangers' pages, which is the abuse a static site's
+  form attracts.)
+- **Anything but JSON** (415). That is what the site sends, and it is what
+  makes a browser ask first rather than just send.
+- **A body over 64 KB** (413), counted as it arrives — a chunked request
+  carries no length to check up front.
+
+There is no rate limit. If one is ever needed, Cloudflare's rate-limiting
+binding is the place for it, not this file.
+
+## What it sends
+
+The message, the page and its language, the reply address if one was given,
+and the country the connection comes from as Cloudflare reports it
+(`cf-ipcountry`). Not the IP address. The site's form and privacy page list
+exactly these; change one and change the others.
+
 ## The API
 
-`POST /` with a JSON body:
+`POST /` with a JSON body and `content-type: application/json`, from an
+allowed origin:
 
 | Field | | |
 | --- | --- | --- |

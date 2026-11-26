@@ -4,6 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>አሃዱ — Ahadu 2.0</title>
+    <!-- tools/shared/csp.ts. The hash is of the script below, exactly; a test fails if they drift. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-7v8GSD7h23+Jz+f3zvvnIOTSSDRGiTVSnY0mpJG24zI='; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://contact.ahaducode.com; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'" />
+    <meta name="referrer" content="no-referrer" />
     <link rel="stylesheet" href="./styles.css" />
     <script>
       // Before first paint, so arriving from a dark page is not a white flash.

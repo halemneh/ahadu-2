@@ -12,13 +12,20 @@
  * whatever device a school has.
  */
 
+import { createHash } from 'node:crypto';
 import { escapeHtml } from '../../playground/view.js';
+import { contentSecurityPolicy } from '../../shared/csp.js';
 import { PLAYGROUND_URL, STORAGE, sectionUrl } from '../../shared/nav.js';
 import { contactDialog, footerActions } from './contact.js';
 import { headLinks } from './discovery.js';
 import type { Alternates } from './discovery.js';
 import type { Strings } from './strings.js';
 import type { Section } from './content.js';
+
+/** A CSP hash source for an inline script's exact text. */
+export function scriptHash(text: string): string {
+  return `sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}`;
+}
 
 /**
  * The home page's background: the fidel, laid out as the chart a learner
@@ -114,16 +121,9 @@ export function page(view: PageView): string {
           }
         </nav>`;
 
-  return `<!doctype html>
-<html lang="${s.code}" dir="${s.dir}">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(view.title)} — ${escapeHtml(s.siteName)}</title>
-    <meta name="description" content="${escapeHtml(view.summary)}" />
-    ${headLinks(view.alternates)}
-    <link rel="stylesheet" href="/theme/site.css" />
-    <script>
+  // The pre-paint script, kept in a variable so the policy can allow exactly
+  // this text by its hash and nothing else inline.
+  const boot = `
       try {
         // Before first paint, so a reader who chose dark never sees a flash.
         var t = localStorage.getItem('${STORAGE.theme}');
@@ -140,7 +140,20 @@ export function page(view: PageView): string {
         // which has one URL for both — opens in the language being read.
         localStorage.setItem('${STORAGE.language}', '${s.code}');
       } catch (e) {}
-    </script>
+    `;
+
+  return `<!doctype html>
+<html lang="${s.code}" dir="${s.dir}">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(view.title)} — ${escapeHtml(s.siteName)}</title>
+    <meta name="description" content="${escapeHtml(view.summary)}" />
+    ${headLinks(view.alternates)}
+    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy([scriptHash(boot)])}" />
+    <meta name="referrer" content="no-referrer" />
+    <link rel="stylesheet" href="/theme/site.css" />
+    <script>${boot}</script>
   </head>
   <body data-section="${view.section}">
     <!--

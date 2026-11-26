@@ -9,6 +9,7 @@
  * stylesheet they reference; it is not asked to understand the content.
  */
 
+import { contentSecurityPolicy } from '../../shared/csp.js';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { readLanguage, pairingProblems } from './content.js';
@@ -175,6 +176,8 @@ export function generate(options: GenerateOptions): GenerateResult {
 <html lang="am">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="${contentSecurityPolicy([])}" />
+    <meta name="referrer" content="no-referrer" />
     <title>አሃዱ</title>
     <link rel="canonical" href="/am/" />
     <meta http-equiv="refresh" content="0; url=/am/" />
