@@ -59,13 +59,13 @@ export interface Strings {
   /** Read out with the editor: how to leave it, since Tab indents. */
   readonly editorKeys: string;
 
-  // The input dialog, shown only when a program calls አንብብ
-  readonly inputLabel: string;
-  readonly inputHint: string;
-  /** Shown for an `አንብብ` that prints no prompt of its own. */
-  readonly inputUnlabelled: string;
-  /** Shown when a read sits inside a loop and so repeats. */
-  readonly inputRepeats: string;
+  // The console under the editor: output, answers to አንብብ, and Ahadu
+  readonly consoleLabel: string;
+  /** In the console's line while nothing is waiting: it runs Ahadu. */
+  readonly consoleCode: string;
+  /** In the console's line while a program waits at አንብብ. */
+  readonly consoleAnswer: string;
+  readonly statusWaiting: string;
 
   /** The contact dialog, shared with every other page. */
   readonly contact: string;
@@ -83,7 +83,6 @@ export interface Strings {
   readonly contactNeedMessage: string;
   readonly contactTooLong: string;
   readonly contactBadEmail: string;
-  readonly inputWhy: string;
   readonly cancel: string;
   /** `(line, column)` → the position readout under the editor. */
   readonly position: (line: number, column: number) => string;
@@ -147,11 +146,11 @@ const amharic: Strings = {
 
   editorLabel: 'የአሃዱ ኮድ',
   editorKeys: 'Tab ገብ ያደርጋል። ከኮዱ ሳጥን ለመውጣት Escapeን ከዚያ Tabን ይጫኑ።',
-  inputLabel: 'ግቤት',
-  inputHint: 'በየመስመሩ አንድ መልስ።',
-  inputUnlabelled: '(ጥያቄ የለውም)',
+  consoleLabel: 'ኮንሶል — የአሃዱ ኮድ፣ ወይም ፕሮግራሙ ሲጠይቅ መልስ',
+  consoleCode: 'የአሃዱ ኮድ ይጻፉ — Enter ያሂደዋል',
+  consoleAnswer: 'መልስዎን ይጻፉ — Enter ይልከዋል',
+  statusWaiting: 'መልስዎን ይጠብቃል',
   findLabel: 'ማጣቀሻውን ፈልግ',
-  inputRepeats: 'ይህ ፕሮግራም በዑደት ውስጥ ይጠይቃል — ከአንድ ጊዜ በላይ ያነባል። ለእያንዳንዱ መልስ አንድ መስመር ይጻፉ።',
   contact: 'አግኙን',
   contactTitle: 'መልእክት ይላኩ',
   contactLead: 'ስለ ትምህርቶቹ ወይም ስለ ቋንቋው ማለት የሚፈልጉት ነገር ካለ ይጻፉ።',
@@ -168,7 +167,6 @@ const amharic: Strings = {
   contactNeedMessage: 'እባክዎ መጀመሪያ መልእክት ይጻፉ።',
   contactTooLong: 'መልእክቱ በጣም ረጅም ነው። እባክዎ ያሳጥሩት።',
   contactBadEmail: 'ኢሜይሉ ትክክል አይመስልም። ያስተካክሉት ወይም ባዶውን ይተዉት።',
-  inputWhy: 'ይህ ፕሮግራም "አንብብ" ይጠቀማል።',
   cancel: 'ተወው',
   position: (line, column) => `መስመር ${line}፣ ዓምድ ${column}`,
   selection: (count) => `${count} ተመርጧል`,
@@ -186,7 +184,7 @@ const amharic: Strings = {
 
   emptyOutput: 'ምንም ውጤት የለም',
   outputTruncated: '… ውጤቱ በጣም ስለረዘመ የተቀረው አልታየም።',
-  emptyPressRun: '"አሂድ" ይጫኑ',
+  emptyPressRun: '"አሂድ" ይጫኑ፣ ወይም ከታች የአሃዱ ኮድ ይጻፉ።',
   emptyRunning: 'ይሰራል…',
   emptyTokens: 'ምንም ቶከን የለም',
   emptyAst: 'ምንም ዛፍ የለም',
@@ -224,12 +222,11 @@ const english: Strings = {
 
   editorLabel: 'Ahadu code',
   editorKeys: 'Tab indents. To leave the editor, press Escape, then Tab.',
-  inputLabel: 'Input',
-  inputHint: 'One answer per line.',
-  inputUnlabelled: '(no prompt)',
+  consoleLabel: 'Console — Ahadu code, or an answer when the program asks',
+  consoleCode: 'Type Ahadu — Enter runs it',
+  consoleAnswer: 'Type your answer — Enter sends it',
+  statusWaiting: 'Waiting for your answer',
   findLabel: 'Search the reference',
-  inputRepeats:
-    'This program asks inside a loop, so it reads more than once. Write one line for each answer.',
   contact: 'Contact',
   contactTitle: 'Send a message',
   contactLead:
@@ -248,7 +245,6 @@ const english: Strings = {
   contactNeedMessage: 'Please write a message first.',
   contactTooLong: 'That message is too long. Please shorten it.',
   contactBadEmail: 'That email address does not look right. Correct it, or leave it empty.',
-  inputWhy: 'This program calls አንብብ.',
   cancel: 'Cancel',
   position: (line, column) => `Ln ${line}, Col ${column}`,
   selection: (count) => `${count} selected`,
@@ -266,7 +262,7 @@ const english: Strings = {
 
   emptyOutput: 'No output',
   outputTruncated: '… the output was too long, so the rest is not shown.',
-  emptyPressRun: 'Press Run',
+  emptyPressRun: 'Press Run, or type Ahadu below.',
   emptyRunning: 'Running…',
   emptyTokens: 'No tokens',
   emptyAst: 'No tree',

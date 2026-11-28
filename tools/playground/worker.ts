@@ -1,12 +1,12 @@
 /**
  * The worker entry point (TOOLING.md §2.2).
  *
- * Binding only. Everything it does lives in `evaluate.ts`, which has no
+ * Binding only. Everything it does lives in `session.ts`, which has no
  * globals and so can be tested without a worker.
  */
 
-import { evaluate } from './evaluate.js';
-import type { RunReply, RunRequest } from './evaluate.js';
+import { runSession } from './session.js';
+import type { SessionReply, SessionRequest } from './session.js';
 
 /**
  * The part of the worker global this file uses.
@@ -16,12 +16,12 @@ import type { RunReply, RunRequest } from './evaluate.js';
  * one. Naming the two members used here is cheaper than fighting that.
  */
 interface WorkerScope {
-  onmessage: ((event: MessageEvent<RunRequest>) => void) | null;
-  postMessage: (message: RunReply) => void;
+  onmessage: ((event: MessageEvent<SessionRequest>) => void) | null;
+  postMessage: (message: SessionReply) => void;
 }
 
 const scope = self as unknown as WorkerScope;
 
-scope.onmessage = (event: MessageEvent<RunRequest>): void => {
-  scope.postMessage(evaluate(event.data));
+scope.onmessage = (event: MessageEvent<SessionRequest>): void => {
+  scope.postMessage(runSession(event.data));
 };

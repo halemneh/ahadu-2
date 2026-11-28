@@ -14,6 +14,7 @@ import { codePoints } from '../../src/interpreter/values.js';
 import type { Diagnostic } from '../../src/diagnostics.js';
 import type { Frame } from '../../src/interpreter/index.js';
 import type { RunReply } from './evaluate.js';
+import type { SessionReply } from './session.js';
 import type { Strings } from './strings.js';
 import { highlightLine } from './highlight.js';
 
@@ -297,95 +298,6 @@ export function statusOf(diagnostics: readonly Diagnostic[], s: Strings): Status
   return { text: s.statusErrors(diagnostics.length), state: 'bad' };
 }
 
-/** The built-in that reads a line, which is the only reason input is needed. */
-const READ_LINE = 'አንብብ';
-
-/**
- * Whether a program will ask for input.
- *
- * `አንብብ` is synchronous — so that the whole interpreter can be — and the
- * program runs in a worker, so it cannot stop half way and wait for a dialog:
- * answering it from the main thread would need `SharedArrayBuffer` and
- * `Atomics.wait`, and so cross-origin isolation headers, and so the page would
- * stop being static (TOOLING.md §2.2).
- *
- * What a program *can* be asked is whether it will want input at all, before
- * it starts — the call is right there in the tokens. So the dialog opens ahead
- * of the run rather than during it.
- *
- * A name the program has rebound is still counted: deciding otherwise would
- * mean resolving scopes here, and offering an input box to someone who did
- * not need one costs a keystroke, while missing one costs them their input.
- */
-export function needsInput(tokens: readonly Token[]): boolean {
-  return tokens.some((token) => token.type === 'IDENTIFIER' && token.value === READ_LINE);
-}
-
-/**
- * The prompt each `አንብብ` in the program will print, in order.
- *
- * The dialog opens before the run, so the reader is asked for every line at
- * once — and without this they are asked for them blind. The program knows
- * what each one is for; the box in front of them did not say.
- *
- * An entry is `null` where the call has no prompt, because position matters:
- * the third box is the third `አንብብ` whether or not the first two were
- * labelled. Only a literal is reported — a prompt built at runtime is not
- * knowable before the program runs, which is the same limit `needsInput`
- * works under.
- */
-export function inputPrompts(tokens: readonly Token[]): (string | null)[] {
-  const prompts: (string | null)[] = [];
-  tokens.forEach((token, i) => {
-    if (token.type !== 'IDENTIFIER' || token.value !== READ_LINE) return;
-    const open = tokens[i + 1];
-    const first = tokens[i + 2];
-    const after = tokens[i + 3];
-    if (open?.type !== 'LPAREN') return;
-    // Only when the literal is the *whole* argument. `አንብብ("ስም" + "፦ ")`
-    // would otherwise be reported as `ስም`, which is not what it prints —
-    // a half-right prompt is worse than admitting there is none.
-    const literal = first?.type === 'STRING' && after?.type === 'RPAREN';
-    prompts.push(literal ? String(first.value) : null);
-  });
-  return prompts;
-}
-
-/**
- * Whether a read sits inside a loop, and so will happen more than once.
- *
- * This matters because the dialog collects every answer before the program
- * starts. A read in a loop has **one** call in the source and many at run
- * time, so listing the prompts alone tells a reader they need one line when
- * they may need five — which is exactly how a guessing game ends after the
- * first guess, the rest of its reads having been handed the empty string.
- *
- * A loop keyword earlier in the file and an indented `አንብብ` after it. Not a
- * parse: the question is only whether to warn, and the cost of warning when
- * the loop runs once is a sentence, while the cost of staying quiet is the
- * reader's program not working.
- */
-export function readsRepeatedly(tokens: readonly Token[]): boolean {
-  const indented = new Set<number>();
-  for (const token of tokens) if (token.type === 'INDENT') indented.add(token.line);
-
-  let sawLoop = false;
-  for (const token of tokens) {
-    if (token.type === 'KEYWORD' && (token.value === 'WHILE' || token.value === 'FOREACH')) {
-      sawLoop = true;
-    }
-    if (
-      sawLoop &&
-      token.type === 'IDENTIFIER' &&
-      token.value === READ_LINE &&
-      indented.has(token.line)
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
 /** The example name shown in the menu, from its path. */
 export function exampleName(path: string): string {
   return (
@@ -394,4 +306,48 @@ export function exampleName(path: string): string {
       .pop()
       ?.replace(/\.ahadu$/, '') ?? path
   );
+}
+
+/**
+ * The console's transcript as HTML (TOOLING.md §2.2).
+ *
+ * Output as it was written; an answer to `አንብብ` right after its prompt, on
+ * the same line, as it would appear in a terminal; a console entry echoed
+ * after `›`; and a value or an error on a line of its own.
+ */
+export function transcriptHtml(reply: SessionReply, s: Strings): string {
+  const parts: string[] = [];
+  let lineOpen = false;
+  const own = (html: string): void => {
+    if (lineOpen) parts.push('\n');
+    parts.push(`${html}\n`);
+    lineOpen = false;
+  };
+
+  for (const line of reply.transcript) {
+    switch (line.kind) {
+      case 'out':
+        parts.push(escapeHtml(line.text));
+        lineOpen = !line.text.endsWith('\n');
+        break;
+      case 'input':
+        // Same line as the prompt before it — the reader pressed Enter there.
+        parts.push(`<span class="stdin">${escapeHtml(line.text)}</span>\n`);
+        lineOpen = false;
+        break;
+      case 'entry':
+        own(`<span class="entry">› ${escapeHtml(line.text).replace(/\n/g, '\n  ')}</span>`);
+        break;
+      case 'value':
+        own(`<span class="value">${escapeHtml(s.valuePrefix)} ${escapeHtml(line.text)}</span>`);
+        break;
+      case 'error':
+        own(
+          `<span class="value bad">[${line.diagnostic.code}] ${escapeHtml(line.diagnostic.message)}</span>`,
+        );
+        break;
+    }
+  }
+  if (reply.truncated) own(`<span class="value">${escapeHtml(s.outputTruncated)}</span>`);
+  return parts.join('');
 }

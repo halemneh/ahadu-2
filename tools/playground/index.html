@@ -136,7 +136,26 @@
         </div>
 
         <div class="panels">
-          <pre id="panel-output" class="panel" role="tabpanel" aria-labelledby="tab-output"></pre>
+          <!--
+            The output panel is a console (TOOLING.md §2.2): what the program
+            printed, then a line to type in — an answer when the program is
+            waiting at አንብብ, or Ahadu to run in the same session.
+          -->
+          <div id="panel-output" class="panel console" role="tabpanel" aria-labelledby="tab-output">
+            <pre id="console-log" class="console-log"></pre>
+            <div class="console-line">
+              <span class="console-prompt" aria-hidden="true">›</span>
+              <textarea
+                id="console-input"
+                class="console-input"
+                rows="1"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                data-i18n-label="consoleLabel"
+              ></textarea>
+            </div>
+          </div>
           <div id="panel-tokens" class="panel" role="tabpanel" aria-labelledby="tab-tokens" hidden></div>
           <div id="panel-ast" class="panel" role="tabpanel" aria-labelledby="tab-ast" hidden></div>
           <div id="panel-errors" class="panel" role="tabpanel" aria-labelledby="tab-errors" hidden></div>
@@ -171,24 +190,6 @@
     <!-- Explains the error the pointer is over; positioned from script. -->
     <div id="tip" class="tip" role="status" hidden></div>
 
-    <!--
-      Asked before a run, not during one: አንብብ is synchronous and the program
-      runs in a worker, so it cannot stop half way and wait. See view.ts.
-    -->
-    <div id="ask" class="ask" hidden>
-      <div class="ask-box" role="dialog" aria-modal="true" aria-labelledby="ask-title">
-        <h2 id="ask-title" data-i18n="inputLabel"></h2>
-        <p class="ask-why"><span data-i18n="inputWhy"></span> <span data-i18n="inputHint"></span></p>
-        <!-- Filled from the program's own `አንብብ` prompts before the dialog opens. -->
-        <ol id="ask-prompts" class="ask-prompts" hidden></ol>
-        <p id="ask-repeat" class="ask-repeat" data-i18n="inputRepeats" hidden></p>
-        <textarea id="ask-input" spellcheck="false" data-i18n-label="inputLabel"></textarea>
-        <div class="ask-actions">
-          <button id="ask-cancel" type="button" data-i18n="cancel"></button>
-          <button id="ask-run" class="run" type="button" data-i18n="run"></button>
-        </div>
-      </div>
-    </div>
 
 
     <!--

@@ -26,14 +26,11 @@ import {
   escapeHtml,
   exampleName,
   gutterHtml,
-  inputPrompts,
-  needsInput,
-  readsRepeatedly,
-  outputHtml,
   positionLabel,
   reported,
   statusOf,
   tokenRowsHtml,
+  transcriptHtml,
 } from './view.js';
 import type { Analysis, Reported } from './view.js';
 import { diagnosticAt, positionAt } from './locate.js';
@@ -44,7 +41,8 @@ import { setUpMenu } from '../shared/menu.js';
 import { STORAGE, sectionUrl } from '../shared/nav.js';
 import type { Section } from '../shared/nav.js';
 import type { Language, Strings } from './strings.js';
-import type { RunReply, RunRequest } from './evaluate.js';
+import type { SessionReply, SessionRequest } from './session.js';
+import { inspectEntry } from '../../src/entry.js';
 
 /** How long after a keystroke the editor re-lexes (TOOLING.md §2.2). */
 const DEBOUNCE_MS = 150;
@@ -53,7 +51,6 @@ const DEBOUNCE_MS = 150;
 const MAX_STEPS = 5_000_000;
 
 const STORAGE_SOURCE = 'ahadu.playground.source';
-const STORAGE_INPUT = 'ahadu.playground.input';
 const STORAGE_DEBUG = 'ahadu.playground.debug';
 /*
  * The theme and the language are the site's, not the playground's: arriving
@@ -96,12 +93,8 @@ const backdrop = need<HTMLPreElement>('backdrop');
 const editorStatus = need<HTMLElement>('editor-status');
 const tip = need<HTMLElement>('tip');
 const brand = need<HTMLAnchorElement>('brand');
-const ask = need<HTMLElement>('ask');
-const askInput = need<HTMLTextAreaElement>('ask-input');
-const askPrompts = need<HTMLOListElement>('ask-prompts');
-const askRepeat = need<HTMLParagraphElement>('ask-repeat');
-const askRun = need<HTMLButtonElement>('ask-run');
-const askCancel = need<HTMLButtonElement>('ask-cancel');
+const consoleLog = need<HTMLPreElement>('console-log');
+const consoleInput = need<HTMLTextAreaElement>('console-input');
 const runButton = need<HTMLButtonElement>('run');
 const stopButton = need<HTMLButtonElement>('stop');
 const examplesSelect = need<HTMLSelectElement>('examples');
@@ -589,151 +582,118 @@ function dispose(): void {
   setRunning(false);
 }
 
-function stop(): void {
-  dispose();
-  status.textContent = s.statusStopped;
-  status.dataset.state = 'bad';
-  // The output panel said "Running…", which stopped being true.
-  panels.output.innerHTML = `<span class="empty">${s.statusStopped}</span>`;
-}
+// ---- the console (TOOLING.md §2.2) ----------------------------------------
 
 /**
- * Asks for input, then runs — or runs straight away.
- *
- * The dialog opens *before* the program starts rather than when `አንብብ` is
- * reached, because a synchronous call inside a worker cannot wait for one
- * (view.ts explains the constraint).
+ * The session the console is showing: the program, the entries typed after
+ * it, and the answers given to `አንብብ`. Every interaction replays it from
+ * the start in a fresh worker (session.ts says why that is enough).
  */
+interface Session {
+  entries: string[];
+  inputs: string[];
+  /** Fixed for the session, so a replay draws the same numbers… */
+  readonly seed: number;
+  /** …and reads the same clock. */
+  readonly now: number;
+}
+
+let session: Session | null = null;
+/** The prompt the session is stopped at, or undefined when nothing waits. */
+let waiting: string | null | undefined;
+/** What was last added, so Stop can take back an entry or answer that never finished. */
+let pendingUndo: (() => void) | null = null;
+/** Console entries, for Up and Down. */
+const entered: string[] = [];
+let enteredAt = 0;
+
+function newSession(program: string): Session {
+  // A changing seed and the real clock, so a guessing game is a game and
+  // `ዛሬ` is today here. The interpreter's defaults are fixed, which is what
+  // the site's build-time checker wants.
+  return { entries: [program], inputs: [], seed: Date.now(), now: Date.now() };
+}
+
+function scrollConsole(): void {
+  panels.output.scrollTop = panels.output.scrollHeight;
+}
+
+function setWaiting(prompt: string | null | undefined): void {
+  waiting = prompt;
+  consoleInput.placeholder = prompt === undefined ? s.consoleCode : s.consoleAnswer;
+  consoleInput.classList.toggle('answering', prompt !== undefined);
+}
+
+function stop(): void {
+  dispose();
+  // The entry or answer that was running never finished, so it is not part
+  // of the session: replaying it next time would only run away again.
+  pendingUndo?.();
+  pendingUndo = null;
+  status.textContent = s.statusStopped;
+  status.dataset.state = 'bad';
+  consoleLog.insertAdjacentHTML('beforeend', `<span class="value bad">${s.statusStopped}</span>\n`);
+  scrollConsole();
+}
+
+/** Starts a session with the editor's program. */
 function start(): void {
   // Re-analyse rather than just repaint, in case the run came within the
   // debounce of a keystroke and the live analysis is a moment behind.
   window.clearTimeout(timer);
   runtimeError = null;
   refresh();
-
-  if (!needsInput(current.tokens)) {
-    launch(inputLines());
-    return;
-  }
-
-  // Show what the program is going to ask for. Being asked for three lines
-  // of input with no indication of what they are is the whole complaint.
-  const prompts = inputPrompts(current.tokens);
-  askPrompts.textContent = '';
-  for (const prompt of prompts) {
-    const item = document.createElement('li');
-    if (prompt === null || prompt.trim() === '') {
-      item.textContent = s.inputUnlabelled;
-      item.className = 'ask-plain';
-    } else {
-      item.textContent = prompt.trim();
-    }
-    askPrompts.append(item);
-  }
-  askPrompts.hidden = prompts.length === 0;
-
-  // A read inside a loop happens more than once, and the dialog is asking
-  // for every answer up front — so say how many lines are really wanted.
-  askRepeat.hidden = !readsRepeatedly(current.tokens);
-
-  askOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  ask.hidden = false;
-  askInput.focus();
-  askInput.setSelectionRange(askInput.value.length, askInput.value.length);
+  session = newSession(editor.value);
+  pendingUndo = null;
+  send(true);
 }
 
-/** Whatever had focus when the input dialog opened, to give it back. */
-let askOpener: HTMLElement | null = null;
-
-function closeAsk(): void {
-  ask.hidden = true;
-  askOpener?.focus();
-  askOpener = null;
-}
-
-// The dialog is modal (`aria-modal`), so it behaves like one: Escape closes
-// it from anywhere inside, and Tab cycles within it rather than wandering
-// off into the page behind.
-ask.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
-    event.preventDefault();
-    closeAsk();
-    return;
-  }
-  if (event.key !== 'Tab') return;
-  const stops = [askInput, askCancel, askRun].filter((el) => !el.hidden);
-  const first = stops[0];
-  const last = stops[stops.length - 1];
-  if (first === undefined || last === undefined) return;
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
-});
-
-function inputLines(): string[] {
-  return askInput.value === '' ? [] : askInput.value.split('\n');
-}
-
-askCancel.addEventListener('click', closeAsk);
-
-askRun.addEventListener('click', () => {
-  remember(STORAGE_INPUT, askInput.value);
-  closeAsk();
-  launch(inputLines());
-});
-
-askInput.addEventListener('keydown', (event) => {
-  // Enter adds a line; the modifier runs, as in the editor.
-  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault();
-    askRun.click();
-  }
-});
-
-ask.addEventListener('click', (event) => {
-  if (event.target === ask) closeAsk();
-});
-
-function launch(input: readonly string[]): void {
+/** Replays the session in a fresh worker and shows where it ends up. */
+function send(fromRun: boolean): void {
+  if (session === null) return;
   dispose();
 
   showPanel('output');
-  panels.output.innerHTML = `<span class="empty">${s.emptyRunning}</span>`;
   status.textContent = s.statusRunning;
+  status.dataset.state = '';
+  if (fromRun) consoleLog.innerHTML = `<span class="empty">${s.emptyRunning}</span>`;
   setRunning(true);
 
   worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
 
-  worker.onmessage = (event: MessageEvent<RunReply>): void => {
+  worker.onmessage = (event: MessageEvent<SessionReply>): void => {
     const reply = event.data;
-    panels.output.innerHTML = outputHtml(reply, s);
-    // The error that stopped a run is under its output; show it, rather than
-    // the top of a long scroll that says nothing went wrong.
-    if (reply.diagnostics.length > 0) panels.output.scrollTop = panels.output.scrollHeight;
+    pendingUndo = null;
+    consoleLog.innerHTML = transcriptHtml(reply, s);
+    setWaiting(reply.waiting === null ? undefined : reply.waiting.prompt);
 
-    const first = reply.diagnostics[0];
-    if (first === undefined) {
-      status.textContent = s.statusDone;
-      status.dataset.state = 'good';
-    } else {
-      // Only a runtime error is news: anything the lexer or the parser found
-      // is already in the live analysis, and adding it again would double it.
-      runtimeError =
-        reply.stoppedAt === 'runtime' ? { diagnostic: first, frames: reply.frames } : null;
+    // The program's own errors are the editor's business; an error in a
+    // console entry belongs to the console alone.
+    const first = reply.programDiagnostics[0];
+    runtimeError =
+      first !== undefined && first.stage === 'runtime'
+        ? { diagnostic: first, frames: reply.programFrames }
+        : null;
+    paintErrors();
+
+    if (reply.waiting !== null) {
+      status.textContent = s.statusWaiting;
+      status.dataset.state = '';
+      consoleInput.focus();
+    } else if (first !== undefined && fromRun) {
       status.textContent = first.code;
       status.dataset.state = 'bad';
+    } else {
+      status.textContent = s.statusDone;
+      status.dataset.state = 'good';
     }
 
-    paintErrors();
+    scrollConsole();
     dispose();
   };
 
   worker.onerror = (): void => {
-    panels.output.innerHTML = `<span class="empty">${s.unexpected}</span>`;
+    consoleLog.insertAdjacentHTML('beforeend', `<span class="value bad">${s.unexpected}</span>\n`);
     // Otherwise the status line says "Running…" for good — which is what a
     // reader saw when a deploy shipped without the worker's chunk.
     status.textContent = s.unexpected;
@@ -741,19 +701,92 @@ function launch(input: readonly string[]): void {
     dispose();
   };
 
-  const request: RunRequest = {
-    source: editor.value,
-    input,
-    maxSteps: MAX_STEPS,
-    // A changing seed, so `ዘፈቀደ_ቁጥር` is actually random here. The interpreter's
-    // default is fixed, which is what the site's build-time checker wants;
-    // a guessing game that picks the same number every time is not one.
-    seed: Date.now(),
-    // Likewise the clock, so `ዛሬ` is actually today here.
-    now: Date.now(),
-  };
+  const request: SessionRequest = { ...session, maxSteps: MAX_STEPS };
   worker.postMessage(request);
 }
+
+/** Sends what is in the console's line: an answer, or Ahadu to run. */
+function submitConsole(): void {
+  // An answer is sent exactly as typed. An entry loses the blank lines that
+  // closed its block, which are not part of what the reader meant to echo.
+  const text =
+    waiting === undefined ? consoleInput.value.replace(/(\n[ \t]*)+$/, '') : consoleInput.value;
+  if (waiting !== undefined) {
+    // An answer to አንብብ — one line, sent as typed, empty included.
+    session?.inputs.push(text);
+    const answered = session;
+    pendingUndo = (): void => {
+      answered?.inputs.pop();
+    };
+  } else {
+    if (text.trim() === '') return;
+    // Ahadu, run in the session — a new one with no program if there is none.
+    session ??= newSession('');
+    session.entries.push(text);
+    const into = session;
+    pendingUndo = (): void => {
+      into.entries.pop();
+    };
+    entered.push(text);
+  }
+  enteredAt = entered.length;
+  consoleInput.value = '';
+  fitConsole();
+  send(false);
+}
+
+/** Grows the console's line with what is typed into it. */
+function fitConsole(): void {
+  consoleInput.rows = Math.min(8, Math.max(1, consoleInput.value.split('\n').length));
+}
+
+consoleInput.addEventListener('input', fitConsole);
+
+consoleInput.addEventListener('keydown', (event) => {
+  // Ctrl/Cmd+Enter runs the editor's program from here as anywhere.
+  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+    event.preventDefault();
+    start();
+    return;
+  }
+
+  if (event.key === 'Enter' && !event.shiftKey) {
+    // An answer is one line. Ahadu runs when it is finished — the same rule
+    // as the CLI's REPL: an open bracket waits for its close, and a block
+    // (a line ending in ፦) waits for an empty line.
+    const text = consoleInput.value;
+    if (waiting === undefined) {
+      const { openBracket, opensBlock } = inspectEntry(text);
+      const lastLine = text.slice(text.lastIndexOf('\n') + 1);
+      const inBlock = opensBlock || (text.includes('\n') && lastLine.trim() !== '');
+      if (openBracket || inBlock) {
+        event.preventDefault();
+        const indent = /^\s*/.exec(lastLine)?.[0] ?? '';
+        const deeper = /[፦]\s*$|:-\s*$/.test(lastLine) ? `${indent}    ` : indent;
+        document.execCommand('insertText', false, `\n${deeper}`);
+        return;
+      }
+    }
+    event.preventDefault();
+    submitConsole();
+    return;
+  }
+
+  // Up and Down recall earlier entries, when the line is a single line.
+  if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && waiting === undefined) {
+    if (consoleInput.value.includes('\n') || entered.length === 0) return;
+    event.preventDefault();
+    enteredAt = Math.max(
+      0,
+      Math.min(entered.length, enteredAt + (event.key === 'ArrowUp' ? -1 : 1)),
+    );
+    consoleInput.value = entered[enteredAt] ?? '';
+    fitConsole();
+  }
+});
+
+// The same suggestions as the editor, for Ahadu typed into the console.
+attachCompletion(consoleInput, { language: () => language });
 
 runButton.addEventListener('click', start);
 stopButton.addEventListener('click', stop);
@@ -812,7 +845,9 @@ examplesSelect.addEventListener('change', () => {
   // The last program's output and runtime error do not describe this one.
   dispose();
   runtimeError = null;
-  panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
+  session = null;
+  setWaiting(undefined);
+  consoleLog.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
   refresh();
   updatePosition();
   editor.focus();
@@ -957,7 +992,6 @@ window.addEventListener('hashchange', () => {
   refresh();
   updatePosition();
 });
-askInput.value = recall(STORAGE_INPUT) ?? '';
 showPanel('output');
 applyLanguage();
 // After applyLanguage, which is what gives the hamburger its label.
@@ -965,4 +999,5 @@ setUpMenu();
 // And the footer's contact button, which is inert until this runs.
 setUpContact();
 setUpSearch();
-panels.output.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
+consoleLog.innerHTML = `<span class="empty">${s.emptyPressRun}</span>`;
+setWaiting(undefined);
