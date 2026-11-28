@@ -196,7 +196,7 @@ of solid colours — a solid step reads as a different plane at any size, and th
 longest edge on the page has nothing beside it for a shadow to fall across.
 Smaller things stack a translucent layer over whatever shade they land on, so a
 snippet inside a panel takes its own level without a shade of its own. Shadows
-are kept for what genuinely floats: the tooltip, the input dialog, a control
+are kept for what genuinely floats: the tooltip, a dialog, a control
 under the pointer.
 
 The rule has exactly one exception, and it is deliberately not a border: the
@@ -250,7 +250,8 @@ have none.
   around the tool: a teacher setting it up, or a reader of the spec who does
   not read Amharic.
 
-- **Output** — what `ጻፍ` printed, plus the value of the last statement.
+- **Output** — the console: what `ጻፍ` printed, the value of the last
+  statement, and a line for answers and Ahadu (§2.2).
 - **Tokens** — the live token table; hovering a row highlights its source span,
   and hovering source highlights the row.
 - **AST** — the collapsible tree; selecting a node highlights its span.
@@ -336,27 +337,36 @@ Three things beyond one colour per token type:
 - Evaluation runs only on **አሂድ**, in a Web Worker, with a step budget so an
   infinite loop cannot hang the tab. Exceeding it reports
   `ፕሮግራሙ ከመጠን በላይ ረዘመ` and offers a stop button.
-- `አንብብ` reads from an **input dialog**, which አሂድ opens *before* starting a
-  program that calls it. Each call takes the next line; a program that calls
-  it more times than there are lines reads `""` (§9 of LANGUAGE.md).
+- **The output panel is a console.** It shows what the program printed, and
+  under it a line to type in. That line does one of two things:
 
-  The timing is forced. `አንብብ` is synchronous, so that the whole interpreter
-  can be, and the program runs in a worker — so it cannot stop half way and
-  wait for an answer: a prompt on the main thread could only reach it through
-  `SharedArrayBuffer` and `Atomics.wait`, which needs cross-origin isolation
-  headers, and so would stop the page being static.
+  - While a program is stopped at `አንብብ`, it takes the **answer**. The
+    prompt is already on screen, the line is tinted and says so, Enter sends
+    the answer, and it appears after its prompt as a terminal shows it. A
+    guessing game is played as one: guess, read the hint, guess again.
+  - Otherwise it runs **Ahadu**, in the same session as the program — the
+    program's names are still bound, as in the CLI's REPL (§1.2). An entry
+    that opens a block (`…፦`) or a bracket keeps reading until it is
+    finished, by the REPL's own rule (`src/entry.ts`); Shift+Enter adds a
+    line; Up and Down recall earlier entries; suggestions work as in the
+    editor. Each entry is echoed after `›`, followed by its output and its
+    value. It works before Run as well, in a session with no program.
 
-  What *can* be asked ahead of the run is whether the program will want input
-  at all, because the call to `አንብብ` is right there in the tokens the page has
-  already lexed for highlighting. So the dialog is driven by the program rather
-  than by the user remembering to fill a box, and the page carries no input
-  panel for the great majority of programs that never read anything.
+  `አንብብ` is synchronous, so that the whole interpreter can be, and the
+  program runs in a worker, so it cannot stop half way and wait. It does not
+  need to. A host's `readLine` with no answer yet throws `InputPending`, which
+  `tryRun` reports as `waiting` rather than an error; when the answer
+  arrives, the session — program, entries and every answer so far — is
+  **replayed from the start** in a fresh worker. The seed and the clock are
+  fixed per session, and an Ahadu program has no effect but its output, so
+  the replay reaches exactly where it stopped and goes one step further.
+  This needs no `SharedArrayBuffer`, and so none of the cross-origin isolation
+  headers a static host like GitHub Pages cannot send.
 
-  A name the program has rebound still counts as a call. Deciding otherwise
-  would mean resolving scopes in the editor; offering an input box to someone
-  who did not need one costs a keystroke, and missing one costs them their
-  input. The answer is remembered, so a program can be re-run against the same
-  input unchanged.
+  **Run** starts a new session; loading an example clears it. **Stop** ends a
+  runaway entry and takes it (or the answer that set it off) back out of the
+  session, so the next replay does not run away too. A console entry's error
+  stays in the console; only the program's own errors go to the ስተቶች panel.
 - The examples menu loads `examples/*.ahadu` from the repository, so the
   playground and the conformance suite exercise the same programs. A second
   group loads `examples/errors/*.ahadu`: programs that are meant to fail, so

@@ -42,6 +42,23 @@ export class AhaduError extends Error {
  * An Error subclass because it travels by `throw`, not because anything went
  * wrong: this is how a return leaves a loop or a nested block at all.
  */
+/**
+ * A host's way of saying "no answer yet" to `አንብብ`.
+ *
+ * The evaluator is synchronous, so it cannot wait for a person to type. A
+ * host that wants to ask anyway — the playground's console — throws this
+ * from `readLine`; `tryRun` returns it as `RunResult.waiting` rather than an
+ * error, and the host runs the program again from the start once it has the
+ * answer. A program is deterministic given its seed, clock and input, so the
+ * second run reaches the same point and goes one line further (TOOLING.md
+ * §2.2).
+ */
+export class InputPending extends Error {
+  constructor(readonly prompt: string | null) {
+    super('input pending');
+  }
+}
+
 export class ReturnSignal extends Error {
   constructor(readonly value: Value) {
     super('ተመላሽ');

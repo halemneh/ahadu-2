@@ -9,7 +9,7 @@
 
 export { Interpreter, run, GLOBAL_SCOPE_NAME } from './interpreter.js';
 export type { Host, RunOptions, RunResult } from './interpreter.js';
-export { AhaduError, ReturnSignal } from './errors.js';
+export { AhaduError, InputPending, ReturnSignal } from './errors.js';
 export type { Frame } from './errors.js';
 export { Scope, findMethod } from './scope.js';
 export * from './values.js';

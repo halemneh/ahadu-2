@@ -24,7 +24,8 @@ stylesheet cannot be reviewed by reading it.
 | `view.ts` | what the panels show, plus line numbers and the position readout |
 | `highlight.ts` | the editor's backdrop, coloured from the lexer's own tokens |
 | `strings.ts` | the page's own text, in Amharic and English |
-| `evaluate.ts` | running a program, and what comes back — no globals |
+| `evaluate.ts` | running a program, and what comes back — no globals (the site's snippets) |
+| `session.ts` | the console: a session replayed with its answers — no globals |
 | `locate.ts` | which error the pointer is over, as arithmetic |
 | `../shared/complete.ts` | what the suggestion list offers, and what picking one inserts — no DOM |
 | `../shared/completion.ts` | the suggestion list itself, shared with every lesson snippet |
@@ -50,7 +51,7 @@ so a snippet inside a panel takes its own level without a shade of its own.
 Adding a `border` anywhere will look out of place rather than tidy — reach for
 a shade or a layer instead.
 
-Shadows are for what genuinely floats — the tooltip, the input dialog, a
+Shadows are for what genuinely floats — the tooltip, a dialog, a
 control under the pointer — and not for the boundaries between regions. A
 shadow needs an edge to fall across, and the longest edge on the page, between
 the editor and the panels, has nothing beside it to catch one.
@@ -59,12 +60,11 @@ Because nothing has a border to carry focus, controls get a focus ring from
 `box-shadow`. Removing an outline without replacing it leaves the page
 unusable from a keyboard.
 
-**Input is a dialog, opened before the run.** `አንብብ` is synchronous and the
-program runs in a worker, so it cannot stop half way and wait for an answer.
-What can be asked ahead of time is whether the program will want input at
-all — `needsInput()` looks for the call in the tokens the page already lexed
-for highlighting. So the page carries no input box for the great majority of
-programs that never read anything.
+**The output panel is a console, and input happens there.** `አንብብ` is
+synchronous and the program runs in a worker, so it cannot wait for an
+answer. Instead a session (program, console entries, answers so far) is
+replayed from the start on each interaction, with the seed and clock fixed —
+`session.ts` explains why that is exact. TOOLING.md §2.2 is the full story.
 
 Three more things worth knowing before changing it.
 

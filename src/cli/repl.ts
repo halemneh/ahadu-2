@@ -7,6 +7,9 @@
  */
 
 import { tokenize } from '../lexer/index.js';
+import { inspectEntry } from '../entry.js';
+
+export { inspectEntry } from '../entry.js';
 import { parse, printAst } from '../parser/index.js';
 import { render } from '../interpreter/index.js';
 import type { Interpreter } from '../interpreter/index.js';
@@ -42,34 +45,6 @@ const HELP = `  :help            ይህ መልእክት
 
 ብሎክ ለመጻፍ መስመሩን በ"፦" ጨርሱ፤ ባዶ መስመር ሲመጣ ይሰራል።
 `;
-
-/**
- * How an entry can be unfinished.
- *
- * The two reasons end differently, which is why they are told apart. An
- * unclosed bracket is finished the moment it closes, so `ጻፍ(` + `1)` runs
- * straight away. An open block has no such mark — the body is however many
- * indented lines the writer wants — so it runs on a blank line instead
- * (TOOLING.md §1.2).
- *
- * Both are structural, so neither needs the parser's opinion, which matters
- * because a half-typed entry is full of parse errors by definition.
- */
-export function inspectEntry(source: string): { openBracket: boolean; opensBlock: boolean } {
-  const { tokens } = tokenize(source);
-  let depth = 0;
-  let last = '';
-
-  for (const token of tokens) {
-    if (token.type === 'LPAREN' || token.type === 'LBRACKET') depth += 1;
-    if (token.type === 'RPAREN' || token.type === 'RBRACKET') depth -= 1;
-    if (token.type !== 'EOF' && token.type !== 'NEWLINE' && token.type !== 'INDENT') {
-      last = token.type;
-    }
-  }
-
-  return { openBracket: depth > 0, opensBlock: last === 'THEN' };
-}
 
 /** Runs one entry: lex, parse, evaluate, print. Stops at the first stage that reports. */
 function evaluateEntry(

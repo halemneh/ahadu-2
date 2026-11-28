@@ -61,7 +61,7 @@ import type {
   UnaryExpression,
 } from '../parser/index.js';
 import * as err from './errors.js';
-import { AhaduError, ReturnSignal, runtimeDiagnostic } from './errors.js';
+import { AhaduError, InputPending, ReturnSignal, runtimeDiagnostic } from './errors.js';
 import type { Frame } from './errors.js';
 import { Scope, findMethod } from './scope.js';
 import type { ClassValue, ListValue, ObjectValue, Site, StringValue, Value } from './values.js';
@@ -133,6 +133,11 @@ export interface RunResult {
   readonly diagnostic: Diagnostic | null;
   /** The call stack when the error happened, outermost first (§9.1). */
   readonly frames: readonly Frame[];
+  /**
+   * Set when the host's `readLine` had no answer yet (`InputPending`): the
+   * run stopped at `አንብብ`, with this prompt, and nothing went wrong.
+   */
+  readonly waiting?: { readonly prompt: string | null };
 }
 
 /** The deepest line the interpreter was working on, for an error with no site. */
@@ -442,6 +447,14 @@ export class Interpreter {
         // The parser reports AH2005 for a return outside a function, so this
         // is only reachable if a program was run with diagnostics outstanding.
         return { value: thrown.value, diagnostic: null, frames: [] };
+      }
+      if (thrown instanceof InputPending) {
+        return {
+          value: NOTHING,
+          diagnostic: null,
+          frames: this.callStack,
+          waiting: { prompt: thrown.prompt },
+        };
       }
       if (thrown instanceof RangeError) {
         // The host gave out. Still an Ahadu error — nothing escapes — but an

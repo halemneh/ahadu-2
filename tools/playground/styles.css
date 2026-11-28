@@ -533,81 +533,91 @@ button:focus-visible {
   }
 }
 
-/* ---- the input dialog ---- */
+/* ---- the console (TOOLING.md §2.2) ---- */
 
 /*
- * Opened before a run, not during one: `አንብብ` is synchronous and the program
- * runs in a worker, so it cannot stop half way and wait for an answer. What
- * can be asked ahead of time is whether the program will want input at all —
- * the call is there in the tokens. See view.ts.
- *
- * This genuinely floats above the page, so here a shadow is the right tool.
+ * The output panel is a console: the transcript, then a line to type in,
+ * scrolling together as a terminal does. The line takes Ahadu, or — tinted,
+ * while a program waits at አንብብ — the answer to it.
  */
-.ask {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
+.console {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background: rgb(0 0 0 / 45%);
+  flex-direction: column;
 }
 
-.ask[hidden] {
-  display: none;
-}
-
-.ask-box {
-  width: min(32rem, 100%);
-  padding: 1.1rem 1.2rem 1rem;
-  border-radius: 10px;
-  background: var(--surface-1);
-  box-shadow: var(--shadow-lg);
-}
-
-.ask-box h2 {
+.console-log {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
+  font: inherit;
+  white-space: pre-wrap;
 }
 
-.ask-why {
-  margin: 0.3rem 0 0.7rem;
-  color: var(--muted);
-  font-size: 0.84rem;
+.console-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
 }
 
-#ask-input {
-  width: 100%;
-  min-height: 7rem;
+.console-prompt {
+  color: var(--accent-text);
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.console-input {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  padding: 0.55rem 0.7rem;
+  padding: 0;
   border: 0;
-  border-radius: 6px;
-  resize: vertical;
-  background: var(--bg);
+  border-radius: 4px;
+  resize: none;
+  background: transparent;
   color: var(--ink);
-  font-family: var(--code);
-  font-size: 1rem;
-  line-height: 1.7;
-  outline: none;
+  caret-color: var(--ink);
+  font: inherit;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
 }
 
-#ask-input:focus-visible {
-  outline: 3px solid var(--ring);
-  outline-offset: 2px;
+.console-input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
 }
 
-#ask-input::selection {
+.console-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+/* Waiting for an answer: the line says so before anything is typed into it. */
+.console-input.answering {
+  background: var(--layer);
+}
+
+.console-input::selection {
   background: var(--select);
 }
 
-.ask-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.8rem;
+/* What was typed: an answer, bold where the program asked; an entry, after ›. */
+.stdin {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.entry {
+  color: var(--accent-text);
+}
+
+/* In the console a value or an error follows straight on, not after a gap. */
+.console .value {
+  display: inline;
+  margin-top: 0;
+}
+
+.value.bad {
+  color: var(--bad);
 }
 
 /* ---- phone widths ---- */
@@ -714,35 +724,3 @@ button:focus-visible {
   }
 }
 
-/*
- * What the program is about to ask for.
- *
- * The dialog collects every answer before the run (view.ts explains why), so
- * without this the reader is asked for three lines with nothing to say which
- * is which. Numbered, because position is the only thing tying an answer to
- * its question.
- */
-.ask-prompts {
-  margin: 0 0 0.7rem;
-  padding-left: 1.4rem;
-  color: var(--ink);
-  font-size: 0.9rem;
-  line-height: 1.6;
-}
-
-.ask-prompts li {
-  font-family: var(--code);
-}
-
-.ask-prompts .ask-plain {
-  color: var(--muted);
-  font-family: var(--ui);
-  font-style: italic;
-}
-
-/* A read inside a loop asks more than once; the dialog has to say so. */
-.ask-repeat {
-  margin: 0 0 0.7rem;
-  color: var(--ink);
-  font-size: 0.88rem;
-}

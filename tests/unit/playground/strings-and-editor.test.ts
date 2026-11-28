@@ -7,12 +7,10 @@ import { describe, expect, it } from 'vitest';
 import { LANGUAGES, otherLanguage, strings } from '../../../tools/playground/strings.js';
 import type { Strings } from '../../../tools/playground/strings.js';
 import {
-  analyse,
   cursorPosition,
   diagnosticHtml,
   gutterHtml,
   lineNumbers,
-  needsInput,
   positionLabel,
   statusOf,
 } from '../../../tools/playground/view.js';
@@ -188,39 +186,5 @@ describe('the readout label', () => {
 
   it('shows no count when nothing is selected', () => {
     expect(positionLabel('ሀ', 1, 1, en)).toBe('Ln 1, Col 2');
-  });
-});
-
-describe('deciding whether to ask for input', () => {
-  // The dialog opens before the run, so the question is answered from the
-  // tokens rather than from the running program; see view.ts for why.
-  function needs(source: string): boolean {
-    return needsInput(analyse(source).tokens);
-  }
-
-  it('asks when the program calls አንብብ', () => {
-    expect(needs('ስም = አንብብ("ስም፦ ")')).toBe(true);
-  });
-
-  it('does not ask when it never reads', () => {
-    expect(needs('ጻፍ("ሰላም")')).toBe(false);
-    expect(needs('')).toBe(false);
-  });
-
-  it('asks for a call anywhere, not just the first line', () => {
-    expect(needs('ሀ = 1\nለ = 2\nሐ = አንብብ()')).toBe(true);
-  });
-
-  it('asks even inside a block, where a scan of statements would miss it', () => {
-    expect(needs('ሀ > 1 ከሆነ፦\n  ስም = አንብብ()')).toBe(true);
-  });
-
-  it('ignores the word inside a string or a comment, which is not a call', () => {
-    expect(needs('ጻፍ("አንብብ")')).toBe(false);
-    expect(needs('# አንብብ ይጠቀማል\nጻፍ("ሰላም")')).toBe(false);
-  });
-
-  it('still asks when the source does not parse, since tokens are enough', () => {
-    expect(needs('ሀ = $ አንብብ(')).toBe(true);
   });
 });
